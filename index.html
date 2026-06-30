@@ -764,7 +764,14 @@ function addRow(key){saveInputs();let c=crop();let map={harvestRows:{yieldAcre:'
 function removeRow(key,i){saveInputs();let arr=crop()[key];arr.splice(i,1);if(!arr.length)addRow(key);else render()}
 function tillageValue(c){if(String(c.noTill)==='true'||c.noTill===true)return 0;return c.tillageRows.reduce((s,r)=>{let rating=(TILLAGE_RATINGS.find(x=>x.label===r.tillageType)||{}).rating||0;return s+rating*(num(r.depthIn)*2.54)*num(r.passes)*(num(r.disturbed)/100)},0)}
 function livingRootPct(c){let days=c.cropPlanner.reduce((s,e)=>{if(!e.plantingDate||!e.harvestDate)return s;return s+Math.max(0,(new Date(e.harvestDate)-new Date(e.plantingDate))/86400000)},0);return Math.min(100,Math.round(days/365*100))}
-function pillar(c){let ti=tillageValue(c),p1=ti<=60?'IV':ti<=80?'III':ti<=100?'II':ti<=120?'I':'Gap';let rp=livingRootPct(c),p2=rp>=80?'IV':rp>=70?'III':rp>=60?'II':rp>=50?'I':'Gap';let fert=state.nutrientEnabled&&(c.fertilizerRows||[]).some(r=>r.productName||r.rateAcre||r.nPct||r.pPct||r.kPct),p5=fert?'I':(state.nutrientEnabled?'Gap':'Skipped');let ipm=state.ipmEnabled&&(c.ipmRows||[]).some(r=>r.productName||r.pest||r.amountAcre),p5i=ipm?'I':(state.ipmEnabled?'Gap':'Skipped');return{P1:p1,P2:p2,P3:'Planning',P4:'Planning',P5:p5,P5_IPM:p5i,P6:'Planning',P7:livestockStatus(),TI:ti,rootPct:rp}}
+function hasNutrientPlanData(c){return state.nutrientEnabled&&(c.fertilizerRows||[]).some(r=>r.productName||r.applicationDate||r.rateAcre||r.nPct||r.pPct||r.kPct||r.notes)}
+function hasIpmPlanData(c){return state.ipmEnabled&&(c.ipmRows||[]).some(r=>r.applicationDate||r.pest||r.productName||r.epaRegNo||r.amountAcre||r.activePct||r.applicationMethod||r.notes)}
+function nutrientP5Status(c){if(!state.nutrientEnabled)return 'Skipped';return hasNutrientPlanData(c)?'I':'Gap'}
+function ipmP5Status(c){if(!state.ipmEnabled)return 'Skipped';return hasIpmPlanData(c)?'I':'Gap'}
+function combinedP5Status(c){let n=nutrientP5Status(c), i=ipmP5Status(c);if(n==='Skipped'&&i==='Skipped')return 'Skipped';if(n==='I'&&i==='I')return 'I';return 'Gap'}
+function biodiversityLevelEstimate(){ensureBiodiversity();let b=state.biodiversity||{};if(biodiversityStatus()!=='Requirements Met')return 'Gap';return b.targetLevel||'I'}
+function learningLevelEstimate(){let rows=learningRowsNormalized();if(!rows.length)return 'Gap';return rows.every(r=>r.requirementStatus==='Requirements Met')?'I':'Gap'}
+function pillar(c){let ti=tillageValue(c),p1=ti<=60?'IV':ti<=80?'III':ti<=100?'II':ti<=120?'I':'Gap';let rp=livingRootPct(c),p2=rp>=80?'IV':rp>=70?'III':rp>=60?'II':rp>=50?'I':'Gap';let p5n=nutrientP5Status(c),p5i=ipmP5Status(c),p5=combinedP5Status(c);return{P1:p1,P2:p2,P3:'Planning',P4:biodiversityLevelEstimate(),P5:p5,P5_Nutrients:p5n,P5_IPM:p5i,P6:learningLevelEstimate(),P7:livestockStatus(),TI:ti,rootPct:rp}}
 
 function biodiversityRequiredCount(){let lvl=String((state.biodiversity||{}).targetLevel||'I');return ({I:1,II:2,III:3,IV:4})[lvl]||1}
 function biodiversityCompleteCount(){let a=((state.biodiversity||{}).actions||[]);return a.filter(x=>x.actionElement&&x.status&&x.measurementCriterion).length}
@@ -826,7 +833,7 @@ let acres=state.crops.reduce((s,c)=>s+cropAcres(c),0);
 let avg=state.crops.length?state.crops.reduce((s,c)=>s+tillageValue(c),0)/state.crops.length:0;
 let plannerEntries=state.crops.reduce((s,c)=>s+(c.cropPlanner||[]).filter(e=>e.crop||e.plantingDate||e.harvestDate).length,0);
 let fertRows=state.nutrientEnabled?state.crops.reduce((s,c)=>s+(c.fertilizerRows||[]).filter(r=>r.productName||r.rateAcre||r.nPct||r.pPct||r.kPct).length,0):0;
-let ipmRows=state.crops.reduce((s,c)=>s+(c.ipmRows||[]).filter(r=>r.product||r.rate||r.activeIngredient).length,0);
+let ipmRows=state.ipmEnabled?state.crops.reduce((s,c)=>s+(c.ipmRows||[]).filter(r=>r.applicationDate||r.pest||r.productName||r.epaRegNo||r.amountAcre||r.activePct||r.applicationMethod||r.notes).length,0):0;
 let dieselRows=state.crops.reduce((s,c)=>s+(c.dieselRows||[]).filter(r=>dieselTotal(r)>0||String(r.notes||'').trim()).length,0);
 let irrRows=state.crops.reduce((s,c)=>s+(c.irrigationRows||[]).filter(r=>r.method||r.waterSource||r.acreFeet).length,0);
 let livestockEntries=livestockEvidenceCount();
@@ -834,16 +841,15 @@ let cropTypes=[...new Set(state.crops.map(c=>c.cropType==='Other'?(c.cropTypeOth
 let rank={Gap:0,I:1,II:2,III:3,IV:4,Planning:2,'N/A':3};
 let levelClass=v=>v==='Planning'?'compliance-pending':(v==='N/A'?'compliant':'level-'+String(v).replace(/[^A-Za-z]/g,''));
 let minStatus=(key)=>{let vals=state.crops.map(c=>pillar(c)[key]).filter(Boolean); if(!vals.length)return 'Gap'; return vals.sort((a,b)=>(rank[a]||0)-(rank[b]||0))[0]};
-let p1=minStatus('P1'),p2=minStatus('P2'),p5=minStatus('P5'),p5i=minStatus('P5_IPM');
-let p5Final=(rank[p5]||0)<=(rank[p5i]||0)?p5:p5i;
+let p1=minStatus('P1'),p2=minStatus('P2'),p5=minStatus('P5'),p5n=minStatus('P5_Nutrients'),p5i=minStatus('P5_IPM');
 let p7=livestockStatus();let bioStatus=biodiversityStatus();let learningRows=learningRowsNormalized();let learningMet=learningRows.length&&learningRows.every(r=>r.requirementStatus==='Requirements Met');
 let pillars=[
  {num:'P1',title:'Appropriate Tillage',subtitle:'Tillage intensity and no-till planning',status:p1,evidence:[`Farm average gTIR: ${fmt(avg,1)}`,`${state.crops.length} crop plan${state.crops.length===1?'':'s'} reviewed`]},
  {num:'P2',title:'Living Roots',subtitle:'Crop planner planting and harvest windows',status:p2,evidence:[`Crop planner entries: ${plannerEntries}`,`Living root estimates are calculated from entered crop dates`]},
  {num:'P3',title:'Soil Cover',subtitle:'Crop, harvest, and tillage planning evidence',status:'Planning',evidence:['Farm plan captures crop, harvest, and tillage sections for review','Confirm residue and cover evidence during audit review']},
- {num:'P4',title:'Biodiversity / Crop Diversity',subtitle:'Crop diversity and Biodiversity Action Elements',status:bioStatus==='Requirements Met'?'Planning':'Gap',evidence:[`Crop types documented: ${cropTypes.length||0}`,`Biodiversity actions complete: ${biodiversityCompleteCount()} of ${biodiversityRequiredCount()}`,`Biodiversity status: ${bioStatus}`]},
- {num:'P5',title:'Nutrient Management & IPM',subtitle:'Nutrient plan and crop protection sections',status:p5Final,evidence:[`Nutrient management entries: ${fertRows}`,`IPM entries: ${ipmRows}`]},
- {num:'P6',title:'Continuous Learning',subtitle:'Farm goals and improvement planning',status:'Planning',evidence:['Use the exported Farm Plan Document with learning records to confirm this pillar']},
+ {num:'P4',title:'Biodiversity / Crop Diversity',subtitle:'Biodiversity Action Elements plus crop rotation diversity review',status:biodiversityLevelEstimate(),evidence:[`Crop types documented: ${cropTypes.length||0}`,`Biodiversity actions complete: ${biodiversityCompleteCount()} of ${biodiversityRequiredCount()}`,`Biodiversity status: ${bioStatus}`,`Crop diversity / functional group requirements still require reviewer confirmation from crop plan`] },
+ {num:'P5',title:'Nutrient Management & IPM',subtitle:'P5 requires both an IPM Plan and Nutrient Stewardship Plan',status:p5,evidence:[`Nutrient Stewardship Plan status: ${p5n}`,`IPM Plan status: ${p5i}`,`Nutrient management entries: ${fertRows}`,`IPM entries: ${ipmRows}`,`Auto-estimate is capped at Level I until pesticide/fertilizer reduction trends, phase-outs, and risk-mitigation requirements are reviewed`] },
+ {num:'P6',title:'Continuous Learning',subtitle:'Annual learning credits and evidence',status:learningMet?'I':'Gap',evidence:[`Continuous learning records: ${learningRows.length}`,learningMet?'Annual learning requirement appears met':'Enter credits/evidence or mark first year to satisfy the annual learning requirement']},
  {num:'P7',title:'Livestock Integration',subtitle:'Livestock status, grazing impact, and animal welfare evidence',status:p7,evidence:[`Livestock selected: ${state.farm.livestock||'Not entered'}`,`Livestock log entries: ${livestockEntries}`,state.farm.livestock==='No'?`Explanation: ${state.farm.livestockWhyNo||'Not entered'}`:'Review outdoor access, feed/water, shelter, pasture cover, recovery, and withdrawal-period entries']},
  {num:'§7',title:'Soil Testing Readiness',subtitle:'Soil lab and field testing status',status:(state.farm.soilLabTesting&&state.farm.soilFieldTesting)?'Requirements Met':'Upload / Complete',isCompliance:true,compliance:!!(state.farm.soilLabTesting&&state.farm.soilFieldTesting),evidence:[`Soil lab testing: ${state.farm.soilLabTesting||'Not entered'}`,`Soil field testing: ${state.farm.soilFieldTesting||'Not entered'}`]}
 ];
@@ -964,6 +970,7 @@ function professionalReportText(){
   let livestockRows=livestockRowsNormalized();
   let attRows=attestationRows();
   const no=(v)=>{v=cleanReportValue(v);return v===''||v==='Not entered'||v==='undefined'||v==='null'};
+  const has=(v)=>!no(v);
   const val=(v,d='Not entered')=>no(v)?d:cleanReportValue(v);
   const list=(arr,sep=', ')=>(arr||[]).filter(x=>!no(x)).map(cleanReportValue).join(sep)||'Not entered';
   const line=(label,value)=>{lines.push(`${label}: ${val(value)}`)};
@@ -995,7 +1002,7 @@ function professionalReportText(){
   line('Soil Testing',`Lab - ${val(f.soilLabTesting)} | Field - ${val(f.soilFieldTesting)} | Equivalency Accepted - ${val(f.soilEquivalencyAccepted,'N/A')}${f.soilEquivalencyAccepted==='Yes'?' | Program: '+val(f.soilEquivalencyProgram):''}`);
   line('Records Included',`${allRows.length} total records across the exported datasets`);
 
-  section(2,'Farm Story and Goals','Narrative summary fields are separated for easier review and copy/paste from transcript notes.');
+  section(2,'Farm Story and Goals');
   const storyBlock=(label,value)=>{
     bullet(label);
     lines.push(`  ${val(value)}`);
@@ -1027,7 +1034,54 @@ function professionalReportText(){
     if(kb.length>20) bullet(`${kb.length-20} more boundary record(s) are included in 00_kml_boundaries.csv.`);
   }
 
-  section(5,'Crop and Pillar Summary');
+  section(5,'Pillar Engagement Summary');
+  bullet('Note: Final Pillar Engagement Level is determined during audit by SCS Global.');
+  const minPillarStatus=(key)=>{
+    const rank={Gap:0,I:1,II:2,III:3,IV:4,Planning:2,'N/A':3,'Requirements Met':3,'Upload / Complete':0};
+    let vals=crops.map(c=>pillar(c)[key]).filter(Boolean);
+    if(!vals.length)return 'Gap';
+    return vals.sort((a,b)=>(rank[a]||0)-(rank[b]||0))[0];
+  };
+  const pillarAvgTI=()=>crops.length?crops.reduce((s,c)=>s+num(pillar(c).TI),0)/crops.length:0;
+  const pillarPlannerEntries=()=>crops.reduce((s,c)=>s+(c.cropPlanner||[]).filter(e=>has(e.crop)||has(e.plantingDate)||has(e.harvestDate)).length,0);
+  const pillarFertRows=()=>crops.reduce((s,c)=>s+(c.fertilizerRows||[]).filter(r=>has(r.product)||has(r.productName)||has(r.rateAcre)||has(r.nPct)||has(r.pPct)||has(r.kPct)).length,0);
+  const pillarIpmRows=()=>crops.reduce((s,c)=>s+(c.ipmRows||[]).filter(r=>has(r.pest)||has(r.targetPest)||has(r.product)||has(r.productName)||has(r.epaRegNo)||has(r.amountAcre)||has(r.activePct)).length,0);
+  const learningMetForReport=learnRows.length&&learnRows.every(r=>r.requirementStatus==='Requirements Met');
+  const pillarBlocks=[
+    ['P1. Minimize Soil Disturbance',minPillarStatus('P1'),[
+      ['Basis',`Average gTIR: ${fmt(pillarAvgTI(),1)}; tillage/no-till entries reviewed across ${crops.length} crop plan(s)`],
+      ['Review note','Confirm primary inversion tillage prohibition, residue burning prohibition, and traffic/compaction details during review']
+    ]],
+    ['P2. Living Roots in the Ground Year-Round',minPillarStatus('P2'),[
+      ['Basis',`Crop planner entries used for living-root estimate: ${pillarPlannerEntries()}`],
+      ['Review note','Confirm growing-season photosynthetic activity and non-growing-season vegetative cover requirements by enrolled acres']
+    ]],
+    ['P3. Keeping Year-Round Soil Coverage','Planning',[
+      ['Basis','Crop, harvest, tillage, and cover/residue records are captured for review'],
+      ['Review note','Bare-soil decrease requires baseline/trend confirmation and should not be auto-claimed from the form alone']
+    ]],
+    ['P4. Maximizing Diversity Above and Below Ground',biodiversityLevelEstimate(),[
+      ['Basis',`Biodiversity actions complete: ${biodiversityCompleteCount()} of ${biodiversityRequiredCount()}; crop types documented: ${[...new Set(crops.map(c=>c.cropType==='Other'?(c.cropTypeOther||'Other'):c.cropType).filter(Boolean))].length}`],
+      ['Review note','Confirm required number of Biodiversity Action Elements, measurement criteria, evidence, and crop diversity requirements']
+    ]],
+    ['P5. Reducing Synthetic Inputs',minPillarStatus('P5'),[
+      ['Nutrient stewardship status',minPillarStatus('P5_Nutrients')],
+      ['IPM plan status',minPillarStatus('P5_IPM')],
+      ['Basis',`Nutrient entries: ${pillarFertRows()}; IPM entries: ${pillarIpmRows()}`],
+      ['Review note','P5 requires both nutrient and IPM information; reduction trends, pesticide phase-outs, and risk-mitigation requirements require reviewer confirmation']
+    ]],
+    ['P6. Continuous Learning',learningMetForReport?'I':'Gap',[
+      ['Basis',`Continuous learning records: ${learnRows.length}`],
+      ['Review note',learningMetForReport?'Annual learning requirement appears met from entered records':'Enter credits/evidence or first-year status to support this pillar']
+    ]],
+    ['P7. Appropriate Integration of Livestock',livestockStatus(),[
+      ['Basis',`Livestock selected: ${val(f.livestock,'Not entered')}; livestock log entries: ${livestockRows.length}`],
+      ['Review note',f.livestock==='No'?`Explanation: ${val(f.livestockWhyNo)}`:'Confirm outdoor access, feed/water, shelter, pasture cover, recovery, and withdrawal-period records where applicable']
+    ]]
+  ];
+  pillarBlocks.forEach(([title,status,pairs],i)=>recordBlock(i+1,`${title} — Auto-estimate: ${status}`,pairs));
+
+  section(6,'Crop Summary');
   if(!crops.length) bullet('No crops entered.');
   crops.forEach((c,i)=>{
     ensureHarvestSections(c);
@@ -1036,44 +1090,44 @@ function professionalReportText(){
       ['Crop type',c.cropType==='Other'?(c.cropTypeOther||'Other'):val(c.cropType)],
       ['Boundaries',selectedBoundaryNames(c).join(', ')||'Not assigned'],
       ['Practices',cropPractices(c)],
-      ['Pillars / indicators',`P1 ${p.P1}; P2 ${p.P2}; P3 ${p.P3}; P4 ${p.P4}; P5 Nutrients ${p.P5}; P5 IPM ${p.P5_IPM}; P7 ${p.P7}; gTIR ${fmt(p.TI)}; Living Root Estimate ${p.rootPct}%`],
+      ['Key indicators',`P1 ${p.P1}; P2 ${p.P2}; P5 ${p.P5}; P7 ${p.P7}; gTIR ${fmt(p.TI)}; Living root estimate ${p.rootPct}%`],
       ['Harvest',`Last Year ${val(c.harvestLastYear.yieldAcre)} ${c.harvestLastYear.unit||''}/ac | Projected ${val(c.harvestProjected.yieldAcre)} ${c.harvestProjected.unit||''}/ac`]
     ]);
   });
 
-  section(6,'Crop Calendar');
+  section(7,'Crop Calendar');
   if(!cropPlannerRows.length) bullet('No crop calendar records entered.');
   else cropPlannerRows.forEach((r,i)=>recordBlock(i+1,`${val(r.cropName)} — ${val(r.title,'Crop event')}`,[
     ['Crop planted',r.crop],['Planting date',r.plantingDate],['Harvest / end date',r.harvestDate],['Seeding rate',r.seedingRate],['Termination',r.terminationStyle]
   ]));
 
-  section(7,'Harvest');
+  section(8,'Harvest');
   if(!harvestRows.length) bullet('No harvest records entered.');
   else harvestRows.forEach((r,i)=>recordBlock(i+1,`${val(r.cropName)} — ${val(r.harvestPeriod,'Harvest entry')}`,[
     ['Yield per acre',r.yieldAcre],['Unit',r.unit],['Total harvest',r.totalHarvest]
   ]));
 
-  section(8,'Tillage Intensity');
+  section(9,'Tillage Intensity');
   if(!tillRows.length) bullet('No tillage records entered.');
   else tillRows.forEach((r,i)=>recordBlock(i+1,`${val(r.cropName)} — ${val(r.implement,'Tillage event')}`,[
     ['Date',r.date],['Tillage type',r.tillageType],['Depth',r.depthIn],['Surface disturbed (%)',r.disturbed],['Passes',r.passes],['Tillage value',r.tillageValue||r.gTIR]
   ]));
 
-  section(9,'Nutrient Management');
+  section(10,'Nutrient Management');
   if(!state.nutrientEnabled) bullet(`Section skipped: ${(state.skippedReasons||{}).nutrient||'Reason not entered'}`);
   if(!nutrientRows.length) bullet('No nutrient records entered.');
   else nutrientRows.forEach((r,i)=>recordBlock(i+1,`${val(r.cropName)} — ${val(r.productName,'Nutrient application')}`,[
     ['Product label',r.productLabel],['Application date',r.applicationDate],['Rate',list([r.rateAcre,r.unit],' ')],['N-P-K',`${val(r.nPct)}-${val(r.pPct)}-${val(r.kPct)}`],['Total product',r.totalProduct],['Total N / P / K',`${val(r.totalN)} / ${val(r.totalP)} / ${val(r.totalK)}`],['Fields',r.fieldBoundaries]
   ]));
 
-  section(10,'IPM / Crop Protection');
+  section(11,'IPM / Crop Protection');
   if(!state.ipmEnabled) bullet(`Section skipped: ${(state.skippedReasons||{}).ipm||'Reason not entered'}`);
   if(!ipmRows.length) bullet('No IPM records entered.');
   else ipmRows.forEach((r,i)=>recordBlock(i+1,`${val(r.cropName)} — ${val(r.productName,'IPM application')}`,[
     ['Product label',r.productLabel],['EPA Reg No',r.epaRegNo],['Application date',r.applicationDate],['Target pest/weed',r.pest],['Rate',list([r.amountAcre,r.unit],' ')],['Active ingredient (%)',r.activePct],['Area applied',r.areaApplied],['Total active ingredient',r.totalActiveIngredient],['Fields',r.fieldBoundaries]
   ]));
 
-  section(11,'Diesel and Irrigation');
+  section(12,'Diesel and Irrigation');
   if(!dieselActive()) bullet(`Diesel skipped: ${(state.skippedReasons||{}).diesel||'Reason not entered'}`);
   if(!dieselRows.length) bullet('No diesel records entered.');
   else dieselRows.forEach((r,i)=>recordBlock(i+1,`${val(r.cropName)} — Diesel use`,[
@@ -1085,26 +1139,26 @@ function professionalReportText(){
     ['Practice / acres',`${val(r.cropPractice)} | ${val(r.irrigatedAcres)} acres`],['Pump / source',list([r.pumpName,r.waterSource],' | ')],['Flow rate',r.effectiveFlowRateGpm||r.pumpGpm],['Hours range',list([r.minHours,r.maxHours],' to ')],['Cycles range',list([r.minCycles,r.maxCycles],' to ')],['Gallons / acre-feet',`${val(r.gallons)} gal | ${val(r.acreFeet)} ac-ft`],['Drainage type',r.drainageType]
   ]));
 
-  section(12,'Livestock');
+  section(13,'Livestock');
   line('Livestock Question',`${val(f.livestock,'Optional / not selected')}${f.livestock==='No'?' | Reason: '+val(f.livestockWhyNo):''}`);
   if(!livestockRows.length) bullet('No livestock records entered.');
   else livestockRows.forEach((r,i)=>recordBlock(i+1,`${val(r.status,'Livestock record')}${no(r.species)?'':' — '+val(r.species)}`,[
     ['Production type',r.productionType],['Animal count',r.animalCount],['Fields',r.fieldBoundaries],['Grazing window',list([r.grazingStart,r.grazingEnd],' to ')],['Recovery days',r.recoveryDays],['Vegetative cover (%)',r.vegetativeCoverPct],['Water / shelter',list([r.waterAccess,r.shelterAccess],' | ')],['Manure handling',r.manureHandling],['Notes',r.notes]
   ]));
 
-  section(13,'Biodiversity Action Elements');
+  section(14,'Biodiversity Action Elements');
   if(!bioRows.length) bullet('No biodiversity action elements entered.');
   else bioRows.forEach((r,i)=>recordBlock(i+1,`${val(r.actionElement,'Action element')} — ${val(r.status)}`,[
     ['Target / requirement',list([r.targetLevel,r.requirementStatus],' | ')],['Area',r.area],['Fields',r.fieldBoundaries],['Boundary acres',r.boundaryAcres],['Measurement criterion',r.measurementCriterion],['Baseline notes',r.baselineNotes],['Target notes',r.targetNotes],['Evidence',r.evidence]
   ]));
 
-  section(14,'Continuous Learning');
+  section(15,'Continuous Learning');
   if(!learnRows.length) bullet('No continuous learning records entered.');
   else learnRows.forEach((r,i)=>recordBlock(i+1,`${val(r.personName)} — ${val(r.eventType,'Learning event')}`,[
     ['Role',r.personRole],['Requirement status',r.requirementStatus],['Event date',r.eventDate],['Topic',r.topic],['Credits',r.credits],['Research credits',r.researchCredits],['Annual target / research minimum',`${val(r.annualTarget)} / ${val(r.researchMinimum)}`],['Person totals',`${val(r.personTotalCredits)} total | ${val(r.personResearchCredits)} research`]
   ]));
 
-  section(15,'NRCS Programs and Practices');
+  section(16,'NRCS Programs and Practices');
   line('NRCS Participation',f.nrcs);
   line('Selected Codes',(f.nrcsCodes||[]).join('; ')||'Not entered');
   if(!nrcsRows.length) bullet('No NRCS practice/program rows entered.');
@@ -1112,13 +1166,13 @@ function professionalReportText(){
     ['Fields',r.fieldBoundaries],['Notes',r.notes]
   ]));
 
-  section(16,'Attestation');
+  section(17,'Attestation');
   if(!attRows.length) bullet('No attestation record entered.');
   else attRows.forEach((r,i)=>recordBlock(i+1,`${val(r.status,'Attestation record')}`,[
     ['Category',r.category],['Activity',r.activity],['Fields',r.fieldBoundaries],['Explanation',r.why]
   ]));
 
-  section(17,'Appendix Note');
+  section(18,'Appendix Note');
   bullet('Detailed normalized records are not repeated in this PDF to keep the report readable.');
   bullet('The ZIP export includes the full normalized CSV and each section-level CSV for audit/review backup.');
   return lines.join('\n');
@@ -1357,12 +1411,13 @@ endstream`):null;
     pageLines.forEach((line,li)=>{
       const text=String(line||'').trim();
       const isSectionTitle=/^\s*(?:[1-9]|10)\.\s+/.test(line);
+      const isNoteBullet=/^-\s*Note:/i.test(text);
       const url=preCallLinkMap[text]||'';
       const isLink=!!url || /(https?:\/\/|soilclimateinitiative\.org)/.test(line);
       if(isLink){
         stream+='/F2 10 Tf\n0.18 0.42 0.18 rg\n';
       }else{
-        stream+=(isSectionTitle?'/F2 10 Tf\n':'/F1 10 Tf\n');
+        stream+=((isSectionTitle||isNoteBullet)?'/F2 10 Tf\n':'/F1 10 Tf\n');
         stream+='0 0 0 rg\n';
       }
       stream+=`(${pdfEscape(line)}) Tj\n`;
