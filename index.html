@@ -326,7 +326,7 @@ function field(label,path,type='text',extra={}){let val=getPath(path)??'';let cl
 function storyTextarea(label,path,note,placeholder){let val=getPath(path)??'';return`<div class="field full"><label>${esc(label)}</label><div class="help" style="margin-bottom:5px">${esc(note)}</div><textarea data-bind="${path}" placeholder="${esc(placeholder||'')}">${esc(val)}</textarea></div>`}
 function skippedReasonBox(key,label){state.skippedReasons=state.skippedReasons||{nutrient:'',ipm:'',diesel:'',irrigation:'',livestock:''};return`<div class="card skip"><div class="note"><strong>${esc(label)} is currently skipped.</strong></div><div class="field full" style="margin-top:8px"><label>Why is this skipped?</label><textarea data-bind="skippedReasons.${key}" placeholder="Example: Not applicable this season, records not available, service not used, or practice not relevant to this farm.">${esc(state.skippedReasons[key]||'')}</textarea></div></div>`}
 
-function csvUploadBox(section,label){return`<div class="card csv-import-card"><div class="section-title"><div><h3>Upload Existing ${esc(label)} CSV</h3><div class="help">Optional: upload the individual CSV for this section. Supports the demo/export format with summary rows at the top and then fills matching crop records.</div></div><label class="btn ghost" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">Upload CSV<input type="file" accept=".csv,text/csv" style="display:none" onchange="importSectionCsv(event,'${esc(section)}')"></label></div></div>`}
+function csvUploadBox(section,label){let extra=section==='harvest_log'?' For Harvest Log, this accepts the standalone Harvest Log CSV and maps Last Year, Projected This Year, and Actual Harvest Entry rows into this builder.':'';return`<div class="card csv-import-card"><div class="section-title"><div><h3>Upload Existing ${esc(label)} CSV</h3><div class="help">Optional: upload the individual CSV for this section. Supports the demo/export format with summary rows at the top and then fills matching crop records.${esc(extra)}</div></div><label class="btn ghost" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">Upload CSV<input type="file" accept=".csv,text/csv" style="display:none" onchange="importSectionCsv(event,'${esc(section)}')"></label></div></div>`}
 function parseCsvTable(text){
   text=String(text||'').replace(/^\ufeff/,'');
   let rows=[],row=[],field='',q=false;
@@ -341,7 +341,7 @@ function parseCsvTable(text){
 function csvHeaderScore(row){
   let keys=(row||[]).map(keyNorm).filter(Boolean); if(keys.length<2)return -999;
   let joined='|'+keys.join('|')+'|', score=0;
-  ['cropname','croppagename','crop','cropfields','cropacres','inputcategory','applicationdate','tillagedate','productname','productorpackname','yieldac','waterirrigationmethod','groundworkgallons','blockname','eparegno','actionelement','measurementcriterion','personname','eventtype','eventdate','credits','isonfarmresearch'].forEach(k=>{if(joined.includes('|'+k+'|'))score+=3});
+  ['cropname','croppagename','crop','cropfields','cropacres','inputcategory','applicationdate','tillagedate','productname','productorpackname','yieldac','yieldacre','harvestperiod','totalharvest','entry','waterirrigationmethod','groundworkgallons','blockname','eparegno','actionelement','measurementcriterion','personname','eventtype','eventdate','credits','isonfarmresearch'].forEach(k=>{if(joined.includes('|'+k+'|'))score+=3});
   ['farmname','state','preparedby','totalfarmacres','totalfields','planningyear','cropyear'].forEach(k=>{if(joined.includes('|'+k+'|'))score+=1});
   if(keys.length>=6)score+=2; if(keys.length>=10)score+=2;
   // De-prioritize simple summary key/value lines.
@@ -393,11 +393,11 @@ function normalizeWaterSource(v){
   return x;
 }
 function boundaryIdsFromText(txt){let names=String(txt||'').split(/;|,/).map(x=>x.trim()).filter(Boolean);if(!names.length)return[];let out=[];(state.kmlBoundaries||[]).forEach(b=>{if(names.some(n=>n===b.name||n===String(b.id)))out.push(b.id)});return out;}
-function findOrCreateCropForRow(row){let name=rowVal(row,['cropName','Crop Name','Crop Page Name','crop page name','Crop ','crop','Block Name'])||crop().name||'Crop 1';let c=(state.crops||[]).find(x=>String(x.name||'').trim().toLowerCase()===String(name).trim().toLowerCase());if(!c){c=(state.crops||[]).find(x=>!String(x.name||'').trim());if(!c){if(state.crops.length<MAX_CROPS){c=newCrop(state.crops.length+1);state.crops.push(c)}else c=state.crops[0];}c.name=name;}
-  let farmName=rowVal(row,['Farm Name']); if(farmName&&!state.farm.farmName)state.farm.farmName=farmName;
-  let yr=rowVal(row,['Planning Year','Crop Year']); if(yr&&!state.farm.planningYear)state.farm.planningYear=yr;
-  let totalAcres=rowVal(row,['Total Farm Acres']); if(totalAcres&&!state.farm.totalAcres)state.farm.totalAcres=totalAcres;
-  let totalFields=rowVal(row,['Total Fields','Total Farm Fields']); if(totalFields&&!state.farm.totalFields)state.farm.totalFields=totalFields;
+function findOrCreateCropForRow(row){let name=rowVal(row,['cropName','Crop Name','Crop Page Name','crop page name','Crop ','Crop #','crop','Block Name'])||crop().name||'Crop 1';let c=(state.crops||[]).find(x=>String(x.name||'').trim().toLowerCase()===String(name).trim().toLowerCase());if(!c){c=(state.crops||[]).find(x=>!String(x.name||'').trim());if(!c){if(state.crops.length<MAX_CROPS){c=newCrop(state.crops.length+1);state.crops.push(c)}else c=state.crops[0];}c.name=name;}
+  let farmName=rowVal(row,['Farm Name','farmName']); if(farmName&&!state.farm.farmName)state.farm.farmName=farmName;
+  let yr=rowVal(row,['Planning Year','Farm Planning Year','Crop Year','farmPlanningYear']); if(yr&&!state.farm.planningYear)state.farm.planningYear=yr;
+  let totalAcres=rowVal(row,['Total Farm Acres','totalFarmAcres','totalAcres']); if(totalAcres&&!state.farm.totalAcres)state.farm.totalAcres=totalAcres;
+  let totalFields=rowVal(row,['Total Fields','Total Farm Fields','totalFields']); if(totalFields&&!state.farm.totalFields)state.farm.totalFields=totalFields;
   let acres=rowVal(row,['acres','cropAcres','Crop Acres','# Acres','Acres Tilled','Irrigated Acres Used','Area applied (in acres)','Area Applied']);if(acres)c.acres=acres;
   let fields=rowVal(row,['fields','cropFields','Crop Fields']);if(fields)c.fields=fields;
   let cropType=rowVal(row,['cropType','Crop Type']);if(cropType){if(CROP_TYPES.includes(cropType))c.cropType=cropType;else{c.cropType='Other';c.cropTypeOther=cropType}}
@@ -405,7 +405,7 @@ function findOrCreateCropForRow(row){let name=rowVal(row,['cropName','Crop Name'
   let b=boundaryIdsFromText(rowVal(row,['fieldBoundaries','Field Boundaries','boundaries']));if(b.length)c.boundaryIds=b;
   return c;
 }
-function importSectionCsv(event,section){let input=event&&event.target;if(!input||!input.files||!input.files[0])return;saveInputs();let file=input.files[0];let reader=new FileReader();reader.onload=()=>{try{let all=parseCsvRows(reader.result);let rows=all.filter(r=>!rowVal(r,['section'])||rowVal(r,['section'])===section);if(!rows.length)rows=all;if(!rows.length){alert('No rows found in CSV.');return}let count=applySectionRows(section,rows);render();alert('Imported '+count+' row(s) into '+section.replace(/_/g,' ')+'.')}catch(err){console.error(err);alert('CSV import failed. Please check that this is a section CSV exported from the tool.')}finally{input.value=''}};reader.readAsText(file);}
+function importSectionCsv(event,section){let input=event&&event.target;if(!input||!input.files||!input.files[0])return;saveInputs();let file=input.files[0];let reader=new FileReader();reader.onload=()=>{try{let all=parseCsvRows(reader.result);let rows=all.filter(r=>{let sec=rowVal(r,['section','Section']);return !sec||keyNorm(sec)===keyNorm(section)});if(section==='harvest_log'&&!rows.length){rows=all.filter(r=>rowVal(r,['harvestPeriod','Harvest Period','Yield/ac','yieldAcre','Total Harvest ','totalHarvest']))}if(!rows.length)rows=all;if(!rows.length){alert('No rows found in CSV.');return}let count=applySectionRows(section,rows);render();alert('Imported '+count+' row(s) into '+section.replace(/_/g,' ')+'.')}catch(err){console.error(err);alert('CSV import failed. Please check that this is a section CSV exported from the tool.')}finally{input.value=''}};reader.readAsText(file);}
 
 function applySectionRows(section,rows){
   if(section==='biodiversity_action_elements'){
@@ -469,7 +469,25 @@ function applySectionRows(section,rows){
   }
   let grouped=new Map();rows.forEach(r=>{let c=findOrCreateCropForRow(r);if(!grouped.has(c))grouped.set(c,[]);grouped.get(c).push(r)});let count=0;
   grouped.forEach((rs,c)=>{if(section==='crop_planner'){c.cropPlanner=rs.map((r,i)=>({title:rowVal(r,['title','Input Category','Crop Stage','stage'])||(['Pre-Season Cover Crop (Optional)','Cash Crop (Required)','Post-Harvest Cover Crop (Optional)'][i]||'Crop Planner Entry'),plantingYear:rowVal(r,['plantingYear','Planting Year','Planning Year','year'])||c.year||new Date().getFullYear(),crop:rowVal(r,['crop','Crop / Cover Crop','coverCrop','cashCrop'])||'',variety:rowVal(r,['variety'])||'',seedingRate:rowVal(r,['seedingRate','Seeding Rate lb/ac','seedingRateLbAc'])||'',plantingDate:rowVal(r,['plantingDate','Planting Date'])||'',harvestDate:rowVal(r,['harvestDate','Harvest / Termination Date','Harvest/Termination Date','terminationDate'])||'',terminationStyle:rowVal(r,['terminationStyle','Termination Style'])||'',notes:rowVal(r,['notes'])||''}));count+=rs.length;}
-    else if(section==='harvest_log'){c.harvestRows=[];rs.forEach(r=>{let obj={yieldAcre:rowVal(r,['yieldAcre','Yield/ac','Yield per acre']),unit:rowVal(r,['unit'])||'bu',notes:rowVal(r,['notes'])||''};let period=rowVal(r,['harvestPeriod','Harvest Period','period']);if(/last/i.test(period))c.harvestLastYear=obj;else if(/projected/i.test(period))c.harvestProjected=obj;else c.harvestRows.push(obj);count++;});if(!c.harvestRows.length)c.harvestRows=[{yieldAcre:'',unit:'bu',notes:''}];}
+    else if(section==='harvest_log'){
+      ensureHarvestSections(c);
+      c.harvestRows=[];
+      rs.forEach(r=>{
+        let obj={
+          yieldAcre:rowVal(r,['yieldAcre','Yield/ac','Yield per acre','Yield Per Acre','Yield Acre']),
+          unit:rowVal(r,['unit','Unit','Harvest Unit','Last Year Unit','Projected Unit'])||'bu',
+          notes:rowVal(r,['notes','Notes','Harvest Notes'])||''
+        };
+        let period=rowVal(r,['harvestPeriod','Harvest Period','period','Period','Entry Type']);
+        if(/last\s*year|previous/i.test(period))c.harvestLastYear=obj;
+        else if(/projected|projection|planned/i.test(period))c.harvestProjected=obj;
+        else if(obj.yieldAcre||obj.notes)c.harvestRows.push(obj);
+        count++;
+      });
+      if(!c.harvestLastYear)c.harvestLastYear={yieldAcre:'',unit:'bu',notes:''};
+      if(!c.harvestProjected)c.harvestProjected={yieldAcre:'',unit:'bu',notes:''};
+      if(!c.harvestRows.length)c.harvestRows=[{yieldAcre:'',unit:'bu',notes:''}];
+    }
     else if(section==='tillage_intensity'){c.tillageRows=[];rs.forEach(r=>{let status=rowVal(r,['status']);if(/no till/i.test(status)){c.noTill=true;count++;return}c.noTill=false;c.tillageRows.push({date:rowVal(r,['date','tillageDate','Tillage Date']),depthIn:rowVal(r,['depthIn','Depth (in)','depth']),implement:rowVal(r,['implement','Tillage Implement']),tillageType:rowVal(r,['tillageType','Tillage Type']),disturbed:rowVal(r,['disturbed','Disturbed (%)','Surface Area Disturbed %','Percent Disturbed'])||'100',passes:rowVal(r,['passes','Passes'])||'1',notes:rowVal(r,['notes'])||''});count++;});if(!c.tillageRows.length)c.tillageRows=[{date:'',depthIn:'',implement:'',tillageType:'',disturbed:'100',passes:'1',notes:''}];}
     else if(section==='nutrient_management_plan'){state.nutrientEnabled=true;c.fertilizerRows=[];c.microRows=[];c.amendmentRows=[];rs.forEach(r=>{let cat=rowVal(r,['Input Category','Application Type','category']);let commonName=rowVal(r,['productName','Product Name','Product Or Pack Name','Product / Source','product']);let objDate=rowVal(r,['applicationDate','Application Date','date']);let rate=rowVal(r,['rateAcre','Rate/ac','Rate Per Acre','rate']);let unit=rowVal(r,['unit'])||'lbs';let notes=rowVal(r,['notes'])||'';if(/micro|fertility pack/i.test(cat)){c.microRows.push({name:commonName,date:objDate,contains:rowVal(r,['Micronutrients / Contents','What It Contains','contains']),rate:rate,unit:unit||'lbs',notes:notes});}
       else if(/organic|compost|manure|amend/i.test(cat)){c.amendmentRows.push({type:rowVal(r,['Application Type'])||'Compost',date:objDate,name:commonName,rate:rate,unit:unit||'Tons',notes:notes});}
