@@ -1046,16 +1046,30 @@ function handleTranscriptUpload(input){
     input.value='';
     return;
   }
-  const reader = new FileReader();
-  reader.onload = function(){
-    window.sciTranscriptFileBytes = new Uint8Array(reader.result);
-    state.farm = state.farm || {};
-    state.farm.transcriptFileName = file.name;
-    const el = document.getElementById('transcriptUploadStatus');
-    if(el)el.textContent = 'Transcript selected: ' + file.name;
-  };
-  reader.onerror = function(){alert('Could not read the transcript file. Please try again.');};
-  reader.readAsArrayBuffer(file);
+  // Keep the actual File object and read it again during ZIP export. This is
+  // more reliable than depending on an earlier FileReader result after the
+  // user navigates between steps or the page re-renders.
+  window.sciTranscriptFile = file;
+  window.sciTranscriptFileBytes = null;
+  window.sciTranscriptFilePending = null;
+  state.farm = state.farm || {};
+  state.farm.transcriptFileName = file.name;
+  const el = document.getElementById('transcriptUploadStatus');
+  if(el)el.textContent = 'Transcript selected and ready for ZIP: ' + file.name;
+}
+function readTranscriptForZip(){
+  const file=window.sciTranscriptFile;
+  if(!file)return Promise.resolve(window.sciTranscriptFileBytes||null);
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const bytes=new Uint8Array(reader.result);
+      window.sciTranscriptFileBytes=bytes;
+      resolve(bytes);
+    };
+    reader.onerror=()=>reject(reader.error||new Error('Transcript read failed'));
+    reader.readAsArrayBuffer(file);
+  });
 }
 function transcriptUploadBox(){
   const name=(state.farm&&state.farm.transcriptFileName)||'';
@@ -1832,7 +1846,7 @@ function makePdfReport(){
   const title='SCI FARM PLAN DOCUMENT';
   return makeProfessionalPdf(title,professionalReportText());
 }
-function datasets(){
+function datasets(transcriptBytes){
   saveInputs();
   let skipRows=[{...exportMeta(),section:'nutrient_management_plan',status:state.nutrientEnabled?'Enabled':'Skipped',reason:(state.skippedReasons||{}).nutrient||''},{...exportMeta(),section:'ipm_plan',status:state.ipmEnabled?'Enabled':'Skipped',reason:(state.skippedReasons||{}).ipm||''},{...exportMeta(),section:'diesel_log',status:dieselActive()?'Enabled':'Skipped',reason:(state.skippedReasons||{}).diesel||''},{...exportMeta(),section:'irrigation_log',status:state.irrigationEnabled?'Enabled':'Skipped',reason:(state.skippedReasons||{}).irrigation||''}];
   let d={
@@ -1858,16 +1872,30 @@ function datasets(){
     [farmDatasetFileName('Farm Plan Document.pdf')]:makePdfReport()
   };
   if(state.kmlFileContent&&state.farm.kmlFileName)d['uploaded_kml/'+farmDatasetFileName(safeFileName(state.farm.kmlFileName))]=state.kmlFileContent;
-  if(window.sciTranscriptFileBytes&&state.farm.transcriptFileName)d['uploaded_transcript/'+farmDatasetFileName(safeFileName(state.farm.transcriptFileName))]=window.sciTranscriptFileBytes;
+  if(transcriptBytes&&transcriptBytes.length&&state.farm.transcriptFileName)d[farmDatasetFileName('00_CALL_TRANSCRIPT_'+safeFileName(state.farm.transcriptFileName))]=transcriptBytes;
   return d;
 }
 function zipU16(n){return new Uint8Array([n&255,(n>>>8)&255])}
 function zipU32(n){return new Uint8Array([n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255])}
 function crc32Bytes(bytes){let c=~0;for(let i=0;i<bytes.length;i++){c^=bytes[i];for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1}return~c>>>0}
 function dosDateTime(d=new Date()){let time=(d.getHours()<<11)|(d.getMinutes()<<5)|Math.floor(d.getSeconds()/2);let date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();return{time,date}}
-function downloadZip(){
+async function downloadZip(){
   saveInputs();
-  const files=datasets();
+  let transcriptBytes=null;
+  if(state.farm.transcriptFileName){
+    try{
+      transcriptBytes=await readTranscriptForZip();
+      if(!transcriptBytes||!transcriptBytes.length)throw new Error('No transcript bytes available');
+    }catch(e){
+      alert('The transcript could not be read for the ZIP. Please re-select the Word transcript and export again.');
+      return;
+    }
+  }
+  const files=datasets(transcriptBytes);
+  if(state.farm.transcriptFileName&&!Object.keys(files).some(n=>n.includes('00_CALL_TRANSCRIPT_'))){
+    alert('The transcript was not added to the ZIP. Please re-select it and export again.');
+    return;
+  }
   const enc=new TextEncoder();
   const localParts=[];
   const centralParts=[];
