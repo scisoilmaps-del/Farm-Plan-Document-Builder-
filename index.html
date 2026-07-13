@@ -342,7 +342,58 @@ function newCrop(i){return{name:'',cropType:'',cropTypeOther:'',acres:'',fields:
 function entry(title){return{title,plantingYear:new Date().getFullYear(),crop:'',variety:'',seedingRate:'',plantingDate:'',harvestDate:'',terminationStyle:'',notes:''}}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function num(v){let n=parseFloat(v);return Number.isFinite(n)?n:0}function fmt(n,d=2){return num(n).toFixed(d)}function setStep(n){saveInputs();state.step=Math.max(0,Math.min(STEPS.length-1,n));render();window.scrollTo({top:0,behavior:'smooth'})}
-function ensureStateDefaults(){state.skippedReasons=state.skippedReasons||{nutrient:'',ipm:'',diesel:'',irrigation:'',livestock:''};state.biodiversity=state.biodiversity||{targetLevel:'I',equivalency:'No',actions:[newBiodiversityAction()]};state.learning=state.learning||{firstYear:'No',grossRevenue:'150000 or more',staffDecisionMakers:'',people:[newLearningPerson()]};state.nrcsPracticeDetails=state.nrcsPracticeDetails||{};state.nrcsEnabled=!!state.nrcsEnabled;state.livestockRows=state.livestockRows||[newLivestockRow()]}
+function fillMissing(target,defaults){
+  if(!target||typeof target!=='object'||Array.isArray(target))target={};
+  Object.keys(defaults||{}).forEach(key=>{
+    const dv=defaults[key],tv=target[key];
+    if(Array.isArray(dv)){
+      if(!Array.isArray(tv))target[key]=dv.map(item=>item&&typeof item==='object'?JSON.parse(JSON.stringify(item)):item);
+    }else if(dv&&typeof dv==='object'){
+      target[key]=fillMissing(tv,dv);
+    }else if(tv===undefined||tv===null){
+      target[key]=dv;
+    }
+  });
+  return target;
+}
+function normalizeCropRecord(c,i){
+  c=fillMissing(c,newCrop(i+1));
+  const requiredRows={
+    cropPlanner:[entry('Pre-Season Cover Crop (Optional)'),entry('Cash Crop (Required)'),entry('Post-Harvest Cover Crop (Optional)')],
+    harvestRows:[{yieldAcre:'',unit:'bu',notes:''}],
+    tillageRows:[{date:'',depthIn:'',implement:'',tillageType:'',disturbed:'100',passes:'1',notes:''}],
+    fertilizerRows:[{productName:'',applicationDate:'',rateAcre:'',unit:'lbs',nPct:'',pPct:'',kPct:'',notes:''}],
+    microRows:[],amendmentRows:[],
+    ipmRows:[{applicationDate:'',pest:'',productName:'',epaRegNo:'',unit:'lb/acre',amountAcre:'',activePct:'',applicationMethod:'',areaApplied:'',notes:''}],
+    dieselRows:[{}],
+    irrigationRows:[{cropPractice:'Non-rice crop',method:'',drainageType:'',irrigatedAcres:'',pumpName:'',waterSource:'',pumpGpm:'',emitterGpm:'',emitterSpacing:'',rowSpacing:'',sprinklerGpm:'',sprinklerSpacing:'',lateralSpacing:'',minHours:'',maxHours:'',minCycles:'',maxCycles:'',awdEvents:'',notes:''}]
+  };
+  Object.keys(requiredRows).forEach(key=>{if(!Array.isArray(c[key]))c[key]=requiredRows[key].map(x=>({...x}));});
+  while(c.cropPlanner.length<3)c.cropPlanner.push({...requiredRows.cropPlanner[c.cropPlanner.length]});
+  c.harvestLastYear=fillMissing(c.harvestLastYear,{yieldAcre:'',unit:'bu',notes:''});
+  c.harvestProjected=fillMissing(c.harvestProjected,{yieldAcre:'',unit:'bu',notes:''});
+  if(!Array.isArray(c.boundaryIds))c.boundaryIds=[];
+  return c;
+}
+function ensureStateDefaults(){
+  state.skippedReasons=fillMissing(state.skippedReasons,{nutrient:'',ipm:'',diesel:'',irrigation:'',livestock:''});
+  state.farm=fillMissing(state.farm,{numberOfCrops:1,goals:[],nrcsCodes:[],nrcsPrograms:[]});
+  if(!Array.isArray(state.farm.goals))state.farm.goals=[];
+  if(!Array.isArray(state.farm.nrcsCodes))state.farm.nrcsCodes=[];
+  if(!Array.isArray(state.farm.nrcsPrograms))state.farm.nrcsPrograms=[];
+  state.biodiversity=fillMissing(state.biodiversity,{targetLevel:'I',equivalency:'No',actions:[newBiodiversityAction()]});
+  if(!Array.isArray(state.biodiversity.actions)||!state.biodiversity.actions.length)state.biodiversity.actions=[newBiodiversityAction()];
+  state.learning=fillMissing(state.learning,{firstYear:'No',grossRevenue:'150000 or more',staffDecisionMakers:'',people:[newLearningPerson()]});
+  if(!Array.isArray(state.learning.people)||!state.learning.people.length)state.learning.people=[newLearningPerson()];
+  state.nrcsPracticeDetails=(state.nrcsPracticeDetails&&typeof state.nrcsPracticeDetails==='object')?state.nrcsPracticeDetails:{};
+  state.nrcsEnabled=!!state.nrcsEnabled;
+  if(!Array.isArray(state.livestockRows)||!state.livestockRows.length)state.livestockRows=[newLivestockRow()];
+  if(!Array.isArray(state.kmlBoundaries))state.kmlBoundaries=[];
+  if(!Array.isArray(state.crops)||!state.crops.length)state.crops=[newCrop(1)];
+  state.crops=state.crops.map(normalizeCropRecord);
+  state.activeCrop=Math.max(0,Math.min(Number(state.activeCrop)||0,state.crops.length-1));
+  state.step=Math.max(0,Math.min(Number(state.step)||0,STEPS.length-1));
+}
 function saveInputs(){ensureStateDefaults();document.querySelectorAll('[data-bind]').forEach(el=>setPath(el.dataset.bind,el.type==='checkbox'?el.checked:el.value));syncBoundaryDerivedCropValues()}
 function syncBoundaryDerivedCropValues(){(state.crops||[]).forEach((c,i)=>{let a=selectedBoundaryAcres(c);if(a>0){let acres=a.toFixed(2);c.acres=acres;c.fields=String((c.boundaryIds||[]).length);(c.ipmRows||[]).forEach(r=>{if(!num(r.areaApplied))r.areaApplied=acres});(c.irrigationRows||[]).forEach(r=>{if(!num(r.irrigatedAcres))r.irrigatedAcres=acres})}})}
 function getPath(p){return p.split('.').reduce((o,k)=>o&&o[k],state)}function setPath(p,v){let a=p.split('.'),o=state;while(a.length>1)o=o[a.shift()];o[a[0]]=v}
@@ -2038,6 +2089,18 @@ function updateHarvestTotalsLive(){
 
 const VIEW_RENDERERS=[home,farmDetails,attestationPage,cropPlanner,harvestLog,livestockLog,tillage,nutrientPlan,ipmPlan,dieselLog,irrigationLog,biodiversityPage,continuousLearningPage,nrcsProgramsPage,rollup];
 function handleBoundInput(event){const el=event.currentTarget;setPath(el.dataset.bind,el.type==='checkbox'?el.checked:el.value);if(state.step===4)updateHarvestTotalsLive();if(el.tagName==='SELECT')render()}
-function render(){ensureStateDefaults();if(dieselHasRecords())state.dieselEnabled=true;syncBoundaryDerivedCropValues();app.innerHTML=VIEW_RENDERERS[state.step]();document.querySelectorAll('[data-bind]').forEach(el=>el.addEventListener('input',handleBoundInput));}
+function render(){
+  try{
+    ensureStateDefaults();
+    if(dieselHasRecords())state.dieselEnabled=true;
+    syncBoundaryDerivedCropValues();
+    const renderer=VIEW_RENDERERS[state.step]||home;
+    app.innerHTML=renderer();
+    document.querySelectorAll('[data-bind]').forEach(el=>el.addEventListener('input',handleBoundInput));
+  }catch(err){
+    console.error('SCI Farm Plan render error on step',state.step,STEPS[state.step],err);
+    app.innerHTML=`<main class="page"><div class="card"><h2>We recovered from a step loading error</h2><div class="help">The saved record for this section was incomplete. Choose Retry to repair missing fields and reopen the step, or go back.</div><div class="footer-nav"><button type="button" class="btn ghost" onclick="state.step=Math.max(0,state.step-1);render()">← Back</button><button type="button" class="btn" onclick="ensureStateDefaults();render()">Retry Step</button></div></div></main>`;
+  }
+}
 render();
 </script></body></html>
