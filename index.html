@@ -7688,7 +7688,7 @@ ${acreChangePanel()}
 
         section(5, "Pillar Engagement Summary");
         bullet(
-          "Note: Final Pillar Engagement Level is determined during audit by SCS Global.",
+          "Note: Final Pillar Engagement Level is determined during audit by SCS GLOBAL SERVICES.",
         );
         const minPillarStatus = (key) => methodologyFarmPEL(key).level;
         const reportPELLevels = {
@@ -8229,6 +8229,12 @@ ${acreChangePanel()}
           );
 
         section(15, "Continuous Learning");
+        if (state.learning?.firstYear === "Yes") {
+          line("First-Year Continuous Learning Requirement", "Satisfied");
+          bullet(
+            "Enrollment, completion of the Farm Commitment Form and Farm Plan, executing baseline soil testing, and participating in the soil testing interpretative support meeting will serve to meet the continuous learning requirements in the first year. Renewal requires Evidence of the required continuous learning credits.",
+          );
+        }
         if (!learnRows.length)
           bullet("No continuous learning records entered.");
         else
@@ -8288,7 +8294,7 @@ ${acreChangePanel()}
           "Detailed normalized records are not repeated in this PDF to keep the report readable.",
         );
         bullet(
-          "The ZIP export includes the full normalized CSV, each section-level CSV, and a dedicated Living Root Index CSV documenting the P2 photosynthetic calculation basis, crop-calendar events, thresholds, and outstanding non-growing-season documentation needs.",
+          "The ZIP export includes the full normalized CSV, each section-level CSV, the complete SCI IPM Plan CSV, a separate PRT spray-record CSV, and a dedicated Living Root Index CSV documenting the P2 photosynthetic calculation basis, crop-calendar events, thresholds, and outstanding non-growing-season documentation needs.",
         );
         return lines.join("\n");
       }
@@ -9237,6 +9243,7 @@ endstream`)
               stream += `0.72 0.84 0.73 rg 44 ${it.y - 8} 4 22 re f\n`;
             } else if (it.type === "bullet") {
               size = 9.5;
+              if (it.text.includes("SCS GLOBAL SERVICES")) font = "/F2";
               color = "0.16 0.14 0.12";
               x = 66;
               stream += `0.12 0.35 0.20 rg 54 ${it.y + 3} 3 3 re f\n`;
@@ -9426,6 +9433,75 @@ endstream`)
           : [{ status: "Skipped", reason: reason || "" }];
       }
 
+      const IPM_PRT_HEADERS = [
+        "Block Name",
+        "Product Name*",
+        "EPA Reg No*",
+        "Application Rate*",
+        "Unit (e.g. gal/ac)*",
+        "Date*",
+        "Application method*",
+        "Area applied (in acres)*",
+      ];
+      const IPM_PRT_EPA_REG_RE = /^\d{2,7}-\d{1,6}(-\d{1,6})?$/;
+      function ipmPrtRowHasData(r) {
+        return !!(
+          has(r.productName) ||
+          has(r.epaRegNo) ||
+          has(r.amountAcre) ||
+          has(r.unit) ||
+          has(r.applicationDate) ||
+          has(r.applicationMethod) ||
+          has(r.areaApplied) ||
+          has(r.pest)
+        );
+      }
+      function ipmPrtIssues(r, areaApplied) {
+        const issues = [];
+        if (!has(r.productName)) issues.push("Missing Product Name");
+        const epa = String(r.epaRegNo || "").trim();
+        if (!epa) issues.push("Missing EPA Reg No");
+        else if (!IPM_PRT_EPA_REG_RE.test(epa))
+          issues.push("EPA Reg No format looks unusual. Example: 12345-678.");
+        if (num(r.amountAcre) <= 0) issues.push("Missing Application Rate");
+        if (!has(r.unit)) issues.push("Missing Unit");
+        if (!has(r.applicationDate)) issues.push("Missing Date");
+        if (!has(r.applicationMethod)) issues.push("Missing Application Method");
+        if (num(areaApplied) <= 0)
+          issues.push("Area Applied must be greater than 0");
+        return issues;
+      }
+      function ipmPrtCsv(rows) {
+        const quote = (value) =>
+          '"' + String(value ?? "").replace(/"/g, '""') + '"';
+        const body = (rows || [])
+          .map((row) => IPM_PRT_HEADERS.map((head) => quote(row[head])).join(","))
+          .join("\r\n");
+        return "\ufeff" + IPM_PRT_HEADERS.join(",") + (body ? "\r\n" + body : "\r\n");
+      }
+      function ipmPrtRows() {
+        if (!state.ipmEnabled) return [];
+        const rows = [];
+        (state.crops || []).forEach((c, ci) => {
+          (c.ipmRows || []).forEach((r) => {
+            if (!ipmPrtRowHasData(r)) return;
+            const areaApplied = num(r.areaApplied) || cropAcres(c);
+            if (ipmPrtIssues(r, areaApplied).length) return;
+            rows.push({
+              "Block Name": c.name || `Crop ${ci + 1}`,
+              "Product Name*": String(r.productName || "").trim(),
+              "EPA Reg No*": String(r.epaRegNo || "").trim(),
+              "Application Rate*": r.amountAcre,
+              "Unit (e.g. gal/ac)*": r.unit,
+              "Date*": r.applicationDate,
+              "Application method*": r.applicationMethod,
+              "Area applied (in acres)*": areaApplied,
+            });
+          });
+        });
+        return rows;
+      }
+
       function datasets(transcriptBytes) {
         saveInputs();
         const datasetRows = {
@@ -9448,6 +9524,7 @@ endstream`)
             state.ipmEnabled,
             (state.skippedReasons || {}).ipm || "",
           ),
+          "06b_ipm_prt_spray_records.csv": ipmPrtRows(),
           "07_diesel_log.csv": rowsForSection(
             "diesel_log",
             dieselActive(),
@@ -9473,6 +9550,7 @@ endstream`)
           "04_tillage_intensity.csv": ["status", "note"],
           "05_nutrient_management_plan.csv": ["status", "reason", "note"],
           "06_ipm_plan.csv": ["status", "reason", "note"],
+          "06b_ipm_prt_spray_records.csv": IPM_PRT_HEADERS,
           "07_diesel_log.csv": ["status", "reason", "note"],
           "08_irrigation_log.csv": ["status", "reason", "note"],
           "09_biodiversity_action_elements.csv": ["status", "note"],
@@ -9487,7 +9565,9 @@ endstream`)
         Object.entries(datasetRows).forEach(([datasetName, rows]) => {
           let exportRows = rows;
           if (!Array.isArray(exportRows) || !exportRows.length) {
-            if (datasetName === "05_nutrient_management_plan.csv")
+            if (datasetName === "06b_ipm_prt_spray_records.csv")
+              exportRows = [];
+            else if (datasetName === "05_nutrient_management_plan.csv")
               exportRows = sectionStatusRows(state.nutrientEnabled, (state.skippedReasons || {}).nutrient || "");
             else if (datasetName === "06_ipm_plan.csv")
               exportRows = sectionStatusRows(state.ipmEnabled, (state.skippedReasons || {}).ipm || "");
@@ -9510,11 +9590,14 @@ endstream`)
             "09_biodiversity_action_elements.csv": "biodiversity_action_elements",
             "10_continuous_learning.csv": "continuous_learning",
           };
-          d[farmDatasetFileName(datasetName)] = sectionCsv(
-            exportRows,
-            sectionFallbacks[datasetName],
-            sectionNameByFile[datasetName] || "",
-          );
+          d[farmDatasetFileName(datasetName)] =
+            datasetName === "06b_ipm_prt_spray_records.csv"
+              ? ipmPrtCsv(exportRows)
+              : sectionCsv(
+                  exportRows,
+                  sectionFallbacks[datasetName],
+                  sectionNameByFile[datasetName] || "",
+                );
         });
         if (state.kmlFileContent && state.farm.kmlFileName)
           d[
