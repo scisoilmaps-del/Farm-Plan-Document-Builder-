@@ -3324,7 +3324,7 @@
       const SECTION_CSV_SIGNATURES = {
         crop_planner: ["Input Category", "Crop Page Name", "Planting Date", "Harvest/Termination Date"],
         harvest_log: ["harvestPeriod", "Yield/ac", "Total Harvest", "Harvest Entry Mode"],
-        tillage_intensity: ["Crop Total gTIR", "Tillage Date", "Implement", "Disturbed (%)", "Event gTIR"],
+        tillage_intensity: ["Crop Average gTIR", "Tillage Date", "Implement", "Disturbed (%)", "Event gTIR"],
         nutrient_management_plan: ["Input Category", "Product Or Pack Name", "Rate Per Acre", "N Percent", "Micronutrients / Contents"],
         ipm_plan: ["Input Category", "Weed Or Pest", "Product Label Category", "Rate Per Acre", "Percent Active Ingredient"],
         diesel_log: ["Crop Name", "Ground Work Gallons", "Total Annual Diesel Use", "Diesel Gallons Per Acre"],
@@ -5736,9 +5736,10 @@ ${acreChangePanel()}
           })
           .filter((value) => value !== null);
         if (!completedEvents.length) return 0;
-        // Crop gTIR is the sum of all completed soil-disturbing operations
-        // within the crop interval. No-till crops return zero above.
-        return completedEvents.reduce((sum, value) => sum + value, 0);
+        // Crop gTIR is the arithmetic average of all completed tillage-event
+        // gTIR values documented for this crop in the one-year rotation.
+        // No-till crops return zero above.
+        return completedEvents.reduce((sum, value) => sum + value, 0) / completedEvents.length;
       }
       function farmWeightedGTIR(crops = state.crops || []) {
         const validCrops = crops.filter((c) => cropAcres(c) > 0);
@@ -5748,6 +5749,16 @@ ${acreChangePanel()}
           (sum, c) => sum + tillageValue(c) * cropAcres(c),
           0,
         ) / totalAcres;
+      }
+      function highestCropGTIR(crops = state.crops || []) {
+        if (!crops.length) return 0;
+        return Math.max(...crops.map((c) => tillageValue(c)));
+      }
+      function limitingTillageCrops(crops = state.crops || []) {
+        const highest = highestCropGTIR(crops);
+        return crops
+          .filter((c) => Math.abs(tillageValue(c) - highest) < 0.000001)
+          .map((c) => c.name || c.cropTypeOther || c.cropType || "Unnamed crop");
       }
       function parseFarmDate(value, year) {
         let v = String(value || "").trim();
@@ -5989,6 +6000,25 @@ ${acreChangePanel()}
             meetCount: 0,
             floorMet: false,
           };
+        // SCI P1 is evaluated per crop over the one-year crop rotation.
+        // The farm planning result is therefore limited by the crop with the
+        // highest TI / lowest P1 rating; crop values are not acreage-weighted.
+        if (key === "P1") {
+          const level = ratings.reduce(
+            (lowest, rating) =>
+              (PEL_NUM[rating] || 0) < (PEL_NUM[lowest] || 0) ? rating : lowest,
+            "IV",
+          );
+          return {
+            level,
+            ratings,
+            majorityNeeded: n,
+            meetCount: ratings.filter(
+              (v) => (PEL_NUM[v] || 0) >= (PEL_NUM[level] || 0),
+            ).length,
+            floorMet: level !== "Gap",
+          };
+        }
         const majorityNeeded = Math.floor(n / 2) + 1;
         for (let claimed = 4; claimed >= 1; claimed--) {
           const meetCount = ratings.filter(
@@ -6462,7 +6492,7 @@ ${acreChangePanel()}
       function rollup() {
         saveInputs();
         let acres = state.crops.reduce((s, c) => s + cropAcres(c), 0);
-        let avg = farmWeightedGTIR(state.crops);
+        let avg = highestCropGTIR(state.crops);
         let plannerEntries = state.crops.reduce(
           (s, c) =>
             s +
@@ -6580,7 +6610,7 @@ ${acreChangePanel()}
             subtitle: "Tillage intensity and no-till planning",
             status: p1,
             evidence: [
-              `Farm acreage-weighted gTIR: ${fmt(avg, 1)}`,
+              `Highest crop-average TI: ${fmt(avg, 1)}${limitingTillageCrops(state.crops).length ? ` (${limitingTillageCrops(state.crops).join(", ")})` : ""}`,
               `${state.crops.length} crop plan${state.crops.length === 1 ? "" : "s"} reviewed`,
             ],
           },
@@ -6690,7 +6720,7 @@ ${acreChangePanel()}
             fmt(acres, 1),
             "KML-selected crop acres when boundaries are assigned",
           ],
-          ["Weighted gTIR", fmt(avg, 1), "Acreage-weighted across crop acres"],
+          ["Highest Crop TI", fmt(avg, 1), "P1 is determined by the crop with the highest one-year TI"],
         ]
           .map(
             (m) =>
@@ -6719,7 +6749,7 @@ ${acreChangePanel()}
           })
           .join("");
         let summaryItems = `
- <div class="ds-cell"><div class="ds-cell-val">${fmt(avg, 1)}</div><div class="ds-cell-lbl">Farm Weighted gTIR</div></div>
+ <div class="ds-cell"><div class="ds-cell-val">${fmt(avg, 1)}</div><div class="ds-cell-lbl">Acreage-Weighted Crop-Average gTIR</div></div>
  <div class="ds-cell"><div class="ds-cell-val">${fmt(acres, 1)}</div><div class="ds-cell-lbl">Total Acres</div></div>
  <div class="ds-cell"><div class="ds-cell-val">${state.crops.length}</div><div class="ds-cell-lbl">Crops</div></div>
  <div class="ds-cell"><div class="ds-cell-val">${plannerEntries}</div><div class="ds-cell-lbl">Crop Planner Entries</div></div>
@@ -7749,7 +7779,7 @@ ${acreChangePanel()}
         bullet(
           `Sampling reference: ${pelSampleSize()} of ${(state.kmlBoundaries || []).length || crops.length || 0} entered fields; actual sample selection and field-level ratings are assigned by SCI's approved certifying body.`,
         );
-        const pillarAvgTI = () => farmWeightedGTIR(crops);
+        const pillarMaxTI = () => highestCropGTIR(crops);
         const pillarPlannerEntries = () =>
           crops.reduce(
             (s, c) =>
@@ -7807,7 +7837,7 @@ ${acreChangePanel()}
             [
               [
                 "Basis",
-                `Acreage-weighted gTIR: ${fmt(pillarAvgTI(), 1)}; tillage/no-till entries reviewed across ${crops.length} crop plan(s)`,
+                `Highest crop-average TI: ${fmt(pillarMaxTI(), 1)}${limitingTillageCrops(crops).length ? ` (${limitingTillageCrops(crops).join(", ")})` : ""}; each crop value is the average of its completed tillage events in the one-year crop rotation`,
               ],
               [
                 "Review note",
