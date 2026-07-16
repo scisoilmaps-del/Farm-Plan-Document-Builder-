@@ -5482,7 +5482,7 @@ ${acreChangePanel()}
               .rating || 0,
           depthCm = num(r.depthIn) * 2.54,
           acres = cropAcres(crop()) * (num(r.disturbed) / 100),
-          gtir = rating * depthCm * num(r.passes) * (num(r.disturbed) / 100);
+          gtir = rating * 3.25 * depthCm * (num(r.disturbed) / 100) * num(r.passes);
         return `<div class="event-card event-row"><div class="event-header"><span class="event-title e-title">Tillage Event</span><span class="event-status">${gtir ? "Complete" : "Incomplete"}</span><button type="button" class="btn danger" onclick="removeRow('tillageRows',${i})">✕</button></div><div class="event-body"><div class="field"><label>Tillage Date</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.date" type="date" value="${esc(r.date)}"></div><div class="field"><label>Depth (in)</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.depthIn" type="number" min="0" step="0.01" value="${esc(r.depthIn)}" placeholder="0" inputmode="decimal"></div><div class="field span-3"><label>Tillage Implement</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.implement" value="${esc(r.implement)}" placeholder="Disk, ripper, chisel plow..."></div><div class="field span-3"><label>Tillage Type</label><select data-bind="crops.${state.activeCrop}.tillageRows.${i}.tillageType"><option value="">Select tillage type / rating...</option>${TILLAGE_RATINGS.map((x) => `<option value="${x.label}" ${r.tillageType === x.label ? "selected" : ""}>${x.label}</option>`).join("")}</select></div><div class="field"><label>% Disturbed</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.disturbed" type="number" min="0" max="100" step="0.01" value="${esc(r.disturbed)}" placeholder="100" inputmode="decimal"></div><div class="field"><label># Passes</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.passes" type="number" min="0" step="0.01" value="${esc(r.passes)}" placeholder="1" inputmode="decimal"></div><div class="field"><label>Rating</label><div class="readout rating">${fmt(rating)}</div></div><div class="field"><label>Depth (cm)</label><div class="readout depth-cm">${fmt(depthCm)}</div></div><div class="field"><label>Acres Tilled</label><div class="readout acres-tilled">${fmt(acres)}</div></div><div class="field"><label>gTIR</label><div class="readout gtir" style="color:var(--leaf);font-size:18px;">${fmt(gtir)}</div></div><div class="field full"><label>Notes</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.notes" value="${esc(r.notes)}" placeholder="Optional notes..."></div></div></div>`;
       }
       function nutrientPlan() {
@@ -5720,9 +5720,10 @@ ${acreChangePanel()}
           return (
             s +
             rating *
+              3.25 *
               (num(r.depthIn) * 2.54) *
-              num(r.passes) *
-              (num(r.disturbed) / 100)
+              (num(r.disturbed) / 100) *
+              num(r.passes)
           );
         }, 0);
       }
@@ -7404,9 +7405,10 @@ ${acreChangePanel()}
                 cropAcres(c) * (num(r.disturbed) / 100);
               const eventGTIR =
                 tillageRating *
+                3.25 *
                 depthCm *
-                num(r.passes) *
-                (num(r.disturbed) / 100);
+                (num(r.disturbed) / 100) *
+                num(r.passes);
               rows.push({
                 ...base,
                 section: "tillage_intensity",
@@ -8855,7 +8857,7 @@ Have ready:
             const disturbed = num(r.disturbed);
             const passes = num(r.passes);
             const acresTilled = acres * (disturbed / 100);
-            const eventGTIR = gtirRating * depthCm * passes * (disturbed / 100);
+            const eventGTIR = gtirRating * 3.25 * depthCm * (disturbed / 100) * passes;
             rows.push({
               cropName, acres, fieldBoundaries,
               date: r.date || "", depthIn: r.depthIn ?? "", depthCm,
