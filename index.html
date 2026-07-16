@@ -3324,7 +3324,7 @@
       const SECTION_CSV_SIGNATURES = {
         crop_planner: ["Input Category", "Crop Page Name", "Planting Date", "Harvest/Termination Date"],
         harvest_log: ["harvestPeriod", "Yield/ac", "Total Harvest", "Harvest Entry Mode"],
-        tillage_intensity: ["Crop Avg gTIR", "Tillage Date", "Implement", "Disturbed (%)", "Event gTIR"],
+        tillage_intensity: ["Crop Total gTIR", "Tillage Date", "Implement", "Disturbed (%)", "Event gTIR"],
         nutrient_management_plan: ["Input Category", "Product Or Pack Name", "Rate Per Acre", "N Percent", "Micronutrients / Contents"],
         ipm_plan: ["Input Category", "Weed Or Pest", "Product Label Category", "Rate Per Acre", "Percent Active Ingredient"],
         diesel_log: ["Crop Name", "Ground Work Gallons", "Total Annual Diesel Use", "Diesel Gallons Per Acre"],
@@ -5713,19 +5713,41 @@ ${acreChangePanel()}
       function tillageValue(c) {
         if (!state.tillageEnabled) return 0;
         if (String(c.noTill) === "true" || c.noTill === true) return 0;
-        return c.tillageRows.reduce((s, r) => {
-          let rating =
-            (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
-              .rating || 0;
-          return (
-            s +
-            rating *
-              3.25 *
-              (num(r.depthIn) * 2.54) *
-              (num(r.disturbed) / 100) *
-              num(r.passes)
-          );
-        }, 0);
+        const completedEvents = (Array.isArray(c.tillageRows) ? c.tillageRows : [])
+          .map((r) => {
+            const rating =
+              num(r.gtirRating) ||
+              num(r.tillageRating) ||
+              ((TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
+                .rating || 0);
+            const depthCm = num(r.depthIn) * 2.54;
+            const disturbedFraction = num(r.disturbed) / 100;
+            const passes = num(r.passes);
+            const hasEventData =
+              !!r.tillageType ||
+              !!r.implement ||
+              !!r.date ||
+              num(r.depthIn) > 0 ||
+              num(r.disturbed) > 0 ||
+              num(r.passes) > 0;
+            if (!hasEventData || rating <= 0 || depthCm <= 0 || passes <= 0)
+              return null;
+            return rating * 3.25 * depthCm * disturbedFraction * passes;
+          })
+          .filter((value) => value !== null);
+        if (!completedEvents.length) return 0;
+        // Crop gTIR is the sum of all completed soil-disturbing operations
+        // within the crop interval. No-till crops return zero above.
+        return completedEvents.reduce((sum, value) => sum + value, 0);
+      }
+      function farmWeightedGTIR(crops = state.crops || []) {
+        const validCrops = crops.filter((c) => cropAcres(c) > 0);
+        const totalAcres = validCrops.reduce((sum, c) => sum + cropAcres(c), 0);
+        if (!totalAcres) return 0;
+        return validCrops.reduce(
+          (sum, c) => sum + tillageValue(c) * cropAcres(c),
+          0,
+        ) / totalAcres;
       }
       function parseFarmDate(value, year) {
         let v = String(value || "").trim();
@@ -6440,10 +6462,7 @@ ${acreChangePanel()}
       function rollup() {
         saveInputs();
         let acres = state.crops.reduce((s, c) => s + cropAcres(c), 0);
-        let avg = state.crops.length
-          ? state.crops.reduce((s, c) => s + tillageValue(c), 0) /
-            state.crops.length
-          : 0;
+        let avg = farmWeightedGTIR(state.crops);
         let plannerEntries = state.crops.reduce(
           (s, c) =>
             s +
@@ -6561,7 +6580,7 @@ ${acreChangePanel()}
             subtitle: "Tillage intensity and no-till planning",
             status: p1,
             evidence: [
-              `Farm average gTIR: ${fmt(avg, 1)}`,
+              `Farm acreage-weighted gTIR: ${fmt(avg, 1)}`,
               `${state.crops.length} crop plan${state.crops.length === 1 ? "" : "s"} reviewed`,
             ],
           },
@@ -6671,7 +6690,7 @@ ${acreChangePanel()}
             fmt(acres, 1),
             "KML-selected crop acres when boundaries are assigned",
           ],
-          ["Avg gTIR", fmt(avg, 1), "Planning estimate"],
+          ["Weighted gTIR", fmt(avg, 1), "Acreage-weighted across crop acres"],
         ]
           .map(
             (m) =>
@@ -6700,7 +6719,7 @@ ${acreChangePanel()}
           })
           .join("");
         let summaryItems = `
- <div class="ds-cell"><div class="ds-cell-val">${fmt(avg, 1)}</div><div class="ds-cell-lbl">Farm Avg gTIR</div></div>
+ <div class="ds-cell"><div class="ds-cell-val">${fmt(avg, 1)}</div><div class="ds-cell-lbl">Farm Weighted gTIR</div></div>
  <div class="ds-cell"><div class="ds-cell-val">${fmt(acres, 1)}</div><div class="ds-cell-lbl">Total Acres</div></div>
  <div class="ds-cell"><div class="ds-cell-val">${state.crops.length}</div><div class="ds-cell-lbl">Crops</div></div>
  <div class="ds-cell"><div class="ds-cell-val">${plannerEntries}</div><div class="ds-cell-lbl">Crop Planner Entries</div></div>
@@ -7395,7 +7414,7 @@ ${acreChangePanel()}
               gTIR: 0,
             });
           else {
-            const cropAvgGTIR = tillageValue(c);
+            const cropTotalGTIR = tillageValue(c);
             c.tillageRows.forEach((r) => {
               const tillageRating =
                 (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
@@ -7417,7 +7436,7 @@ ${acreChangePanel()}
                 depthCm,
                 acresTilled,
                 gTIR: eventGTIR,
-                cropAvgGTIR,
+                cropTotalGTIR,
               });
             });
           }
@@ -7730,10 +7749,7 @@ ${acreChangePanel()}
         bullet(
           `Sampling reference: ${pelSampleSize()} of ${(state.kmlBoundaries || []).length || crops.length || 0} entered fields; actual sample selection and field-level ratings are assigned by SCI's approved certifying body.`,
         );
-        const pillarAvgTI = () =>
-          crops.length
-            ? crops.reduce((s, c) => s + num(pillar(c).TI), 0) / crops.length
-            : 0;
+        const pillarAvgTI = () => farmWeightedGTIR(crops);
         const pillarPlannerEntries = () =>
           crops.reduce(
             (s, c) =>
@@ -7791,7 +7807,7 @@ ${acreChangePanel()}
             [
               [
                 "Basis",
-                `Average gTIR: ${fmt(pillarAvgTI(), 1)}; tillage/no-till entries reviewed across ${crops.length} crop plan(s)`,
+                `Acreage-weighted gTIR: ${fmt(pillarAvgTI(), 1)}; tillage/no-till entries reviewed across ${crops.length} crop plan(s)`,
               ],
               [
                 "Review note",
@@ -8829,7 +8845,7 @@ Have ready:
             cropName: "", acres: "", fieldBoundaries: "", date: "",
             depthIn: "", depthCm: "", implement: "", tillageType: "",
             gtirRating: "", disturbed: "", passes: "", acresTilled: "",
-            eventGTIR: "", cropAverageGTIR: "", notes: "",
+            eventGTIR: "", cropTotalGTIR: "", notes: "",
             status: "Skipped", reason: (state.skippedReasons || {}).tillage || ""
           }];
         }
@@ -8841,12 +8857,12 @@ Have ready:
             rows.push({
               cropName, acres, fieldBoundaries, date: "", depthIn: "", depthCm: "",
               implement: "", tillageType: "No Till", gtirRating: 0, disturbed: 0,
-              passes: 0, acresTilled: 0, eventGTIR: 0, cropAverageGTIR: 0,
+              passes: 0, acresTilled: 0, eventGTIR: 0, cropTotalGTIR: 0,
               notes: "", status: "No Till skipped", reason: ""
             });
             return;
           }
-          const cropAverageGTIR = tillageValue(c);
+          const cropTotalGTIR = tillageValue(c);
           const eventRows = Array.isArray(c.tillageRows) ? c.tillageRows : [];
           eventRows.forEach((r) => {
             const gtirRating =
@@ -8863,7 +8879,7 @@ Have ready:
               date: r.date || "", depthIn: r.depthIn ?? "", depthCm,
               implement: r.implement || "", tillageType: r.tillageType || "",
               gtirRating, disturbed: r.disturbed ?? "", passes: r.passes ?? "",
-              acresTilled, eventGTIR, cropAverageGTIR, notes: r.notes || "",
+              acresTilled, eventGTIR, cropTotalGTIR, notes: r.notes || "",
               status: eventGTIR || r.date || r.implement || r.tillageType ? "Complete" : "Incomplete",
               reason: ""
             });
@@ -8873,7 +8889,7 @@ Have ready:
           cropName: "", acres: "", fieldBoundaries: "", date: "", depthIn: "",
           depthCm: "", implement: "", tillageType: "", gtirRating: "",
           disturbed: "", passes: "", acresTilled: "", eventGTIR: "",
-          cropAverageGTIR: "", notes: "", status: "Enabled", reason: ""
+          cropTotalGTIR: "", notes: "", status: "Enabled", reason: ""
         }];
       }
 
@@ -9421,7 +9437,7 @@ endstream`)
         tillage_intensity: [
           "cropName", "acres", "fieldBoundaries", "date", "depthIn", "depthCm",
           "implement", "tillageType", "gtirRating", "disturbed", "passes",
-          "acresTilled", "eventGTIR", "cropAverageGTIR", "notes", "status", "reason"
+          "acresTilled", "eventGTIR", "cropTotalGTIR", "notes", "status", "reason"
         ],
         nutrient_management_plan: [
           "cropName", "productName", "applicationDate", "rateAcre", "unit",
