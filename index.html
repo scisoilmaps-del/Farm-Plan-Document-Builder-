@@ -7393,10 +7393,32 @@ ${acreChangePanel()}
               status: "No Till skipped",
               gTIR: 0,
             });
-          else
-            c.tillageRows.forEach((r) =>
-              rows.push({ ...base, section: "tillage_intensity", ...r }),
-            );
+          else {
+            const cropAvgGTIR = tillageValue(c);
+            c.tillageRows.forEach((r) => {
+              const tillageRating =
+                (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
+                  .rating || 0;
+              const depthCm = num(r.depthIn) * 2.54;
+              const acresTilled =
+                cropAcres(c) * (num(r.disturbed) / 100);
+              const eventGTIR =
+                tillageRating *
+                depthCm *
+                num(r.passes) *
+                (num(r.disturbed) / 100);
+              rows.push({
+                ...base,
+                section: "tillage_intensity",
+                ...r,
+                tillageRating,
+                depthCm,
+                acresTilled,
+                gTIR: eventGTIR,
+                cropAvgGTIR,
+              });
+            });
+          }
           if (state.nutrientEnabled)
             c.fertilizerRows.forEach((r) => {
               let lbs = fertilizerProductLbsPerAcre(r);
@@ -9340,8 +9362,9 @@ endstream`)
           "totalHarvest", "harvestDate", "storageLocation", "buyer", "notes", "status"
         ],
         tillage_intensity: [
-          "cropName", "operation", "tillageType", "implement", "passes", "depth",
-          "speed", "residueBefore", "residueAfter", "gTIR", "notes", "status"
+          "cropName", "acres", "fieldBoundaries", "date", "depthIn", "depthCm",
+          "implement", "tillageType", "tillageRating", "disturbed", "passes",
+          "acresTilled", "gTIR", "cropAvgGTIR", "notes", "status"
         ],
         nutrient_management_plan: [
           "cropName", "productName", "applicationDate", "rateAcre", "unit",
