@@ -8426,10 +8426,19 @@ Have ready:
         };
       }
       function utf8ToB64(str) {
-        return btoa(unescape(encodeURIComponent(str)));
+        const bytes = new TextEncoder().encode(String(str ?? ""));
+        const chunkSize = 0x8000;
+        let binary = "";
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+        }
+        return btoa(binary);
       }
       function b64ToUtf8(str) {
-        return decodeURIComponent(escape(atob(str)));
+        const binary = atob(String(str || ""));
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new TextDecoder().decode(bytes);
       }
       function progressCsvContent() {
         let p = progressPayload();
@@ -9614,6 +9623,86 @@ endstream`)
         }
         return d;
       }
+      function buildRecoveryZipDatasets(transcriptBytes, originalError) {
+        const files = {};
+        const addText = (name, producer, fallbackText) => {
+          try {
+            const value = producer();
+            files[name] = value == null ? fallbackText : value;
+          } catch (error) {
+            console.error("ZIP recovery skipped " + name, error);
+            files[name] =
+              fallbackText +
+              "\r\nExport note: " +
+              (error && error.message ? error.message : String(error));
+          }
+        };
+        const prefix = farmFilePrefix();
+        addText(
+          farmDatasetFileName("00_normalized_farm_plan_dataset.csv"),
+          () => csv(rowsNormalized()),
+          "status,note\r\nRecovery export,Normalized dataset could not be generated",
+        );
+        addText(
+          "_system/" + farmDatasetFileName("99_SAVE_PROGRESS_upload_to_resume.csv"),
+          () => progressCsvContent(),
+          "file_type,app,version,saved_at,farm_name,planning_year,state_json_b64\r\nSCI_FARM_PLAN_SAVE_PROGRESS,SCI Farm Plan Document Builder,recovery,,,,",
+        );
+        addText(
+          farmDatasetFileName("Farm Plan Document.txt"),
+          () => reportText(),
+          "SCI Farm Plan Document\r\nRecovery export created because a CSV-imported value prevented the standard report from generating.",
+        );
+        try {
+          files[farmDatasetFileName("Farm Plan Document.pdf")] = makePdfReport();
+        } catch (error) {
+          console.error("ZIP recovery skipped PDF", error);
+        }
+        const sectionSpecs = [
+          ["01_crop_planner.csv", "crop_planner"],
+          ["02_harvest_log.csv", "harvest_log"],
+          ["04_tillage_intensity.csv", "tillage_intensity"],
+          ["05_nutrient_management_plan.csv", "nutrient_management_plan"],
+          ["06_ipm_plan.csv", "ipm_plan"],
+          ["07_diesel_log.csv", "diesel_log"],
+          ["08_irrigation_log.csv", "irrigation_log"],
+          ["09_biodiversity_action_elements.csv", "biodiversity_action_elements"],
+          ["10_continuous_learning.csv", "continuous_learning"],
+        ];
+        sectionSpecs.forEach(([fileName, sectionName]) => {
+          addText(
+            farmDatasetFileName(fileName),
+            () => sectionCsv(rowsForSection(sectionName), ["status", "note"], sectionName),
+            "status,note\r\nRecovery export,Section could not be converted",
+          );
+        });
+        addText(
+          farmDatasetFileName("06b_ipm_prt_spray_records.csv"),
+          () => ipmPrtCsv(ipmPrtRows()),
+          IPM_PRT_HEADERS.join(",") + "\r\n",
+        );
+        if (state.kmlFileContent && state.farm && state.farm.kmlFileName) {
+          files[
+            "uploaded_kml/" +
+              farmDatasetFileName(safeFileName(state.farm.kmlFileName))
+          ] = state.kmlFileContent;
+        }
+        if (transcriptBytes && transcriptBytes.length) {
+          const transcriptName = safeFileName(
+            (state.farm && state.farm.transcriptFileName) ||
+              (window.sciTranscriptFile && window.sciTranscriptFile.name) ||
+              "Call_Transcript.docx",
+          );
+          files[transcriptName] = transcriptBytes;
+        }
+        files[farmDatasetFileName("ZIP_EXPORT_RECOVERY_NOTE.txt")] =
+          "The complete ZIP was generated using recovery mode after the standard export encountered an imported-data conversion error.\r\nOriginal error: " +
+          (originalError && originalError.message
+            ? originalError.message
+            : String(originalError));
+        return files;
+      }
+
       function zipU16(n) {
         return new Uint8Array([n & 255, (n >>> 8) & 255]);
       }
@@ -9647,6 +9736,15 @@ endstream`)
       }
       async function downloadZip() {
         saveInputs();
+        const clickedButton =
+          document.activeElement && document.activeElement.tagName === "BUTTON"
+            ? document.activeElement
+            : null;
+        const originalButtonText = clickedButton ? clickedButton.textContent : "";
+        if (clickedButton) {
+          clickedButton.disabled = true;
+          clickedButton.textContent = "Preparing ZIP…";
+        }
         let transcriptBytes = null;
         const transcriptWasSelected = !!(
           window.sciTranscriptFile ||
@@ -9667,7 +9765,28 @@ endstream`)
             return;
           }
         }
-        const files = datasets(transcriptBytes);
+        let files;
+        try {
+          files = datasets(transcriptBytes);
+        } catch (datasetError) {
+          console.error("Primary ZIP dataset preparation failed", datasetError);
+          try {
+            files = buildRecoveryZipDatasets(transcriptBytes, datasetError);
+          } catch (recoveryError) {
+            console.error("Recovery ZIP preparation failed", recoveryError);
+            alert(
+              "ZIP export could not be prepared. The imported CSV data was preserved, but one or more imported values could not be converted for export. Details: " +
+                (recoveryError && recoveryError.message
+                  ? recoveryError.message
+                  : String(recoveryError)),
+            );
+            if (clickedButton) {
+              clickedButton.disabled = false;
+              clickedButton.textContent = originalButtonText;
+            }
+            return;
+          }
+        }
         if (
           transcriptWasSelected &&
           !Object.keys(files).some((n) =>
@@ -9755,6 +9874,10 @@ endstream`)
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        if (clickedButton) {
+          clickedButton.disabled = false;
+          clickedButton.textContent = originalButtonText;
+        }
       }
       document.addEventListener("click", function (e) {
         let nav = e.target.closest("[data-go-step]");
