@@ -62,6 +62,15 @@
         border-color: var(--clay);
         box-shadow: 0 0 0 3px rgba(168, 85, 31, 0.12);
       }
+      input[type="checkbox"],
+      input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        min-height: 0;
+        flex: none;
+        accent-color: var(--leaf2);
+        padding: 0;
+      }
       .app {
         max-width: 1180px;
         margin: 0 auto;
@@ -360,6 +369,26 @@
         font-size: 13px;
         font-weight: 700;
       }
+      .checks {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        cursor: pointer;
+      }
+      .check input[type="checkbox"] {
+        margin: 0;
+      }
       .crop-tabs {
         display: flex;
         gap: 6px;
@@ -386,9 +415,10 @@
       .crop-head,
       .crop-meta {
         display: grid;
-        grid-template-columns:
-          minmax(160px, 1.1fr) minmax(95px, 0.4fr) minmax(90px, 0.35fr)
-          minmax(95px, 0.35fr) auto;
+        grid-template-columns: minmax(160px, 1.1fr) minmax(95px, 0.4fr) minmax(
+            90px,
+            0.35fr
+          ) minmax(95px, 0.35fr) auto;
         gap: 9px;
         align-items: end;
         padding: 10px;
@@ -1328,9 +1358,10 @@
       }
       .harvest-year-fields {
         display: grid;
-        grid-template-columns:
-          minmax(90px, 0.55fr) minmax(80px, 0.35fr) minmax(110px, 0.45fr)
-          minmax(160px, 1fr);
+        grid-template-columns: minmax(90px, 0.55fr) minmax(80px, 0.35fr) minmax(
+            110px,
+            0.45fr
+          ) minmax(160px, 1fr);
         gap: 8px;
         align-items: end;
       }
@@ -2414,13 +2445,12 @@
           "Native pollinator nesting site establishment",
           "Flowering plant species diversity and bloom succession timing",
         ],
-        "Cover crops that feed pollinators and are managed for pollinator benefit":
-          [
-            "Pollinator visitation counts during peak bloom periods",
-            "Diversity of pollinator species observed",
-            "Native pollinator nesting site establishment",
-            "Flowering plant species diversity and bloom succession timing",
-          ],
+        "Cover crops that feed pollinators and are managed for pollinator benefit": [
+          "Pollinator visitation counts during peak bloom periods",
+          "Diversity of pollinator species observed",
+          "Native pollinator nesting site establishment",
+          "Flowering plant species diversity and bloom succession timing",
+        ],
         "Creating wildlife corridors/strips": [
           "Wildlife camera documentation of species movement/usage",
           "Track plates or tracking stations showing animal passage",
@@ -2547,34 +2577,9 @@
         dieselEnabled: false,
         irrigationEnabled: false,
         continuousImprovement: {
-          ipm: {
-            selections: [],
-            other: "",
-            plannedChange: "",
-            cropsFields: "",
-            cropSelections: [],
-            boundaryIds: [],
-            committed: false,
-          },
-          nutrient: {
-            selections: [],
-            other: "",
-            plannedChange: "",
-            cropsFields: "",
-            cropSelections: [],
-            boundaryIds: [],
-            benchmarkResults: "",
-            committed: false,
-          },
-          tillage: {
-            selections: [],
-            other: "",
-            plannedChange: "",
-            cropsFields: "",
-            cropSelections: [],
-            boundaryIds: [],
-            committed: false,
-          },
+          ipm: { selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], committed: false, noReductionReason: "" },
+          nutrient: { selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], benchmarkResults: "", committed: false, noReductionReason: "" },
+          tillage: { selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], committed: false, noReductionReason: "" },
         },
         skippedReasons: {
           cropPlan: "",
@@ -3068,7 +3073,8 @@
         c.isPerennial =
           String(c.isPerennial) === "true" || c.isPerennial === true;
         c.designatedTrafficZones = c.designatedTrafficZones || "";
-        c.designatedTrafficZonesWhyNo = c.designatedTrafficZonesWhyNo || "";
+        c.designatedTrafficZonesWhyNo =
+          c.designatedTrafficZonesWhyNo || "";
         c.perennialData = fillMissing(c.perennialData, {
           systemType: "",
           systemTypeOther: "",
@@ -3153,16 +3159,7 @@
             ? state.nrcsPracticeDetails
             : {};
         state.nrcsEnabled = !!state.nrcsEnabled;
-        const ciSection = () => ({
-          selections: [],
-          other: "",
-          plannedChange: "",
-          cropsFields: "",
-          cropSelections: [],
-          boundaryIds: [],
-          benchmarkResults: "",
-          committed: false,
-        });
+        const ciSection = () => ({ selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], benchmarkResults: "", committed: false, noReductionReason: "" });
         state.continuousImprovement = fillMissing(state.continuousImprovement, {
           ipm: ciSection(),
           nutrient: ciSection(),
@@ -3213,32 +3210,18 @@
         const cashCrop = entries.find((e) =>
           /cash crop/i.test(String((e || {}).title || "")),
         );
-        return (
-          String((cashCrop || {}).plantingDate || "").trim() ||
-          String(
-            (
-              entries.find((e) =>
-                String((e || {}).plantingDate || "").trim(),
-              ) || {}
-            ).plantingDate || "",
-          ).trim()
-        );
+        return String((cashCrop || {}).plantingDate || "").trim() ||
+          String(((entries.find((e) => String((e || {}).plantingDate || "").trim()) || {}).plantingDate) || "").trim();
       }
       function syncNoTillDrillEvent(c) {
         if (!c || String(c.noTillDrillUsed || "") !== "Yes") return;
         c.tillageRows = Array.isArray(c.tillageRows) ? c.tillageRows : [];
         let row = c.tillageRows.find((r) => r && r.autoNoTillDrill);
         if (!row) {
-          const blank = c.tillageRows.find(
-            (r) =>
-              r &&
-              !r.date &&
-              !r.depthIn &&
-              !r.implement &&
-              !r.tillageType &&
-              (!r.disturbed || String(r.disturbed) === "100") &&
-              (!r.passes || String(r.passes) === "1") &&
-              !r.notes,
+          const blank = c.tillageRows.find((r) =>
+            r && !r.date && !r.depthIn && !r.implement && !r.tillageType &&
+            (!r.disturbed || String(r.disturbed) === "100") &&
+            (!r.passes || String(r.passes) === "1") && !r.notes,
           );
           row = blank || {};
           if (!blank) c.tillageRows.unshift(row);
@@ -3249,11 +3232,7 @@
         row.tillageType = "Compression";
         row.depthIn = "2";
         row.passes = "1";
-        if (
-          row.disturbed === undefined ||
-          row.disturbed === null ||
-          row.disturbed === ""
-        )
+        if (row.disturbed === undefined || row.disturbed === null || row.disturbed === "")
           row.disturbed = "100";
         if (row.notes === undefined || row.notes === null) row.notes = "";
       }
@@ -3443,74 +3422,22 @@
         return score;
       }
       const SECTION_CSV_SIGNATURES = {
-        crop_planner: [
-          "Input Category",
-          "Crop Page Name",
-          "Planting Date",
-          "Harvest/Termination Date",
-        ],
-        harvest_log: [
-          "harvestPeriod",
-          "Yield/ac",
-          "Total Harvest",
-          "Harvest Entry Mode",
-        ],
-        tillage_intensity: [
-          "Crop Average gTIR",
-          "Tillage Date",
-          "Implement",
-          "Disturbed (%)",
-          "Event gTIR",
-        ],
-        nutrient_management_plan: [
-          "Input Category",
-          "Product Or Pack Name",
-          "Rate Per Acre",
-          "N Percent",
-          "Micronutrients / Contents",
-        ],
-        ipm_plan: [
-          "Input Category",
-          "Weed Or Pest",
-          "Product Label Category",
-          "Rate Per Acre",
-          "Percent Active Ingredient",
-        ],
-        diesel_log: [
-          "Crop Name",
-          "Ground Work Gallons",
-          "Total Annual Diesel Use",
-          "Diesel Gallons Per Acre",
-        ],
-        irrigation_log: [
-          "Crop / Practice Type",
-          "Water / Irrigation Method",
-          "Average Hours Per Cycle",
-          "Gallons Per Year",
-        ],
-        biodiversity_action_elements: [
-          "Action Element",
-          "Acres/Area",
-          "Measurement Criterion",
-          "Baseline Value",
-        ],
-        continuous_learning: [
-          "Person Name",
-          "Event Date",
-          "Event Type",
-          "Credits",
-          "Is On-Farm Research",
-        ],
+        crop_planner: ["Input Category", "Crop Page Name", "Planting Date", "Harvest/Termination Date"],
+        harvest_log: ["harvestPeriod", "Yield/ac", "Total Harvest", "Harvest Entry Mode"],
+        tillage_intensity: ["Crop Average gTIR", "Tillage Date", "Implement", "Disturbed (%)", "Event gTIR"],
+        nutrient_management_plan: ["Input Category", "Product Or Pack Name", "Rate Per Acre", "N Percent", "Micronutrients / Contents"],
+        ipm_plan: ["Input Category", "Weed Or Pest", "Product Label Category", "Rate Per Acre", "Percent Active Ingredient"],
+        diesel_log: ["Crop Name", "Ground Work Gallons", "Total Annual Diesel Use", "Diesel Gallons Per Acre"],
+        irrigation_log: ["Crop / Practice Type", "Water / Irrigation Method", "Average Hours Per Cycle", "Gallons Per Year"],
+        biodiversity_action_elements: ["Action Element", "Acres/Area", "Measurement Criterion", "Baseline Value"],
+        continuous_learning: ["Person Name", "Event Date", "Event Type", "Credits", "Is On-Farm Research"],
       };
       function sectionHeaderScore(row, section) {
         let base = csvHeaderScore(row);
         let keys = new Set((row || []).map(keyNorm).filter(Boolean));
         let expected = SECTION_CSV_SIGNATURES[section] || [];
-        expected.forEach((h) => {
-          if (keys.has(keyNorm(h))) base += 12;
-        });
-        if (expected.length && expected.every((h) => keys.has(keyNorm(h))))
-          base += 40;
+        expected.forEach((h) => { if (keys.has(keyNorm(h))) base += 12; });
+        if (expected.length && expected.every((h) => keys.has(keyNorm(h)))) base += 40;
         return base;
       }
       function parseCsvRows(text, section) {
@@ -3545,11 +3472,7 @@
         let table = parseCsvTable(text);
         let out = {};
         table.forEach((r) => {
-          if (
-            r.length >= 2 &&
-            String(r[0] || "").trim() &&
-            String(r[1] || "").trim()
-          ) {
+          if (r.length >= 2 && String(r[0] || "").trim() && String(r[1] || "").trim()) {
             out[keyNorm(r[0])] = String(r[1] || "").trim();
           }
         });
@@ -3749,30 +3672,13 @@
               );
             }
             if (!rows.length) rows = all;
-            if (metadata.farmname && !state.farm.farmName)
-              state.farm.farmName = metadata.farmname;
-            if (metadata.planningyear || metadata.cropyear)
-              state.farm.planningYear =
-                metadata.planningyear || metadata.cropyear;
+            if (metadata.farmname && !state.farm.farmName) state.farm.farmName = metadata.farmname;
+            if (metadata.planningyear || metadata.cropyear) state.farm.planningYear = metadata.planningyear || metadata.cropyear;
             if (section === "continuous_learning") {
               ensureLearning();
-              if (metadata.programyear)
-                state.learning.firstYear = /first year/i.test(
-                  metadata.programyear,
-                )
-                  ? "Yes"
-                  : "No";
-              if (metadata.revenuetier)
-                state.learning.grossRevenue = /under/i.test(
-                  metadata.revenuetier,
-                )
-                  ? "under 150000"
-                  : "150000 or more";
-              if (
-                metadata.requiredstaff &&
-                !/n\/a/i.test(metadata.requiredstaff)
-              )
-                state.learning.staffDecisionMakers = metadata.requiredstaff;
+              if (metadata.programyear) state.learning.firstYear = /first year/i.test(metadata.programyear) ? "Yes" : "No";
+              if (metadata.revenuetier) state.learning.grossRevenue = /under/i.test(metadata.revenuetier) ? "under 150000" : "150000 or more";
+              if (metadata.requiredstaff && !/n\/a/i.test(metadata.requiredstaff)) state.learning.staffDecisionMakers = metadata.requiredstaff;
             }
             if (!rows.length) {
               alert("No rows found in CSV.");
@@ -4080,11 +3986,7 @@
               c.tillageRows.push({
                 date: rowVal(r, ["date", "tillageDate", "Tillage Date"]),
                 depthIn: rowVal(r, ["depthIn", "Depth (in)", "depth"]),
-                implement: rowVal(r, [
-                  "implement",
-                  "Implement",
-                  "Tillage Implement",
-                ]),
+                implement: rowVal(r, ["implement", "Implement", "Tillage Implement"]),
                 tillageType: rowVal(r, ["tillageType", "Tillage Type", "Type"]),
                 disturbed:
                   rowVal(r, [
@@ -4207,23 +4109,13 @@
                 "Date",
                 "date",
               ]),
-              pest: rowVal(r, [
-                "pest",
-                "Target Pest",
-                "Weed Or Pest",
-                "Weed or Pest",
-              ]),
+              pest: rowVal(r, ["pest", "Target Pest", "Weed Or Pest", "Weed or Pest"]),
               productName: rowVal(r, [
                 "productName",
                 "Product Name",
                 "product",
               ]),
-              epaRegNo: rowVal(r, [
-                "epaRegNo",
-                "EPA Reg No",
-                "EPA Registration Number",
-                "epa",
-              ]),
+              epaRegNo: rowVal(r, ["epaRegNo", "EPA Reg No", "EPA Registration Number", "epa"]),
               labelCategory: rowVal(r, [
                 "labelCategory",
                 "Label Category",
@@ -4238,8 +4130,7 @@
                 "RUP",
                 "RUP?",
               ]),
-              unit:
-                rowVal(r, ["unit", "Unit", "Unit (e.g. gal/ac)"]) || "lb/acre",
+              unit: rowVal(r, ["unit", "Unit", "Unit (e.g. gal/ac)"]) || "lb/acre",
               amountAcre: rowVal(r, [
                 "amountAcre",
                 "Amount/ac",
@@ -5580,9 +5471,7 @@ ${acreChangePanel()}
         let out = [];
         if (String(c.noTill) === "true" || c.noTill === true) {
           out.push("No Till / Direct Seed");
-          out.push(
-            `No-Till Drill Used: ${c.noTillDrillUsed || "Not answered"}`,
-          );
+          out.push(`No-Till Drill Used: ${c.noTillDrillUsed || "Not answered"}`);
         }
         let tills = (c.tillageRows || [])
           .map((r) => r.tillageType || r.implement)
@@ -5653,19 +5542,15 @@ ${acreChangePanel()}
         if (!e || !e.plantingDate) return "";
         const planted = new Date(`${e.plantingDate}T00:00:00Z`);
         if (isNaN(planted)) return "";
-        return new Date(
-          planted.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000,
-        )
-          .toISOString()
-          .slice(0, 10);
+        return new Date(planted.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000)
+          .toISOString().slice(0, 10);
       }
       function cropFullCoverDate(e) {
         const emergence = cropEmergenceDate(e);
         if (!emergence) return "";
         const emerged = new Date(`${emergence}T00:00:00Z`);
         return new Date(emerged.getTime() + Math.max(0, num(e.dcc)) * 86400000)
-          .toISOString()
-          .slice(0, 10);
+          .toISOString().slice(0, 10);
       }
       function cropLivingRootDays(e) {
         const emergence = cropEmergenceDate(e);
@@ -5673,10 +5558,7 @@ ${acreChangePanel()}
         const a = new Date(`${emergence}T00:00:00Z`);
         let b = new Date(`${e.harvestDate}T00:00:00Z`);
         if (isNaN(b)) return 0;
-        if (b < a)
-          b = new Date(
-            Date.UTC(b.getUTCFullYear() + 1, b.getUTCMonth(), b.getUTCDate()),
-          );
+        if (b < a) b = new Date(Date.UTC(b.getUTCFullYear() + 1, b.getUTCMonth(), b.getUTCDate()));
         return Math.max(0, (b - a) / 86400000);
       }
       function cropCoveredDays(e) {
@@ -5685,10 +5567,7 @@ ${acreChangePanel()}
         const a = new Date(`${fullCover}T00:00:00Z`);
         let b = new Date(`${e.harvestDate}T00:00:00Z`);
         if (isNaN(b)) return 0;
-        if (b < a)
-          b = new Date(
-            Date.UTC(b.getUTCFullYear() + 1, b.getUTCMonth(), b.getUTCDate()),
-          );
+        if (b < a) b = new Date(Date.UTC(b.getUTCFullYear() + 1, b.getUTCMonth(), b.getUTCDate()));
         return Math.max(0, (b - a) / 86400000);
       }
       function lri(e) {
@@ -5754,8 +5633,7 @@ ${acreChangePanel()}
               .rating || 0,
           depthCm = num(r.depthIn) * 2.54,
           acres = cropAcres(crop()) * (num(r.disturbed) / 100),
-          gtir =
-            rating * 3.25 * depthCm * (num(r.disturbed) / 100) * num(r.passes);
+          gtir = rating * 3.25 * depthCm * (num(r.disturbed) / 100) * num(r.passes);
         return `<div class="event-card event-row"><div class="event-header"><span class="event-title e-title">Tillage Event</span><span class="event-status">${gtir ? "Complete" : "Incomplete"}</span><button type="button" class="btn danger" onclick="removeRow('tillageRows',${i})">✕</button></div><div class="event-body"><div class="field"><label>Tillage Date</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.date" type="date" value="${esc(r.date)}"></div><div class="field"><label>Depth (in)</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.depthIn" type="number" min="0" step="0.01" value="${esc(r.depthIn)}" placeholder="0" inputmode="decimal"></div><div class="field span-3"><label>Tillage Implement</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.implement" value="${esc(r.implement)}" placeholder="Disk, ripper, chisel plow..."></div><div class="field span-3"><label>Tillage Type</label><select data-bind="crops.${state.activeCrop}.tillageRows.${i}.tillageType"><option value="">Select tillage type / rating...</option>${TILLAGE_RATINGS.map((x) => `<option value="${x.label}" ${r.tillageType === x.label ? "selected" : ""}>${x.label}</option>`).join("")}</select></div><div class="field"><label>% Disturbed</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.disturbed" type="number" min="0" max="100" step="0.01" value="${esc(r.disturbed)}" placeholder="100" inputmode="decimal"></div><div class="field"><label># Passes</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.passes" type="number" min="0" step="0.01" value="${esc(r.passes)}" placeholder="1" inputmode="decimal"></div><div class="field"><label>Rating</label><div class="readout rating">${fmt(rating)}</div></div><div class="field"><label>Depth (cm)</label><div class="readout depth-cm">${fmt(depthCm)}</div></div><div class="field"><label>Acres Tilled</label><div class="readout acres-tilled">${fmt(acres)}</div></div><div class="field"><label>gTIR</label><div class="readout gtir" style="color:var(--leaf);font-size:18px;">${fmt(gtir)}</div></div><div class="field full"><label>Notes</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.notes" value="${esc(r.notes)}" placeholder="Optional notes..."></div></div></div>`;
       }
       function nutrientPlan() {
@@ -5985,22 +5863,15 @@ ${acreChangePanel()}
       }
       function tillageValue(c) {
         if (!state.tillageEnabled) return 0;
-        if (
-          (String(c.noTill) === "true" || c.noTill === true) &&
-          String(c.noTillDrillUsed || "") !== "Yes"
-        )
-          return 0;
+        if ((String(c.noTill) === "true" || c.noTill === true) && String(c.noTillDrillUsed || "") !== "Yes") return 0;
         if (String(c.noTillDrillUsed || "") === "Yes") syncNoTillDrillEvent(c);
-        const completedEvents = (
-          Array.isArray(c.tillageRows) ? c.tillageRows : []
-        )
+        const completedEvents = (Array.isArray(c.tillageRows) ? c.tillageRows : [])
           .map((r) => {
             const rating =
               num(r.gtirRating) ||
               num(r.tillageRating) ||
-              (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
-                .rating ||
-              0;
+              ((TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
+                .rating || 0);
             const depthCm = num(r.depthIn) * 2.54;
             const disturbedFraction = num(r.disturbed) / 100;
             const passes = num(r.passes);
@@ -6020,21 +5891,16 @@ ${acreChangePanel()}
         // Crop gTIR is the arithmetic average of all completed tillage-event
         // gTIR values documented for this crop in the one-year rotation.
         // No-till crops return zero above.
-        return (
-          completedEvents.reduce((sum, value) => sum + value, 0) /
-          completedEvents.length
-        );
+        return completedEvents.reduce((sum, value) => sum + value, 0) / completedEvents.length;
       }
       function farmWeightedGTIR(crops = state.crops || []) {
         const validCrops = crops.filter((c) => cropAcres(c) > 0);
         const totalAcres = validCrops.reduce((sum, c) => sum + cropAcres(c), 0);
         if (!totalAcres) return 0;
-        return (
-          validCrops.reduce(
-            (sum, c) => sum + tillageValue(c) * cropAcres(c),
-            0,
-          ) / totalAcres
-        );
+        return validCrops.reduce(
+          (sum, c) => sum + tillageValue(c) * cropAcres(c),
+          0,
+        ) / totalAcres;
       }
       function highestCropGTIR(crops = state.crops || []) {
         if (!crops.length) return 0;
@@ -6044,9 +5910,7 @@ ${acreChangePanel()}
         const highest = highestCropGTIR(crops);
         return crops
           .filter((c) => Math.abs(tillageValue(c) - highest) < 0.000001)
-          .map(
-            (c) => c.name || c.cropTypeOther || c.cropType || "Unnamed crop",
-          );
+          .map((c) => c.name || c.cropTypeOther || c.cropType || "Unnamed crop");
       }
       function parseFarmDate(value, year) {
         let v = String(value || "").trim();
@@ -6065,9 +5929,7 @@ ${acreChangePanel()}
         return null;
       }
       function coveredSoilMetrics(c) {
-        const year =
-          Number(state.farm && state.farm.planningYear) ||
-          new Date().getFullYear();
+        const year = Number(state.farm && state.farm.planningYear) || new Date().getFullYear();
         const totalDays = 365;
         const intervals = cropPlannerEntries(c)
           .map(({ entry: e }) => {
@@ -6075,8 +5937,7 @@ ${acreChangePanel()}
             let a = fullCover ? parseFarmDate(fullCover, year) : null;
             let b = parseFarmDate(e.harvestDate, year);
             if (!a || !b) return null;
-            if (b < a)
-              b = new Date(b.getFullYear() + 1, b.getMonth(), b.getDate());
+            if (b < a) b = new Date(b.getFullYear() + 1, b.getMonth(), b.getDate());
             return b > a ? [a, b] : null;
           })
           .filter(Boolean)
@@ -6084,28 +5945,12 @@ ${acreChangePanel()}
         const merged = [];
         intervals.forEach((interval) => {
           const last = merged[merged.length - 1];
-          if (!last || interval[0] > last[1])
-            merged.push([new Date(interval[0]), new Date(interval[1])]);
+          if (!last || interval[0] > last[1]) merged.push([new Date(interval[0]), new Date(interval[1])]);
           else if (interval[1] > last[1]) last[1] = new Date(interval[1]);
         });
-        const coveredDays = Math.min(
-          totalDays,
-          Math.round(
-            merged.reduce(
-              (sum, interval) => sum + (interval[1] - interval[0]) / 86400000,
-              0,
-            ),
-          ),
-        );
+        const coveredDays = Math.min(totalDays, Math.round(merged.reduce((sum, interval) => sum + (interval[1] - interval[0]) / 86400000, 0)));
         const coveredPct = Math.min(100, (coveredDays / totalDays) * 100);
-        return {
-          year,
-          totalDays,
-          coveredDays,
-          coveredPct,
-          bareSoilPct: Math.max(0, 100 - coveredPct),
-          merged,
-        };
+        return { year, totalDays, coveredDays, coveredPct, bareSoilPct: Math.max(0, 100 - coveredPct), merged };
       }
       function farmEstimatedBareSoilPct(crops = state.crops || []) {
         const values = crops.map((c) => ({
@@ -6114,10 +5959,7 @@ ${acreChangePanel()}
         }));
         const totalAcres = values.reduce((sum, item) => sum + item.acres, 0);
         if (totalAcres > 0)
-          return (
-            values.reduce((sum, item) => sum + item.pct * item.acres, 0) /
-            totalAcres
-          );
+          return values.reduce((sum, item) => sum + item.pct * item.acres, 0) / totalAcres;
         return values.length
           ? values.reduce((sum, item) => sum + item.pct, 0) / values.length
           : 100;
@@ -6130,8 +5972,7 @@ ${acreChangePanel()}
             section: "estimated_bare_soil",
             cropNumber: index + 1,
             cropName: c.name || `Crop ${index + 1}`,
-            cropType:
-              c.cropType === "Other" ? c.cropTypeOther || "Other" : c.cropType,
+            cropType: c.cropType === "Other" ? c.cropTypeOther || "Other" : c.cropType,
             acres: cropAcres(c),
             fieldBoundaries: selectedBoundaryNames(c).join("; "),
             planningYear: cover.year,
@@ -6140,15 +5981,10 @@ ${acreChangePanel()}
             estimatedCoveredSoilPct: cover.coveredPct,
             estimatedBareSoilPct: cover.bareSoilPct,
             cropResidueIncluded: "No",
-            finalConclusionRequirement:
-              "Onsite assessment required to evaluate crop residue and make the final soil-cover conclusion",
-            formula:
-              "Estimated Bare Soil % = (1 - merged covered days / 365) * 100",
-            coveredIntervalRule:
-              "Full Soil Cover Date (Emergence Date + DCC) through Harvest / Termination or Maturity Date; overlaps merged",
-            status: cropPlannerEntries(c).some(
-              ({ entry: e }) => e.plantingDate && e.harvestDate,
-            )
+            finalConclusionRequirement: "Onsite assessment required to evaluate crop residue and make the final soil-cover conclusion",
+            formula: "Estimated Bare Soil % = (1 - merged covered days / 365) * 100",
+            coveredIntervalRule: "Full Soil Cover Date (Emergence Date + DCC) through Harvest / Termination or Maturity Date; overlaps merged",
+            status: cropPlannerEntries(c).some(({ entry: e }) => e.plantingDate && e.harvestDate)
               ? "Calculated"
               : "Needs complete crop dates",
           };
@@ -6164,9 +6000,7 @@ ${acreChangePanel()}
             let a = parseFarmDate(e.plantingDate, year),
               b = parseFarmDate(e.harvestDate, year);
             if (!a || !b) return null;
-            a = new Date(
-              a.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000,
-            );
+            a = new Date(a.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000);
             if (b < a)
               b = new Date(b.getFullYear() + 1, b.getMonth(), b.getDate());
             return b > a ? [a, b] : null;
@@ -6279,10 +6113,7 @@ ${acreChangePanel()}
               let a = parseFarmDate(e.plantingDate, m.year),
                 b = parseFarmDate(e.harvestDate, m.year);
               if (a) {
-                a = new Date(
-                  a.getTime() +
-                    Math.max(0, num(e.daysUntilEmergence)) * 86400000,
-                );
+                a = new Date(a.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000);
               }
               if (a && b && b < a)
                 b = new Date(b.getFullYear() + 1, b.getMonth(), b.getDate());
@@ -6896,6 +6727,7 @@ ${acreChangePanel()}
         const index = selections.indexOf(choice);
         if (checked && index < 0) selections.push(choice);
         if (!checked && index >= 0) selections.splice(index, 1);
+        if (choice === "No reduction planned") render();
       }
 
       function continuousImprovementChoices(section, choices) {
@@ -6911,43 +6743,33 @@ ${acreChangePanel()}
       function continuousImprovementValue(section) {
         ensureStateDefaults();
         const value = state.continuousImprovement[section];
-        value.cropSelections = (
-          Array.isArray(value.cropSelections) ? value.cropSelections : []
-        )
+        value.cropSelections = (Array.isArray(value.cropSelections)
+          ? value.cropSelections
+          : [])
           .map(String)
-          .filter(
-            (id) =>
-              Number.isInteger(Number(id)) &&
-              Number(id) >= 0 &&
-              Number(id) < (state.crops || []).length,
-          );
-        value.boundaryIds = (
-          Array.isArray(value.boundaryIds) ? value.boundaryIds : []
-        )
+          .filter((id) => Number.isInteger(Number(id)) && Number(id) >= 0 && Number(id) < (state.crops || []).length);
+        value.boundaryIds = (Array.isArray(value.boundaryIds)
+          ? value.boundaryIds
+          : [])
           .map(String)
-          .filter((id) =>
-            (state.kmlBoundaries || []).some((b) => String(b.id) === id),
-          );
+          .filter((id) => (state.kmlBoundaries || []).some((b) => String(b.id) === id));
         return value;
       }
 
       function continuousImprovementCropNames(section) {
-        return continuousImprovementValue(section)
-          .cropSelections.map((id) => {
+        return continuousImprovementValue(section).cropSelections
+          .map((id) => {
             const c = (state.crops || [])[Number(id)];
             return c
-              ? c.name ||
-                  c.cropTypeOther ||
-                  c.cropType ||
-                  `Crop ${Number(id) + 1}`
+              ? c.name || c.cropTypeOther || c.cropType || `Crop ${Number(id) + 1}`
               : "";
           })
           .filter(Boolean);
       }
 
       function continuousImprovementBoundaryNames(section) {
-        return continuousImprovementValue(section)
-          .boundaryIds.map(boundaryName)
+        return continuousImprovementValue(section).boundaryIds
+          .map(boundaryName)
           .filter(Boolean);
       }
 
@@ -6971,20 +6793,14 @@ ${acreChangePanel()}
         const cropSummary = document.getElementById(`ciCropSummary${did}`);
         const cropCount = document.getElementById(`ciCropCount${did}`);
         const cropDetails = document.getElementById(`ciCropDetails${did}`);
-        const boundarySummary = document.getElementById(
-          `ciBoundarySummary${did}`,
-        );
+        const boundarySummary = document.getElementById(`ciBoundarySummary${did}`);
         const boundaryCount = document.getElementById(`ciBoundaryCount${did}`);
-        const boundaryDetails = document.getElementById(
-          `ciBoundaryDetails${did}`,
-        );
-        if (cropSummary)
-          cropSummary.textContent = continuousImprovementCropSummary(section);
+        const boundaryDetails = document.getElementById(`ciBoundaryDetails${did}`);
+        if (cropSummary) cropSummary.textContent = continuousImprovementCropSummary(section);
         if (cropCount)
           cropCount.textContent = `${value.cropSelections.length} of ${(state.crops || []).length} selected`;
         if (boundarySummary)
-          boundarySummary.textContent =
-            continuousImprovementBoundarySummary(section);
+          boundarySummary.textContent = continuousImprovementBoundarySummary(section);
         if (boundaryCount)
           boundaryCount.textContent = `${value.boundaryIds.length} of ${(state.kmlBoundaries || []).length} selected`;
         if (cropDetails) cropDetails.open = true;
@@ -6995,10 +6811,8 @@ ${acreChangePanel()}
         saveInputs();
         const value = continuousImprovementValue(section);
         const id = String(cropIndex);
-        if (on && !value.cropSelections.includes(id))
-          value.cropSelections.push(id);
-        if (!on)
-          value.cropSelections = value.cropSelections.filter((x) => x !== id);
+        if (on && !value.cropSelections.includes(id)) value.cropSelections.push(id);
+        if (!on) value.cropSelections = value.cropSelections.filter((x) => x !== id);
         refreshContinuousImprovementApplicabilityUI(section);
       }
 
@@ -7047,97 +6861,38 @@ ${acreChangePanel()}
         return `<div class="field full"><h3 style="margin:0">Which crop(s) or field(s) will this apply to?</h3><div class="help">Choose from the crops in Crop Planner and the boundaries imported from the farm KML.</div></div>${cropPicker}${boundaryPicker}`;
       }
 
-      function continuousImprovementSection(
-        section,
-        title,
-        question,
-        choices,
-        result,
-        detailHTML,
-      ) {
-        return `<div class="card"><div class="section-title"><div><h2>${esc(title)}</h2><div class="help">${esc(result)}</div></div></div>${detailHTML}<h3 style="margin-top:18px">${esc(question)}</h3><div class="checks" style="margin-top:10px">${continuousImprovementChoices(section, choices)}</div><div class="input-grid" style="margin-top:14px"><div class="field full"><label>Other</label><input data-bind="continuousImprovement.${section}.other" value="${esc(state.continuousImprovement[section].other)}" placeholder="Describe another planned action"></div><div class="field full"><label>Briefly describe the planned change</label><textarea data-bind="continuousImprovement.${section}.plannedChange" placeholder="Describe the planned change">${esc(state.continuousImprovement[section].plannedChange)}</textarea></div>${continuousImprovementApplicabilityPicker(section)}<div class="field full"><label class="check" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--soft)"><input type="checkbox" data-bind="continuousImprovement.${section}.committed" ${state.continuousImprovement[section].committed ? "checked" : ""}><span><strong>I commit to changes</strong></span></label></div></div></div>`;
+      function continuousImprovementSection(section, title, question, choices, result, detailHTML) {
+        const noReductionSelected = (state.continuousImprovement[section].selections || []).includes("No reduction planned");
+        return `<div class="card"><div class="section-title"><div><h2>${esc(title)}</h2><div class="help">${esc(result)}</div></div></div>${detailHTML}<h3 style="margin-top:18px">${esc(question)}</h3><div class="checks" style="margin-top:10px">${continuousImprovementChoices(section, choices)}</div><div class="input-grid" style="margin-top:14px"><div class="field full"><label>Other</label><input data-bind="continuousImprovement.${section}.other" value="${esc(state.continuousImprovement[section].other)}" placeholder="Describe another planned action"></div><div class="field full"><label>Briefly describe the planned change</label><textarea data-bind="continuousImprovement.${section}.plannedChange" placeholder="Describe the planned change">${esc(state.continuousImprovement[section].plannedChange)}</textarea></div>${noReductionSelected ? `<div class="field full"><label>Why is no reduction planned?</label><div class="help" style="margin-bottom:6px">Since "No reduction planned" is selected, briefly explain why (e.g. already at minimum, not applicable this year, cost/equipment constraints).</div><textarea data-bind="continuousImprovement.${section}.noReductionReason" placeholder="Explain why no reduction is planned">${esc(state.continuousImprovement[section].noReductionReason || "")}</textarea></div>` : ""}${continuousImprovementApplicabilityPicker(section)}<div class="field full"><label class="check" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--soft)"><input type="checkbox" data-bind="continuousImprovement.${section}.committed" ${state.continuousImprovement[section].committed ? "checked" : ""}><span><strong>I commit to changes</strong></span></label></div></div></div>`;
       }
 
       function continuousImprovementIPMDetail() {
         const rows = [];
-        state.crops.forEach((c) =>
-          (c.ipmRows || []).forEach((r) => {
-            if (
-              !(
-                r.productName ||
-                r.pest ||
-                num(r.amountAcre) ||
-                num(r.activePct)
-              )
-            )
-              return;
-            const area = num(r.areaApplied) || cropAcres(c);
-            const aiPerAcre = (num(r.amountAcre) * num(r.activePct)) / 100;
-            const totalAI = aiPerAcre * area;
-            rows.push(
-              `<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>${esc(r.pest || "—")}</td><td>${esc(r.productName || "—")}</td><td>${esc(r.applicationDate || "—")}</td><td>${fmt(r.amountAcre, 3)} ${esc(r.unit || "")}</td><td>${fmt(r.activePct, 2)}%</td><td>${fmt(area, 2)}</td><td>${fmt(aiPerAcre, 3)}</td><td>${fmt(totalAI, 3)}</td><td>${esc(r.applicationMethod || "—")}</td><td>${esc(r.labelCategory || "—")}</td><td>${esc(r.restrictedUsePesticide || "—")}</td></tr>`,
-            );
-          }),
-        );
-        const total = state.crops.reduce(
-          (sum, c) =>
-            sum +
-            (c.ipmRows || []).reduce(
-              (s, r) =>
-                s +
-                ((num(r.amountAcre) * num(r.activePct)) / 100) *
-                  (num(r.areaApplied) || cropAcres(c)),
-              0,
-            ),
-          0,
-        );
+        state.crops.forEach((c) => (c.ipmRows || []).forEach((r) => {
+          if (!(r.productName || r.pest || num(r.amountAcre) || num(r.activePct))) return;
+          const area = num(r.areaApplied) || cropAcres(c);
+          const aiPerAcre = num(r.amountAcre) * num(r.activePct) / 100;
+          const totalAI = aiPerAcre * area;
+          rows.push(`<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>${esc(r.pest || "—")}</td><td>${esc(r.productName || "—")}</td><td>${esc(r.applicationDate || "—")}</td><td>${fmt(r.amountAcre, 3)} ${esc(r.unit || "")}</td><td>${fmt(r.activePct, 2)}%</td><td>${fmt(area, 2)}</td><td>${fmt(aiPerAcre, 3)}</td><td>${fmt(totalAI, 3)}</td><td>${esc(r.applicationMethod || "—")}</td><td>${esc(r.labelCategory || "—")}</td><td>${esc(r.restrictedUsePesticide || "—")}</td></tr>`);
+        }));
+        const total = state.crops.reduce((sum, c) => sum + (c.ipmRows || []).reduce((s, r) => s + (num(r.amountAcre) * num(r.activePct) / 100) * (num(r.areaApplied) || cropAcres(c)), 0), 0);
         return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Active ingredient per acre = Amount per acre × (Active ingredient % ÷ 100). Total active ingredient = Active ingredient per acre × Area applied.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(total, 3)}</div><div class="label">Total active ingredient, entered units</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Pest</th><th>Product</th><th>Date</th><th>Rate/ac</th><th>Active %</th><th>Acres</th><th>Active/ac</th><th>Total active</th><th>Method</th><th>Label</th><th>RUP?</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="12">No completed IPM practice records entered.</td></tr>`}</tbody></table></div>`;
       }
 
       function continuousImprovementNutrientDetail() {
         const rows = [];
         const supporting = [];
-        let totalN = 0,
-          totalP = 0,
-          totalK = 0;
+        let totalN = 0, totalP = 0, totalK = 0;
         state.crops.forEach((c) => {
-          const cropName =
-              c.name || c.cropTypeOther || c.cropType || "Unnamed crop",
-            acres = cropAcres(c);
+          const cropName = c.name || c.cropTypeOther || c.cropType || "Unnamed crop", acres = cropAcres(c);
           (c.fertilizerRows || []).forEach((r) => {
-            if (
-              !(
-                r.productName ||
-                num(r.rateAcre) ||
-                num(r.nPct) ||
-                num(r.pPct) ||
-                num(r.kPct)
-              )
-            )
-              return;
-            const lbs = fertilizerProductLbsPerAcre(r),
-              n = fertilizerNutrientLbsPerAcre(r, "nPct"),
-              p = fertilizerNutrientLbsPerAcre(r, "pPct"),
-              k = fertilizerNutrientLbsPerAcre(r, "kPct");
-            totalN += n * acres;
-            totalP += p * acres;
-            totalK += k * acres;
-            rows.push(
-              `<tr><td>${esc(cropName)}</td><td>${esc(r.productName || "—")}</td><td>${esc(r.applicationDate || "—")}</td><td>${fmt(r.rateAcre, 2)} ${esc(r.unit || "")}</td><td>${fmt(r.productLbsPerGallon, 2)}</td><td>${fmt(lbs, 2)}</td><td>${fmt(r.nPct, 2)}-${fmt(r.pPct, 2)}-${fmt(r.kPct, 2)}</td><td>${fmt(n, 2)}</td><td>${fmt(p, 2)}</td><td>${fmt(k, 2)}</td><td>${fmt(acres, 2)}</td></tr>`,
-            );
+            if (!(r.productName || num(r.rateAcre) || num(r.nPct) || num(r.pPct) || num(r.kPct))) return;
+            const lbs = fertilizerProductLbsPerAcre(r), n = fertilizerNutrientLbsPerAcre(r, "nPct"), p = fertilizerNutrientLbsPerAcre(r, "pPct"), k = fertilizerNutrientLbsPerAcre(r, "kPct");
+            totalN += n * acres; totalP += p * acres; totalK += k * acres;
+            rows.push(`<tr><td>${esc(cropName)}</td><td>${esc(r.productName || "—")}</td><td>${esc(r.applicationDate || "—")}</td><td>${fmt(r.rateAcre, 2)} ${esc(r.unit || "")}</td><td>${fmt(r.productLbsPerGallon, 2)}</td><td>${fmt(lbs, 2)}</td><td>${fmt(r.nPct, 2)}-${fmt(r.pPct, 2)}-${fmt(r.kPct, 2)}</td><td>${fmt(n, 2)}</td><td>${fmt(p, 2)}</td><td>${fmt(k, 2)}</td><td>${fmt(acres, 2)}</td></tr>`);
           });
-          (c.microRows || []).forEach((r) => {
-            if (r.name || num(r.rate))
-              supporting.push(
-                `<tr><td>${esc(cropName)}</td><td>Micronutrient / fertility pack</td><td>${esc(r.name || "—")}</td><td>${esc(r.contains || "—")}</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`,
-              );
-          });
-          (c.amendmentRows || []).forEach((r) => {
-            if (r.name || num(r.rate))
-              supporting.push(
-                `<tr><td>${esc(cropName)}</td><td>${esc(r.type || "Organic input")}</td><td>${esc(r.name || "—")}</td><td>Organic nutrient source</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`,
-              );
-          });
+          (c.microRows || []).forEach((r) => { if (r.name || num(r.rate)) supporting.push(`<tr><td>${esc(cropName)}</td><td>Micronutrient / fertility pack</td><td>${esc(r.name || "—")}</td><td>${esc(r.contains || "—")}</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`); });
+          (c.amendmentRows || []).forEach((r) => { if (r.name || num(r.rate)) supporting.push(`<tr><td>${esc(cropName)}</td><td>${esc(r.type || "Organic input")}</td><td>${esc(r.name || "—")}</td><td>Organic nutrient source</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`); });
         });
         return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Equivalent product lb/ac = entered rate (tons × 2,000; gallons × density; fluid oz ÷ 128 × density; pounds unchanged). Nutrient lb/ac = Equivalent product lb/ac × (nutrient % ÷ 100). Total nutrient = Nutrient lb/ac × crop acres.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(totalN, 2)}</div><div class="label">Total N lb</div></div><div class="metric"><div class="value">${fmt(totalP, 2)}</div><div class="label">Total P lb</div></div><div class="metric"><div class="value">${fmt(totalK, 2)}</div><div class="label">Total K lb</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Product</th><th>Date</th><th>Rate/ac</th><th>Density</th><th>Eq. lb/ac</th><th>N-P-K %</th><th>N lb/ac</th><th>P lb/ac</th><th>K lb/ac</th><th>Acres</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="11">No completed fertilizer practice records entered.</td></tr>`}</tbody></table></div><div class="zone-frost-box" style="margin-top:14px"><div class="zone-frost-head"><div><h4>Nutrient Baseline Extension Benchmark</h4><div class="help">Copy a simple Perplexity prompt that compares the complete table above with fertilizer recommendations for the Farm Details state.</div><div class="lookup-prompt">Perplexity is instructed to return one clean, plain-language paragraph that is ready to paste below.</div></div><div class="lookup-actions"><a class="btn ghost" href="https://www.perplexity.ai/" target="_blank" rel="noopener">Open Perplexity</a><button type="button" class="btn secondary" onclick="copyNutrientExtensionBenchmarkPrompt()">Copy Perplexity Prompt</button></div></div><div class="field full" style="margin-top:14px"><label>Extension Benchmarking Results</label><div class="help" style="margin-bottom:6px">Paste the completed Perplexity paragraph here. It will be included in the PDF and Continuous Improvement CSV.</div><textarea data-bind="continuousImprovement.nutrient.benchmarkResults" placeholder="Paste the plain-language Extension benchmark paragraph here.">${esc((state.continuousImprovement.nutrient || {}).benchmarkResults || "")}</textarea></div></div><h3 style="margin-top:14px">Supporting nutrient practices</h3><div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>Crop</th><th>Practice type</th><th>Product/source</th><th>Contents/purpose</th><th>Rate/ac</th><th>Total product</th></tr></thead><tbody>${supporting.join("") || `<tr><td colspan="6">No micronutrient or organic-input practices entered.</td></tr>`}</tbody></table></div>`;
       }
@@ -7145,30 +6900,13 @@ ${acreChangePanel()}
       function continuousImprovementTillageDetail() {
         const rows = [];
         state.crops.forEach((c) => {
-          if (
-            (String(c.noTill) === "true" || c.noTill === true) &&
-            String(c.noTillDrillUsed || "") !== "Yes"
-          )
-            rows.push(
-              `<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>No Till / Direct Seed</td><td colspan="7">No no-till drill pass recorded; crop gTIR = 0.00</td></tr>`,
-            );
+          if ((String(c.noTill) === "true" || c.noTill === true) && String(c.noTillDrillUsed || "") !== "Yes") rows.push(`<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>No Till / Direct Seed</td><td colspan="7">No no-till drill pass recorded; crop gTIR = 0.00</td></tr>`);
           else {
-            if (String(c.noTillDrillUsed || "") === "Yes")
-              syncNoTillDrillEvent(c);
+            if (String(c.noTillDrillUsed || "") === "Yes") syncNoTillDrillEvent(c);
             (c.tillageRows || []).forEach((r) => {
-              if (!(r.implement || r.tillageType || num(r.depthIn))) return;
-              const rating =
-                  num(r.gtirRating) ||
-                  num(r.tillageRating) ||
-                  (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
-                    .rating ||
-                  0,
-                depthCm = num(r.depthIn) * 2.54,
-                fraction = num(r.disturbed) / 100,
-                event = rating * 3.25 * depthCm * fraction * num(r.passes);
-              rows.push(
-                `<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>${esc(r.implement || "—")}</td><td>${esc(r.tillageType || "—")}</td><td>${fmt(rating, 2)}</td><td>${fmt(r.depthIn, 2)} in / ${fmt(depthCm, 2)} cm</td><td>${fmt(r.disturbed, 2)}%</td><td>${fmt(r.passes, 2)}</td><td>${fmt(event, 2)}</td><td>${fmt(tillageValue(c), 2)}</td></tr>`,
-              );
+            if (!(r.implement || r.tillageType || num(r.depthIn))) return;
+            const rating = num(r.gtirRating) || num(r.tillageRating) || ((TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {}).rating || 0), depthCm = num(r.depthIn) * 2.54, fraction = num(r.disturbed) / 100, event = rating * 3.25 * depthCm * fraction * num(r.passes);
+            rows.push(`<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>${esc(r.implement || "—")}</td><td>${esc(r.tillageType || "—")}</td><td>${fmt(rating, 2)}</td><td>${fmt(r.depthIn, 2)} in / ${fmt(depthCm, 2)} cm</td><td>${fmt(r.disturbed, 2)}%</td><td>${fmt(r.passes, 2)}</td><td>${fmt(event, 2)}</td><td>${fmt(tillageValue(c), 2)}</td></tr>`);
             });
           }
         });
@@ -7178,14 +6916,8 @@ ${acreChangePanel()}
       function continuousImprovementPage() {
         const acres = state.crops.reduce((sum, c) => sum + cropAcres(c), 0);
         const avgTillage = highestCropGTIR(state.crops);
-        const ipmEntries = state.crops.reduce(
-          (sum, c) => sum + (c.ipmRows || []).length,
-          0,
-        );
-        const nutrientEntries = state.crops.reduce(
-          (sum, c) => sum + (c.fertilizerRows || []).length,
-          0,
-        );
+        const ipmEntries = state.crops.reduce((sum, c) => sum + (c.ipmRows || []).length, 0);
+        const nutrientEntries = state.crops.reduce((sum, c) => sum + (c.fertilizerRows || []).length, 0);
         return `${stepBar()}<main class="page"><div class="card ok-note"><h2>Continuous Improvement</h2><div class="help">Review the detailed IPM, Nutrient Management, and Tillage practices and calculations below, then select all planned changes that apply for next year.</div></div>${continuousImprovementSection("ipm", "IPM", "Based on your IPM results, how do you plan to reduce pesticide intensity next year?", ["Reduce application rates", "Eliminate one or more applications", "Replace higher-toxicity products with lower-toxicity products", "Increase scouting or monitoring", "Use more cultural, mechanical, physical, or biological controls", "No reduction planned", "Other"], `${ipmEntries} IPM entr${ipmEntries === 1 ? "y" : "ies"} recorded in the IPM Plan.`, continuousImprovementIPMDetail())}${continuousImprovementSection("nutrient", "Nutrient Management", "Based on your nutrient management results, how do you plan to reduce synthetic fertilizer application rates next year?", ["Adjust rates using soil or tissue test results", "Improve application timing", "Improve fertilizer placement", "Use a more efficient fertilizer source", "Increase organic nutrient sources", "Add legumes or cover crops", "No reduction planned", "Other"], `${nutrientEntries} fertilizer entr${nutrientEntries === 1 ? "y" : "ies"} recorded in the Nutrient Management Plan.`, continuousImprovementNutrientDetail())}${continuousImprovementSection("tillage", "Tillage", "Based on your tillage intensity results, how do you plan to reduce tillage intensity next year?", ["Eliminate one or more tillage passes", "Use a lower-intensity tillage method", "Reduce tillage depth", "Combine field operations", "Transition acres to reduced tillage", "Transition acres to no-till", "No reduction planned", "Other"], `Highest crop tillage result: ${fmt(avgTillage, 1)} gTIR across ${fmt(acres, 1)} acres.`, continuousImprovementTillageDetail())}${nav(13, 15)}</main>`;
       }
 
@@ -7194,67 +6926,35 @@ ${acreChangePanel()}
         const config = {
           ipm: {
             category: "IPM",
-            question:
-              "Based on your IPM results, how do you plan to reduce pesticide intensity next year?",
+            question: "Based on your IPM results, how do you plan to reduce pesticide intensity next year?",
             resultSummary: () => {
               const details = [];
-              (state.crops || []).forEach((c) =>
-                (c.ipmRows || []).forEach((r) => {
-                  if (
-                    !(
-                      r.productName ||
-                      r.pest ||
-                      num(r.amountAcre) ||
-                      num(r.activePct)
-                    )
-                  )
-                    return;
-                  const area = num(r.areaApplied) || cropAcres(c);
-                  const aiPerAcre =
-                    (num(r.amountAcre) * num(r.activePct)) / 100;
-                  details.push(
-                    `${c.name || "Unnamed crop"}: ${r.productName || r.pest || "IPM entry"}; active ingredient/ac ${fmt(aiPerAcre, 3)}; total active ingredient ${fmt(aiPerAcre * area, 3)}`,
-                  );
-                }),
-              );
+              (state.crops || []).forEach((c) => (c.ipmRows || []).forEach((r) => {
+                if (!(r.productName || r.pest || num(r.amountAcre) || num(r.activePct))) return;
+                const area = num(r.areaApplied) || cropAcres(c);
+                const aiPerAcre = num(r.amountAcre) * num(r.activePct) / 100;
+                details.push(`${c.name || "Unnamed crop"}: ${r.productName || r.pest || "IPM entry"}; active ingredient/ac ${fmt(aiPerAcre, 3)}; total active ingredient ${fmt(aiPerAcre * area, 3)}`);
+              }));
               return details.join(" | ") || "No completed IPM practice records";
             },
           },
           nutrient: {
             category: "Nutrient Management",
-            question:
-              "Based on your nutrient management results, how do you plan to reduce synthetic fertilizer application rates next year?",
+            question: "Based on your nutrient management results, how do you plan to reduce synthetic fertilizer application rates next year?",
             resultSummary: () => {
               const details = [];
-              (state.crops || []).forEach((c) =>
-                (c.fertilizerRows || []).forEach((r) => {
-                  if (
-                    !(
-                      r.productName ||
-                      num(r.rateAcre) ||
-                      num(r.nPct) ||
-                      num(r.pPct) ||
-                      num(r.kPct)
-                    )
-                  )
-                    return;
-                  const lbs = fertilizerProductLbsPerAcre(r);
-                  details.push(
-                    `${c.name || "Unnamed crop"}: ${r.productName || "Fertilizer"}; product ${fmt(lbs, 2)} lb/ac; N ${fmt((lbs * num(r.nPct)) / 100, 2)}, P ${fmt((lbs * num(r.pPct)) / 100, 2)}, K ${fmt((lbs * num(r.kPct)) / 100, 2)} lb/ac`,
-                  );
-                }),
-              );
-              return (
-                details.join(" | ") || "No completed nutrient practice records"
-              );
+              (state.crops || []).forEach((c) => (c.fertilizerRows || []).forEach((r) => {
+                if (!(r.productName || num(r.rateAcre) || num(r.nPct) || num(r.pPct) || num(r.kPct))) return;
+                const lbs = fertilizerProductLbsPerAcre(r);
+                details.push(`${c.name || "Unnamed crop"}: ${r.productName || "Fertilizer"}; product ${fmt(lbs, 2)} lb/ac; N ${fmt(lbs * num(r.nPct) / 100, 2)}, P ${fmt(lbs * num(r.pPct) / 100, 2)}, K ${fmt(lbs * num(r.kPct) / 100, 2)} lb/ac`);
+              }));
+              return details.join(" | ") || "No completed nutrient practice records";
             },
           },
           tillage: {
             category: "Tillage",
-            question:
-              "Based on your tillage intensity results, how do you plan to reduce tillage intensity next year?",
-            resultSummary: () =>
-              `Farm acreage-weighted gTIR ${fmt(farmWeightedGTIR(state.crops || []), 2)}; highest crop gTIR ${fmt(highestCropGTIR(state.crops || []), 2)}; crop results: ${(state.crops || []).map((c) => `${c.name || "Unnamed crop"} ${fmt(tillageValue(c), 2)}`).join(" | ") || "none"}`,
+            question: "Based on your tillage intensity results, how do you plan to reduce tillage intensity next year?",
+            resultSummary: () => `Farm acreage-weighted gTIR ${fmt(farmWeightedGTIR(state.crops || []), 2)}; highest crop gTIR ${fmt(highestCropGTIR(state.crops || []), 2)}; crop results: ${(state.crops || []).map((c) => `${c.name || "Unnamed crop"} ${fmt(tillageValue(c), 2)}`).join(" | ") || "none"}`,
           },
         };
         return ["ipm", "nutrient", "tillage"].map((key) => {
@@ -7268,8 +6968,7 @@ ${acreChangePanel()}
             ...(legacyCropsFields ? [legacyCropsFields] : []),
           ].join("; ");
           const committed =
-            value.committed === true ||
-            String(value.committed).toLowerCase() === "true";
+            value.committed === true || String(value.committed).toLowerCase() === "true";
           const hasEnteredData = !!(
             (value.selections || []).length ||
             value.cropSelections.length ||
@@ -7306,8 +7005,7 @@ ${acreChangePanel()}
         let avg = highestCropGTIR(state.crops);
         let estimatedBareSoilPct = farmEstimatedBareSoilPct(state.crops);
         let bareSoilByCrop = state.crops.map(
-          (c) =>
-            `${c.name || c.cropTypeOther || c.cropType || "Unnamed crop"}: ${fmt(coveredSoilMetrics(c).bareSoilPct, 2)}%`,
+          (c) => `${c.name || c.cropTypeOther || c.cropType || "Unnamed crop"}: ${fmt(coveredSoilMetrics(c).bareSoilPct, 2)}%`,
         );
         let plannerEntries = state.crops.reduce(
           (s, c) =>
@@ -7447,9 +7145,7 @@ ${acreChangePanel()}
             status: pelCalc.P3.level,
             evidence: [
               `Farm acreage-weighted Estimated Bare Soil: ${fmt(estimatedBareSoilPct, 2)}%`,
-              ...bareSoilByCrop.map(
-                (value) => `Estimated Bare Soil % — ${value}`,
-              ),
+              ...bareSoilByCrop.map((value) => `Estimated Bare Soil % — ${value}`),
               "Crop residue is not included in Estimated Bare Soil %. An onsite assessment is required to evaluate residue and make the final soil-cover conclusion.",
             ],
           },
@@ -7539,16 +7235,8 @@ ${acreChangePanel()}
             fmt(acres, 1),
             "KML-selected crop acres when boundaries are assigned",
           ],
-          [
-            "Highest Crop TI",
-            fmt(avg, 1),
-            "P1 is determined by the crop with the highest one-year TI",
-          ],
-          [
-            "Estimated Bare Soil",
-            `${fmt(estimatedBareSoilPct, 2)}%`,
-            "Acreage-weighted estimate; residue excluded and onsite assessment required",
-          ],
+          ["Highest Crop TI", fmt(avg, 1), "P1 is determined by the crop with the highest one-year TI"],
+          ["Estimated Bare Soil", `${fmt(estimatedBareSoilPct, 2)}%`, "Acreage-weighted estimate; residue excluded and onsite assessment required"],
         ]
           .map(
             (m) =>
@@ -8300,10 +7988,7 @@ ${acreChangePanel()}
               status: "Not Applicable",
               notes: (state.skippedReasons || {}).tillage || "",
             });
-          else if (
-            (String(c.noTill) === "true" || c.noTill === true) &&
-            String(c.noTillDrillUsed || "") !== "Yes"
-          )
+          else if ((String(c.noTill) === "true" || c.noTill === true) && String(c.noTillDrillUsed || "") !== "Yes")
             rows.push({
               ...base,
               section: "tillage_intensity",
@@ -8311,15 +7996,15 @@ ${acreChangePanel()}
               gTIR: 0,
             });
           else {
-            if (String(c.noTillDrillUsed || "") === "Yes")
-              syncNoTillDrillEvent(c);
+            if (String(c.noTillDrillUsed || "") === "Yes") syncNoTillDrillEvent(c);
             const cropTotalGTIR = tillageValue(c);
             c.tillageRows.forEach((r) => {
               const tillageRating =
                 (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
                   .rating || 0;
               const depthCm = num(r.depthIn) * 2.54;
-              const acresTilled = cropAcres(c) * (num(r.disturbed) / 100);
+              const acresTilled =
+                cropAcres(c) * (num(r.disturbed) / 100);
               const eventGTIR =
                 tillageRating *
                 3.25 *
@@ -8369,14 +8054,16 @@ ${acreChangePanel()}
               });
             });
           if (dieselActive())
-            (c.dieselRows || []).filter(dieselRowHasData).forEach((r) =>
-              rows.push({
-                ...base,
-                section: "diesel_log",
-                ...r,
-                totalDiesel: dieselTotal(r),
-              }),
-            );
+            (c.dieselRows || [])
+              .filter(dieselRowHasData)
+              .forEach((r) =>
+                rows.push({
+                  ...base,
+                  section: "diesel_log",
+                  ...r,
+                  totalDiesel: dieselTotal(r),
+                }),
+              );
           if (state.irrigationEnabled)
             c.irrigationRows.forEach((r) =>
               rows.push({
@@ -8887,18 +8574,11 @@ ${acreChangePanel()}
 
         section(7, "Crop Calendar and Estimated Bare Soil");
         (state.crops || []).forEach((c) => {
-          const root = livingRootMetrics(c),
-            cover = coveredSoilMetrics(c);
-          bullet(
-            `${c.name || c.cropTypeOther || c.cropType || "Unnamed crop"}: LRI ${fmt(root.pct, 2)}% (${root.activityDays} merged living-root days); Estimated Covered Soil ${fmt(cover.coveredPct, 2)}% (${cover.coveredDays} merged covered days); Estimated Bare Soil % = ${fmt(cover.bareSoilPct, 2)}%.`,
-          );
+          const root = livingRootMetrics(c), cover = coveredSoilMetrics(c);
+          bullet(`${c.name || c.cropTypeOther || c.cropType || "Unnamed crop"}: LRI ${fmt(root.pct, 2)}% (${root.activityDays} merged living-root days); Estimated Covered Soil ${fmt(cover.coveredPct, 2)}% (${cover.coveredDays} merged covered days); Estimated Bare Soil % = ${fmt(cover.bareSoilPct, 2)}%.`);
         });
-        bullet(
-          `Farm acreage-weighted Estimated Bare Soil %: ${fmt(farmEstimatedBareSoilPct(state.crops || []), 2)}%.`,
-        );
-        bullet(
-          "Important limitation: Crop residue is not included in Estimated Bare Soil %. An onsite assessment is required to evaluate residue and make the final soil-cover conclusion.",
-        );
+        bullet(`Farm acreage-weighted Estimated Bare Soil %: ${fmt(farmEstimatedBareSoilPct(state.crops || []), 2)}%.`);
+        bullet("Important limitation: Crop residue is not included in Estimated Bare Soil %. An onsite assessment is required to evaluate residue and make the final soil-cover conclusion.");
         if (!cropPlannerRows.length)
           bullet("No crop calendar records entered.");
         else
@@ -9651,10 +9331,7 @@ Have ready:
                 name: name.split("/").pop() || "CALL_TRANSCRIPT.docx",
                 bytes: new Uint8Array(entryBytes),
               };
-              if (
-                /CALL[_ -]?TRANSCRIPT/i.test(name) ||
-                /transcript/i.test(name)
-              ) {
+              if (/CALL[_ -]?TRANSCRIPT/i.test(name) || /transcript/i.test(name)) {
                 if (!transcript) transcript = candidate;
               } else if (!fallbackTranscript) {
                 fallbackTranscript = candidate;
@@ -9688,9 +9365,7 @@ Have ready:
             const encoded = r.state_json_b64 || r.saved_state_b64 || "";
             const raw = r.state_json || "";
             if (!encoded && !raw)
-              throw new Error(
-                "No saved progress data was found inside the ZIP.",
-              );
+              throw new Error("No saved progress data was found inside the ZIP.");
             const payload = JSON.parse(encoded ? b64ToUtf8(encoded) : raw);
             const saved = payload.state || payload;
 
@@ -9797,130 +9472,59 @@ Have ready:
       function tillageRowsForExport() {
         const rows = [];
         if (!state.tillageEnabled) {
-          return [
-            {
-              cropName: "",
-              acres: "",
-              fieldBoundaries: "",
-              date: "",
-              depthIn: "",
-              depthCm: "",
-              implement: "",
-              tillageType: "",
-              gtirRating: "",
-              disturbed: "",
-              passes: "",
-              acresTilled: "",
-              eventGTIR: "",
-              cropTotalGTIR: "",
-              notes: "",
-              status: "Skipped",
-              reason: (state.skippedReasons || {}).tillage || "",
-            },
-          ];
+          return [{
+            cropName: "", acres: "", fieldBoundaries: "", date: "",
+            depthIn: "", depthCm: "", implement: "", tillageType: "",
+            gtirRating: "", disturbed: "", passes: "", acresTilled: "",
+            eventGTIR: "", cropTotalGTIR: "", notes: "",
+            status: "Skipped", reason: (state.skippedReasons || {}).tillage || ""
+          }];
         }
         (state.crops || []).forEach((c, ci) => {
           const cropName = c.name || `Crop ${ci + 1}`;
           const acres = cropAcres(c);
           const fieldBoundaries = selectedBoundaryNames(c).join(", ");
-          if (
-            (String(c.noTill) === "true" || c.noTill === true) &&
-            String(c.noTillDrillUsed || "") !== "Yes"
-          ) {
+          if ((String(c.noTill) === "true" || c.noTill === true) && String(c.noTillDrillUsed || "") !== "Yes") {
             rows.push({
-              cropName,
-              acres,
-              fieldBoundaries,
-              noTill: "Yes",
-              noTillDrillUsed: c.noTillDrillUsed || "",
-              date: "",
-              depthIn: "",
-              depthCm: "",
-              implement: "",
-              tillageType: "No Till",
-              gtirRating: 0,
-              disturbed: 0,
-              passes: 0,
-              acresTilled: 0,
-              eventGTIR: 0,
-              cropTotalGTIR: 0,
-              notes: "",
-              status: "No Till skipped",
-              reason: "",
+              cropName, acres, fieldBoundaries, noTill: "Yes", noTillDrillUsed: c.noTillDrillUsed || "", date: "", depthIn: "", depthCm: "",
+              implement: "", tillageType: "No Till", gtirRating: 0, disturbed: 0,
+              passes: 0, acresTilled: 0, eventGTIR: 0, cropTotalGTIR: 0,
+              notes: "", status: "No Till skipped", reason: ""
             });
             return;
           }
-          if (String(c.noTillDrillUsed || "") === "Yes")
-            syncNoTillDrillEvent(c);
+          if (String(c.noTillDrillUsed || "") === "Yes") syncNoTillDrillEvent(c);
           const cropTotalGTIR = tillageValue(c);
           const eventRows = Array.isArray(c.tillageRows) ? c.tillageRows : [];
           eventRows.forEach((r) => {
             const gtirRating =
-              num(r.gtirRating) ||
-              num(r.tillageRating) ||
-              (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
-                .rating ||
-              0;
+              num(r.gtirRating) || num(r.tillageRating) ||
+              ((TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {}).rating || 0);
             const depthIn = num(r.depthIn);
             const depthCm = depthIn * 2.54;
             const disturbed = num(r.disturbed);
             const passes = num(r.passes);
             const acresTilled = acres * (disturbed / 100);
-            const eventGTIR =
-              gtirRating * 3.25 * depthCm * (disturbed / 100) * passes;
+            const eventGTIR = gtirRating * 3.25 * depthCm * (disturbed / 100) * passes;
             rows.push({
-              cropName,
-              acres,
-              fieldBoundaries,
-              noTill:
-                String(c.noTill) === "true" || c.noTill === true ? "Yes" : "No",
-              noTillDrillUsed:
-                String(c.noTill) === "true" || c.noTill === true
-                  ? c.noTillDrillUsed || ""
-                  : "N/A",
-              date: r.date || "",
-              depthIn: r.depthIn ?? "",
-              depthCm,
-              implement: r.implement || "",
-              tillageType: r.tillageType || "",
-              gtirRating,
-              disturbed: r.disturbed ?? "",
-              passes: r.passes ?? "",
-              acresTilled,
-              eventGTIR,
-              cropTotalGTIR,
-              notes: r.notes || "",
-              status:
-                eventGTIR || r.date || r.implement || r.tillageType
-                  ? "Complete"
-                  : "Incomplete",
-              reason: "",
+              cropName, acres, fieldBoundaries,
+              noTill: String(c.noTill) === "true" || c.noTill === true ? "Yes" : "No",
+              noTillDrillUsed: String(c.noTill) === "true" || c.noTill === true ? c.noTillDrillUsed || "" : "N/A",
+              date: r.date || "", depthIn: r.depthIn ?? "", depthCm,
+              implement: r.implement || "", tillageType: r.tillageType || "",
+              gtirRating, disturbed: r.disturbed ?? "", passes: r.passes ?? "",
+              acresTilled, eventGTIR, cropTotalGTIR, notes: r.notes || "",
+              status: eventGTIR || r.date || r.implement || r.tillageType ? "Complete" : "Incomplete",
+              reason: ""
             });
           });
         });
-        return rows.length
-          ? rows
-          : [
-              {
-                cropName: "",
-                acres: "",
-                fieldBoundaries: "",
-                date: "",
-                depthIn: "",
-                depthCm: "",
-                implement: "",
-                tillageType: "",
-                gtirRating: "",
-                disturbed: "",
-                passes: "",
-                acresTilled: "",
-                eventGTIR: "",
-                cropTotalGTIR: "",
-                notes: "",
-                status: "Enabled",
-                reason: "",
-              },
-            ];
+        return rows.length ? rows : [{
+          cropName: "", acres: "", fieldBoundaries: "", date: "", depthIn: "",
+          depthCm: "", implement: "", tillageType: "", gtirRating: "",
+          disturbed: "", passes: "", acresTilled: "", eventGTIR: "",
+          cropTotalGTIR: "", notes: "", status: "Enabled", reason: ""
+        }];
       }
 
       function acreChangeRows() {
@@ -10451,260 +10055,90 @@ endstream`)
       // complete combined record; these lists keep only fields owned by each section.
       const SECTION_DATASET_COLUMNS = {
         crop_planner: [
-          "cropName",
-          "cropType",
-          "acres",
-          "fieldBoundaries",
-          "fieldBoundaryCount",
-          "designatedTrafficZones",
-          "designatedTrafficZonesWhyNo",
-          "noTill",
-          "noTillDrillUsed",
-          "nonGmo",
-          "perennialOrOrchard",
-          "perennialSystemType",
-          "perennialEstablishmentYear",
-          "perennialMiddleRowVegetation",
-          "perennialFunctionalMix",
-          "perennialMulchUsed",
-          "perennialBareSoilPct",
-          "perennialBareSoilReductionPlan",
-          "perennialTillageReductionPlan",
-          "perennialDesignatedTrafficAreas",
-          "perennialNotes",
-          "plantingDate",
-          "daysUntilEmergence",
-          "dcc",
-          "emergenceDate",
-          "fullSoilCoverDate",
-          "livingRootDays",
-          "coveredDays",
-          "harvestDate",
-          "practice",
-          "practiceType",
-          "notes",
-          "status",
+          "cropName", "cropType", "acres", "fieldBoundaries", "fieldBoundaryCount",
+          "designatedTrafficZones", "designatedTrafficZonesWhyNo",
+          "noTill", "noTillDrillUsed", "nonGmo", "perennialOrOrchard", "perennialSystemType",
+          "perennialEstablishmentYear", "perennialMiddleRowVegetation",
+          "perennialFunctionalMix", "perennialMulchUsed", "perennialBareSoilPct",
+          "perennialBareSoilReductionPlan", "perennialTillageReductionPlan",
+          "perennialDesignatedTrafficAreas", "perennialNotes",
+          "plantingDate", "daysUntilEmergence", "dcc", "emergenceDate",
+          "fullSoilCoverDate", "livingRootDays", "coveredDays", "harvestDate",
+          "practice", "practiceType", "notes",
+          "status"
         ],
         harvest_log: [
-          "cropName",
-          "harvestEntryMode",
-          "harvestPeriod",
-          "yieldAcre",
-          "unit",
-          "totalHarvest",
-          "harvestDate",
-          "storageLocation",
-          "buyer",
-          "notes",
-          "status",
+          "cropName", "harvestEntryMode", "harvestPeriod", "yieldAcre", "unit",
+          "totalHarvest", "harvestDate", "storageLocation", "buyer", "notes", "status"
         ],
         tillage_intensity: [
-          "cropName",
-          "acres",
-          "fieldBoundaries",
-          "noTill",
-          "noTillDrillUsed",
-          "date",
-          "depthIn",
-          "depthCm",
-          "implement",
-          "tillageType",
-          "gtirRating",
-          "disturbed",
-          "passes",
-          "acresTilled",
-          "eventGTIR",
-          "cropTotalGTIR",
-          "notes",
-          "status",
-          "reason",
+          "cropName", "acres", "fieldBoundaries", "noTill", "noTillDrillUsed", "date", "depthIn", "depthCm",
+          "implement", "tillageType", "gtirRating", "disturbed", "passes",
+          "acresTilled", "eventGTIR", "cropTotalGTIR", "notes", "status", "reason"
         ],
         nutrient_management_plan: [
-          "cropName",
-          "productName",
-          "applicationDate",
-          "rateAcre",
-          "unit",
-          "equivalentProductLbsPerAcre",
-          "nPct",
-          "pPct",
-          "kPct",
-          "nutrientNPerAcre",
-          "nutrientPPerAcre",
-          "nutrientKPerAcre",
-          "totalProduct",
-          "totalN",
-          "totalP",
-          "totalK",
-          "notes",
-          "status",
-          "reason",
+          "cropName", "productName", "applicationDate", "rateAcre", "unit",
+          "equivalentProductLbsPerAcre", "nPct", "pPct", "kPct",
+          "nutrientNPerAcre", "nutrientPPerAcre", "nutrientKPerAcre",
+          "totalProduct", "totalN", "totalP", "totalK", "notes", "status", "reason"
         ],
         ipm_plan: [
-          "cropName",
-          "applicationDate",
-          "pest",
-          "productName",
-          "epaRegNo",
-          "labelCategory",
-          "restrictedUsePesticide",
-          "unit",
-          "amountAcre",
-          "activePct",
-          "applicationMethod",
-          "areaApplied",
-          "activeIngredientPerAcre",
-          "totalActiveIngredient",
-          "notes",
-          "status",
-          "reason",
+          "cropName", "applicationDate", "pest", "productName", "epaRegNo",
+          "labelCategory", "restrictedUsePesticide", "unit", "amountAcre",
+          "activePct", "applicationMethod", "areaApplied",
+          "activeIngredientPerAcre", "totalActiveIngredient", "notes", "status", "reason"
         ],
         diesel_log: [
-          "cropName",
-          "planting",
-          "tillage",
-          "fertilizerApplication",
-          "spraying",
-          "irrigation",
-          "harvest",
-          "transport",
-          "other",
-          "totalDiesel",
-          "notes",
-          "status",
-          "reason",
+          "cropName", "planting", "tillage", "fertilizerApplication", "spraying",
+          "irrigation", "harvest", "transport", "other", "totalDiesel", "notes",
+          "status", "reason"
         ],
         irrigation_log: [
-          "cropName",
-          "cropPracticeType",
-          "method",
-          "drainageType",
-          "irrigatedAcres",
-          "pumpName",
-          "waterSource",
-          "pumpGpm",
-          "emitterGpm",
-          "emitterSpacingFt",
-          "dripRowSpacingFt",
-          "sprinklerGpm",
-          "sprinklerSpacingFt",
-          "lateralTowerSpacingFt",
-          "minHoursCycle",
-          "maxHoursCycle",
-          "minCyclesYear",
-          "maxCyclesYear",
-          "awdEvents",
-          "gallons",
-          "acreFeet",
-          "notes",
-          "status",
-          "reason",
+          "cropName", "cropPracticeType", "method", "drainageType", "irrigatedAcres",
+          "pumpName", "waterSource", "pumpGpm", "emitterGpm", "emitterSpacingFt",
+          "dripRowSpacingFt", "sprinklerGpm", "sprinklerSpacingFt",
+          "lateralTowerSpacingFt", "minHoursCycle", "maxHoursCycle",
+          "minCyclesYear", "maxCyclesYear", "awdEvents", "gallons", "acreFeet",
+          "notes", "status", "reason"
         ],
         living_root_index: [
-          "cropName",
-          "cropType",
-          "acres",
-          "plantingDate",
-          "daysUntilEmergence",
-          "emergenceDate",
-          "dcc",
-          "fullSoilCoverDate",
-          "coveredDays",
-          "harvestDate",
-          "growingSeasonDays",
-          "photosyntheticDays",
-          "livingRootPct",
-          "mergedCoveredDays",
-          "coveredSoilPct",
-          "bareSoilPct",
-          "nonGrowingSeasonCover",
-          "documentationStatus",
-          "notes",
-          "status",
+          "cropName", "cropType", "acres", "plantingDate", "daysUntilEmergence",
+          "emergenceDate", "dcc", "fullSoilCoverDate", "coveredDays", "harvestDate",
+          "growingSeasonDays", "photosyntheticDays", "livingRootPct",
+          "mergedCoveredDays", "coveredSoilPct", "bareSoilPct",
+          "nonGrowingSeasonCover", "documentationStatus", "notes", "status"
         ],
         estimated_bare_soil: [
-          "cropNumber",
-          "cropName",
-          "cropType",
-          "acres",
-          "fieldBoundaries",
-          "planningYear",
-          "totalPlanningDays",
-          "mergedCoveredDays",
-          "estimatedCoveredSoilPct",
-          "estimatedBareSoilPct",
-          "cropResidueIncluded",
-          "finalConclusionRequirement",
-          "formula",
-          "coveredIntervalRule",
-          "status",
+          "cropNumber", "cropName", "cropType", "acres", "fieldBoundaries",
+          "planningYear", "totalPlanningDays", "mergedCoveredDays",
+          "estimatedCoveredSoilPct", "estimatedBareSoilPct", "cropResidueIncluded",
+          "finalConclusionRequirement", "formula",
+          "coveredIntervalRule", "status"
         ],
         livestock_log: [
-          "species",
-          "animalCount",
-          "animalUnit",
-          "fieldsOrPaddocks",
-          "grazingSystem",
-          "rotationFrequency",
-          "feed",
-          "water",
-          "shelter",
-          "manureManagement",
-          "notes",
-          "status",
+          "species", "animalCount", "animalUnit", "fieldsOrPaddocks", "grazingSystem",
+          "rotationFrequency", "feed", "water", "shelter", "manureManagement",
+          "notes", "status"
         ],
         biodiversity_action_elements: [
-          "actionElement",
-          "actionType",
-          "measurementCriterion",
-          "quantity",
-          "unit",
-          "fieldBoundaries",
-          "implementationStatus",
-          "implementationDate",
-          "notes",
-          "status",
+          "actionElement", "actionType", "measurementCriterion", "quantity", "unit",
+          "fieldBoundaries", "implementationStatus", "implementationDate", "notes", "status"
         ],
         continuous_learning: [
-          "personName",
-          "role",
-          "eventType",
-          "topicTitle",
-          "provider",
-          "eventDate",
-          "hours",
-          "deliveryMethod",
-          "certificateOrEvidence",
-          "notes",
-          "status",
+          "personName", "role", "eventType", "topicTitle", "provider", "eventDate",
+          "hours", "deliveryMethod", "certificateOrEvidence", "notes", "status"
         ],
         continuous_improvement: [
-          "improvementArea",
-          "question",
-          "selectedActions",
-          "otherPlannedAction",
-          "plannedChange",
-          "selectedCrops",
-          "selectedBoundaries",
-          "applicableCropsOrFields",
-          "committedToChanges",
-          "benchmarkResults",
-          "calculatedPracticeSummary",
-          "status",
+          "improvementArea", "question", "selectedActions", "otherPlannedAction",
+          "plannedChange", "selectedCrops", "selectedBoundaries",
+          "applicableCropsOrFields", "committedToChanges",
+          "benchmarkResults", "calculatedPracticeSummary", "status"
         ],
         nrcs_programs: [
-          "programName",
-          "practiceCode",
-          "practiceName",
-          "contractNumber",
-          "fieldBoundaries",
-          "plannedOrApplied",
-          "plannedDate",
-          "appliedDate",
-          "acres",
-          "notes",
-          "status",
-        ],
+          "programName", "practiceCode", "practiceName", "contractNumber",
+          "fieldBoundaries", "plannedOrApplied", "plannedDate", "appliedDate",
+          "acres", "notes", "status"
+        ]
       };
 
       function sectionOnlyRows(rows, sectionName = "") {
@@ -10716,27 +10150,17 @@ endstream`)
             if (
               !SECTION_EXPORT_OMIT_COLUMNS.has(key) &&
               Object.prototype.hasOwnProperty.call(row || {}, key)
-            )
-              clean[key] = row[key];
+            ) clean[key] = row[key];
           });
           return clean;
         });
       }
-      function sectionCsv(
-        rows,
-        fallbackColumns = ["status", "note"],
-        sectionName = "",
-      ) {
+      function sectionCsv(rows, fallbackColumns = ["status", "note"], sectionName = "") {
         const cleanRows = sectionOnlyRows(rows, sectionName);
         const preferred = SECTION_DATASET_COLUMNS[sectionName] || [];
         const heads = [];
         preferred.forEach((key) => {
-          if (
-            cleanRows.some((row) =>
-              Object.prototype.hasOwnProperty.call(row, key),
-            )
-          )
-            heads.push(key);
+          if (cleanRows.some((row) => Object.prototype.hasOwnProperty.call(row, key))) heads.push(key);
         });
         cleanRows.forEach((row) => {
           Object.keys(row || {}).forEach((key) => {
@@ -10751,10 +10175,7 @@ endstream`)
                   .map(
                     (head) =>
                       '"' +
-                      String(exportValue(head, row[head]) ?? "").replace(
-                        /"/g,
-                        '""',
-                      ) +
+                      String(exportValue(head, row[head]) ?? "").replace(/"/g, '""') +
                       '"',
                   )
                   .join(","),
@@ -10802,8 +10223,7 @@ endstream`)
         if (num(r.amountAcre) <= 0) issues.push("Missing Application Rate");
         if (!has(r.unit)) issues.push("Missing Unit");
         if (!has(r.applicationDate)) issues.push("Missing Date");
-        if (!has(r.applicationMethod))
-          issues.push("Missing Application Method");
+        if (!has(r.applicationMethod)) issues.push("Missing Application Method");
         if (num(areaApplied) <= 0)
           issues.push("Area Applied must be greater than 0");
         return issues;
@@ -10812,13 +10232,9 @@ endstream`)
         const quote = (value) =>
           '"' + String(value ?? "").replace(/"/g, '""') + '"';
         const body = (rows || [])
-          .map((row) =>
-            IPM_PRT_HEADERS.map((head) => quote(row[head])).join(","),
-          )
+          .map((row) => IPM_PRT_HEADERS.map((head) => quote(row[head])).join(","))
           .join("\r\n");
-        return (
-          "\ufeff" + IPM_PRT_HEADERS.join(",") + (body ? "\r\n" + body : "\r\n")
-        );
+        return "\ufeff" + IPM_PRT_HEADERS.join(",") + (body ? "\r\n" + body : "\r\n");
       }
       function ipmPrtRows() {
         if (!state.ipmEnabled) return [];
@@ -10884,19 +10300,8 @@ endstream`)
         const sectionFallbacks = {
           "00_farm_details.csv": ["farmName", "planningYear"],
           "00_acre_change_details.csv": ["acreChangeScenario", "acresChanged"],
-          "00_kml_boundaries.csv": [
-            "boundaryId",
-            "boundaryName",
-            "acres",
-            "linkedCropsAndPractices",
-          ],
-          "00_attestation_prohibited_activities.csv": [
-            "status",
-            "category",
-            "activity",
-            "why",
-            "fieldBoundaries",
-          ],
+          "00_kml_boundaries.csv": ["boundaryId", "boundaryName", "acres", "linkedCropsAndPractices"],
+          "00_attestation_prohibited_activities.csv": ["status", "category", "activity", "why", "fieldBoundaries"],
           "01_crop_planner.csv": ["status", "note"],
           "02_harvest_log.csv": ["status", "note"],
           "03_livestock_log.csv": ["status", "note"],
@@ -10913,11 +10318,8 @@ endstream`)
           "11_continuous_improvement.csv": ["status", "note"],
         };
         let d = {
-          [farmDatasetFileName("00_normalized_farm_plan_dataset.csv")]:
-            csv(rowsNormalized()),
-          ["_system/" +
-          farmDatasetFileName("99_SAVE_PROGRESS_upload_to_resume.csv")]:
-            progressCsvContent(),
+          [farmDatasetFileName("00_normalized_farm_plan_dataset.csv")]: csv(rowsNormalized()),
+          ["_system/" + farmDatasetFileName("99_SAVE_PROGRESS_upload_to_resume.csv")]: progressCsvContent(),
           [farmDatasetFileName("Farm Plan Document.txt")]: reportText(),
           [farmDatasetFileName("Farm Plan Document.pdf")]: makePdfReport(),
         };
@@ -10927,27 +10329,14 @@ endstream`)
             if (datasetName === "06b_ipm_prt_spray_records.csv")
               exportRows = [];
             else if (datasetName === "05_nutrient_management_plan.csv")
-              exportRows = sectionStatusRows(
-                state.nutrientEnabled,
-                (state.skippedReasons || {}).nutrient || "",
-              );
+              exportRows = sectionStatusRows(state.nutrientEnabled, (state.skippedReasons || {}).nutrient || "");
             else if (datasetName === "06_ipm_plan.csv")
-              exportRows = sectionStatusRows(
-                state.ipmEnabled,
-                (state.skippedReasons || {}).ipm || "",
-              );
+              exportRows = sectionStatusRows(state.ipmEnabled, (state.skippedReasons || {}).ipm || "");
             else if (datasetName === "07_diesel_log.csv")
-              exportRows = sectionStatusRows(
-                dieselActive(),
-                (state.skippedReasons || {}).diesel || "",
-              );
+              exportRows = sectionStatusRows(dieselActive(), (state.skippedReasons || {}).diesel || "");
             else if (datasetName === "08_irrigation_log.csv")
-              exportRows = sectionStatusRows(
-                state.irrigationEnabled,
-                (state.skippedReasons || {}).irrigation || "",
-              );
-            else
-              exportRows = [{ status: "Enabled", note: "No entries recorded" }];
+              exportRows = sectionStatusRows(state.irrigationEnabled, (state.skippedReasons || {}).irrigation || "");
+            else exportRows = [{ status: "Enabled", note: "No entries recorded" }];
           }
           const sectionNameByFile = {
             "01_crop_planner.csv": "crop_planner",
@@ -10960,8 +10349,7 @@ endstream`)
             "06_ipm_plan.csv": "ipm_plan",
             "07_diesel_log.csv": "diesel_log",
             "08_irrigation_log.csv": "irrigation_log",
-            "09_biodiversity_action_elements.csv":
-              "biodiversity_action_elements",
+            "09_biodiversity_action_elements.csv": "biodiversity_action_elements",
             "10_continuous_learning.csv": "continuous_learning",
             "11_continuous_improvement.csv": "continuous_improvement",
           };
@@ -11010,8 +10398,7 @@ endstream`)
           "status,note\r\nRecovery export,Normalized dataset could not be generated",
         );
         addText(
-          "_system/" +
-            farmDatasetFileName("99_SAVE_PROGRESS_upload_to_resume.csv"),
+          "_system/" + farmDatasetFileName("99_SAVE_PROGRESS_upload_to_resume.csv"),
           () => progressCsvContent(),
           "file_type,app,version,saved_at,farm_name,planning_year,state_json_b64\r\nSCI_FARM_PLAN_SAVE_PROGRESS,SCI Farm Plan Document Builder,recovery,,,,",
         );
@@ -11021,8 +10408,7 @@ endstream`)
           "SCI Farm Plan Document\r\nRecovery export created because a CSV-imported value prevented the standard report from generating.",
         );
         try {
-          files[farmDatasetFileName("Farm Plan Document.pdf")] =
-            makePdfReport();
+          files[farmDatasetFileName("Farm Plan Document.pdf")] = makePdfReport();
         } catch (error) {
           console.error("ZIP recovery skipped PDF", error);
         }
@@ -11034,23 +10420,17 @@ endstream`)
           ["06_ipm_plan.csv", "ipm_plan"],
           ["07_diesel_log.csv", "diesel_log"],
           ["08_irrigation_log.csv", "irrigation_log"],
-          [
-            "09_biodiversity_action_elements.csv",
-            "biodiversity_action_elements",
-          ],
+          ["09_biodiversity_action_elements.csv", "biodiversity_action_elements"],
           ["10_continuous_learning.csv", "continuous_learning"],
         ];
         sectionSpecs.forEach(([fileName, sectionName]) => {
           addText(
             farmDatasetFileName(fileName),
-            () =>
-              sectionCsv(
-                sectionName === "tillage_intensity"
-                  ? tillageRowsForExport()
-                  : rowsForSection(sectionName),
-                ["status", "note"],
-                sectionName,
-              ),
+            () => sectionCsv(
+              sectionName === "tillage_intensity" ? tillageRowsForExport() : rowsForSection(sectionName),
+              ["status", "note"],
+              sectionName
+            ),
             "status,note\r\nRecovery export,Section could not be converted",
           );
         });
@@ -11128,9 +10508,7 @@ endstream`)
           document.activeElement && document.activeElement.tagName === "BUTTON"
             ? document.activeElement
             : null;
-        const originalButtonText = clickedButton
-          ? clickedButton.textContent
-          : "";
+        const originalButtonText = clickedButton ? clickedButton.textContent : "";
         if (clickedButton) {
           clickedButton.disabled = true;
           clickedButton.textContent = "Preparing ZIP…";
@@ -11179,10 +10557,9 @@ endstream`)
         }
         if (
           transcriptWasSelected &&
-          !Object.keys(files).some(
-            (n) =>
-              /(^|\/)CALL_TRANSCRIPT\.(doc|docx)$/i.test(n) ||
-              /\.(doc|docx)$/i.test(n),
+          !Object.keys(files).some((n) =>
+            /(^|\/)CALL_TRANSCRIPT\.(doc|docx)$/i.test(n) ||
+            /\.(doc|docx)$/i.test(n),
           )
         ) {
           alert(
@@ -11344,8 +10721,7 @@ endstream`)
 
       function buildNutrientExtensionBenchmarkPrompt() {
         const farm = state.farm || {};
-        const farmState =
-          String(farm.state || "").trim() ||
+        const farmState = String(farm.state || "").trim() ||
           "[STATE NOT ENTERED IN FARM DETAILS]";
         const table = nutrientExtensionPromptTable();
         return `Compare the fertilizer data below with current Cooperative Extension fertilizer recommendations for ${farmState}. Add all applications together for each crop to calculate its crop-year N, P, and K pounds per acre.
