@@ -6798,6 +6798,15 @@ ${acreChangePanel()}
         };
         return ["ipm", "nutrient", "tillage"].map((key) => {
           const value = state.continuousImprovement[key] || {};
+          const committed =
+            value.committed === true || String(value.committed).toLowerCase() === "true";
+          const hasEnteredData = !!(
+            (value.selections || []).length ||
+            String(value.other || "").trim() ||
+            String(value.plannedChange || "").trim() ||
+            String(value.cropsFields || "").trim() ||
+            committed
+          );
           return {
             ...exportMeta(),
             section: "continuous_improvement",
@@ -6807,9 +6816,9 @@ ${acreChangePanel()}
             otherPlannedAction: value.other || "",
             plannedChange: value.plannedChange || "",
             applicableCropsOrFields: value.cropsFields || "",
-            committedToChanges: value.committed ? "Yes" : "No",
+            committedToChanges: committed ? "Yes" : "No",
             calculatedPracticeSummary: config[key].resultSummary(),
-            status: (value.selections || []).length || value.other || value.plannedChange || value.cropsFields || value.committed ? "Entered" : "Not entered",
+            status: hasEnteredData ? "Entered" : "Not entered",
           };
         });
       }
@@ -7581,6 +7590,12 @@ ${acreChangePanel()}
             );
           }
           lines.push(`  Harvest — ${harvestSummary(c)}.`);
+        });
+        lines.push("Continuous Improvement:");
+        continuousImprovementRows().forEach((r) => {
+          lines.push(
+            `  ${r.improvementArea}: Selected actions: ${r.selectedActions || "None selected"}; Other planned action: ${r.otherPlannedAction || "Not entered"}; Planned change: ${r.plannedChange || "Not entered"}; Crops/fields: ${r.applicableCropsOrFields || "Not entered"}; Committed: ${r.committedToChanges}; Practice summary: ${r.calculatedPracticeSummary}; Status: ${r.status}.`,
+          );
         });
         lines.push(
           "QA/QC: " + qaqc().filter((x) => !x.ok).length + " open item(s).",
@@ -8712,18 +8727,25 @@ ${acreChangePanel()}
           );
 
         section(17, "Continuous Improvement Commitments");
-        improvementRows.forEach((r, i) =>
-          recordBlock(i + 1, r.improvementArea, [
-            ["Planning question", r.question],
-            ["Selected actions", r.selectedActions || "None selected"],
-            ["Other planned action", r.otherPlannedAction],
-            ["Briefly describe the planned change", r.plannedChange],
-            ["Applicable crop(s) or field(s)", r.applicableCropsOrFields],
-            ["I commit to changes", r.committedToChanges],
-            ["Calculated practice summary", r.calculatedPracticeSummary],
-            ["Entry status", r.status],
-          ]),
+        line(
+          "Recorded Areas",
+          `${improvementRows.filter((r) => r.status === "Entered").length} of ${improvementRows.length}`,
         );
+        if (!improvementRows.length)
+          bullet("No Continuous Improvement records entered.");
+        else
+          improvementRows.forEach((r, i) =>
+            recordBlock(i + 1, r.improvementArea, [
+              ["Planning question", r.question],
+              ["Selected actions", r.selectedActions || "None selected"],
+              ["Other planned action", r.otherPlannedAction],
+              ["Briefly describe the planned change", r.plannedChange],
+              ["Applicable crop(s) or field(s)", r.applicableCropsOrFields],
+              ["I commit to changes", r.committedToChanges],
+              ["Calculated practice summary", r.calculatedPracticeSummary],
+              ["Entry status", r.status],
+            ]),
+          );
 
         section(18, "Attestation");
         if (!attRows.length) bullet("No attestation record entered.");
@@ -10209,6 +10231,16 @@ endstream`)
             "status,note\r\nRecovery export,Section could not be converted",
           );
         });
+        addText(
+          farmDatasetFileName("11_continuous_improvement.csv"),
+          () =>
+            sectionCsv(
+              continuousImprovementRows(),
+              ["status", "note"],
+              "continuous_improvement",
+            ),
+          "status,note\r\nRecovery export,Continuous Improvement data could not be converted",
+        );
         addText(
           farmDatasetFileName("06b_ipm_prt_spray_records.csv"),
           () => ipmPrtCsv(ipmPrtRows()),
