@@ -62,6 +62,15 @@
         border-color: var(--clay);
         box-shadow: 0 0 0 3px rgba(168, 85, 31, 0.12);
       }
+      input[type="checkbox"],
+      input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        min-height: 0;
+        flex: none;
+        accent-color: var(--leaf2);
+        padding: 0;
+      }
       .app {
         max-width: 1180px;
         margin: 0 auto;
@@ -359,6 +368,26 @@
         align-items: flex-start;
         font-size: 13px;
         font-weight: 700;
+      }
+      .checks {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        cursor: pointer;
+      }
+      .check input[type="checkbox"] {
+        margin: 0;
       }
       .crop-tabs {
         display: flex;
@@ -2548,9 +2577,9 @@
         dieselEnabled: false,
         irrigationEnabled: false,
         continuousImprovement: {
-          ipm: { selections: [], other: "", plannedChange: "", cropsFields: "", committed: false },
-          nutrient: { selections: [], other: "", plannedChange: "", cropsFields: "", committed: false },
-          tillage: { selections: [], other: "", plannedChange: "", cropsFields: "", committed: false },
+          ipm: { selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], committed: false, noReductionReason: "" },
+          nutrient: { selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], benchmarkResults: "", committed: false, noReductionReason: "" },
+          tillage: { selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], committed: false, noReductionReason: "" },
         },
         skippedReasons: {
           cropPlan: "",
@@ -3130,7 +3159,7 @@
             ? state.nrcsPracticeDetails
             : {};
         state.nrcsEnabled = !!state.nrcsEnabled;
-        const ciSection = () => ({ selections: [], other: "", plannedChange: "", cropsFields: "", committed: false });
+        const ciSection = () => ({ selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], benchmarkResults: "", committed: false, noReductionReason: "" });
         state.continuousImprovement = fillMissing(state.continuousImprovement, {
           ipm: ciSection(),
           nutrient: ciSection(),
@@ -3143,6 +3172,10 @@
           );
           if (!Array.isArray(state.continuousImprovement[key].selections))
             state.continuousImprovement[key].selections = [];
+          if (!Array.isArray(state.continuousImprovement[key].cropSelections))
+            state.continuousImprovement[key].cropSelections = [];
+          if (!Array.isArray(state.continuousImprovement[key].boundaryIds))
+            state.continuousImprovement[key].boundaryIds = [];
         });
         if (!Array.isArray(state.livestockRows) || !state.livestockRows.length)
           state.livestockRows = [newLivestockRow()];
@@ -6694,6 +6727,7 @@ ${acreChangePanel()}
         const index = selections.indexOf(choice);
         if (checked && index < 0) selections.push(choice);
         if (!checked && index >= 0) selections.splice(index, 1);
+        if (choice === "No reduction planned") render();
       }
 
       function continuousImprovementChoices(section, choices) {
@@ -6706,8 +6740,130 @@ ${acreChangePanel()}
           .join("");
       }
 
+      function continuousImprovementValue(section) {
+        ensureStateDefaults();
+        const value = state.continuousImprovement[section];
+        value.cropSelections = (Array.isArray(value.cropSelections)
+          ? value.cropSelections
+          : [])
+          .map(String)
+          .filter((id) => Number.isInteger(Number(id)) && Number(id) >= 0 && Number(id) < (state.crops || []).length);
+        value.boundaryIds = (Array.isArray(value.boundaryIds)
+          ? value.boundaryIds
+          : [])
+          .map(String)
+          .filter((id) => (state.kmlBoundaries || []).some((b) => String(b.id) === id));
+        return value;
+      }
+
+      function continuousImprovementCropNames(section) {
+        return continuousImprovementValue(section).cropSelections
+          .map((id) => {
+            const c = (state.crops || [])[Number(id)];
+            return c
+              ? c.name || c.cropTypeOther || c.cropType || `Crop ${Number(id) + 1}`
+              : "";
+          })
+          .filter(Boolean);
+      }
+
+      function continuousImprovementBoundaryNames(section) {
+        return continuousImprovementValue(section).boundaryIds
+          .map(boundaryName)
+          .filter(Boolean);
+      }
+
+      function continuousImprovementCropSummary(section) {
+        const names = continuousImprovementCropNames(section);
+        if (!names.length) return "Select crops";
+        if (names.length <= 2) return names.join("; ");
+        return `${names.length} crops selected`;
+      }
+
+      function continuousImprovementBoundarySummary(section) {
+        const names = continuousImprovementBoundaryNames(section);
+        if (!names.length) return "Select KML boundaries";
+        if (names.length <= 2) return names.join("; ");
+        return `${names.length} boundaries selected`;
+      }
+
+      function refreshContinuousImprovementApplicabilityUI(section) {
+        const did = domId(section);
+        const value = continuousImprovementValue(section);
+        const cropSummary = document.getElementById(`ciCropSummary${did}`);
+        const cropCount = document.getElementById(`ciCropCount${did}`);
+        const cropDetails = document.getElementById(`ciCropDetails${did}`);
+        const boundarySummary = document.getElementById(`ciBoundarySummary${did}`);
+        const boundaryCount = document.getElementById(`ciBoundaryCount${did}`);
+        const boundaryDetails = document.getElementById(`ciBoundaryDetails${did}`);
+        if (cropSummary) cropSummary.textContent = continuousImprovementCropSummary(section);
+        if (cropCount)
+          cropCount.textContent = `${value.cropSelections.length} of ${(state.crops || []).length} selected`;
+        if (boundarySummary)
+          boundarySummary.textContent = continuousImprovementBoundarySummary(section);
+        if (boundaryCount)
+          boundaryCount.textContent = `${value.boundaryIds.length} of ${(state.kmlBoundaries || []).length} selected`;
+        if (cropDetails) cropDetails.open = true;
+        if (boundaryDetails) boundaryDetails.open = true;
+      }
+
+      function toggleContinuousImprovementCrop(section, cropIndex, on) {
+        saveInputs();
+        const value = continuousImprovementValue(section);
+        const id = String(cropIndex);
+        if (on && !value.cropSelections.includes(id)) value.cropSelections.push(id);
+        if (!on) value.cropSelections = value.cropSelections.filter((x) => x !== id);
+        refreshContinuousImprovementApplicabilityUI(section);
+      }
+
+      function setAllContinuousImprovementCrops(section, on) {
+        saveInputs();
+        continuousImprovementValue(section).cropSelections = on
+          ? (state.crops || []).map((_, i) => String(i))
+          : [];
+        document
+          .querySelectorAll(`[data-ci-crop="${section}"]`)
+          .forEach((el) => (el.checked = !!on));
+        refreshContinuousImprovementApplicabilityUI(section);
+      }
+
+      function toggleContinuousImprovementBoundary(section, boundaryId, on) {
+        saveInputs();
+        const value = continuousImprovementValue(section);
+        const id = String(boundaryId);
+        if (on && !value.boundaryIds.includes(id)) value.boundaryIds.push(id);
+        if (!on) value.boundaryIds = value.boundaryIds.filter((x) => x !== id);
+        refreshContinuousImprovementApplicabilityUI(section);
+      }
+
+      function setAllContinuousImprovementBoundaries(section, on) {
+        saveInputs();
+        continuousImprovementValue(section).boundaryIds = on
+          ? (state.kmlBoundaries || []).map((b) => String(b.id))
+          : [];
+        document
+          .querySelectorAll(`[data-ci-boundary="${section}"]`)
+          .forEach((el) => (el.checked = !!on));
+        refreshContinuousImprovementApplicabilityUI(section);
+      }
+
+      function continuousImprovementApplicabilityPicker(section) {
+        const value = continuousImprovementValue(section);
+        const did = domId(section);
+        const crops = state.crops || [];
+        const boundaries = state.kmlBoundaries || [];
+        const cropPicker = crops.length
+          ? `<div class="field boundary-picker full"><label>Select available crops</label><details id="ciCropDetails${did}"><summary id="ciCropSummary${did}">${esc(continuousImprovementCropSummary(section))}</summary><div class="boundary-menu"><div class="boundary-actions"><button type="button" class="mini-btn" onclick="setAllContinuousImprovementCrops('${jsq(section)}',true)">Select all</button><button type="button" class="mini-btn" onclick="setAllContinuousImprovementCrops('${jsq(section)}',false)">Clear</button><span class="small" id="ciCropCount${did}">${value.cropSelections.length} of ${crops.length} selected</span></div><div class="boundary-list">${crops.map((c, i) => `<label class="boundary-option"><input type="checkbox" data-ci-crop="${esc(section)}" ${value.cropSelections.includes(String(i)) ? "checked" : ""} onchange="toggleContinuousImprovementCrop('${jsq(section)}',${i},this.checked)"><span>${esc(c.name || c.cropTypeOther || c.cropType || `Crop ${i + 1}`)}${cropAcres(c) ? ` <span class="small">(${fmt(cropAcres(c), 1)} ac)</span>` : ""}</span></label>`).join("")}</div></div></details></div>`
+          : `<div class="field full"><label>Available Crops</label><div class="help">Add crops in Crop Planner to select them here.</div></div>`;
+        const boundaryPicker = boundaries.length
+          ? `<div class="field boundary-picker full"><label>Select boundaries from KML</label><details id="ciBoundaryDetails${did}"><summary id="ciBoundarySummary${did}">${esc(continuousImprovementBoundarySummary(section))}</summary><div class="boundary-menu"><div class="boundary-actions"><button type="button" class="mini-btn" onclick="setAllContinuousImprovementBoundaries('${jsq(section)}',true)">Select all</button><button type="button" class="mini-btn" onclick="setAllContinuousImprovementBoundaries('${jsq(section)}',false)">Clear</button><span class="small" id="ciBoundaryCount${did}">${value.boundaryIds.length} of ${boundaries.length} selected</span></div><div class="boundary-list">${boundaries.map((b) => `<label class="boundary-option"><input type="checkbox" data-ci-boundary="${esc(section)}" ${value.boundaryIds.includes(String(b.id)) ? "checked" : ""} onchange="toggleContinuousImprovementBoundary('${jsq(section)}','${jsq(b.id)}',this.checked)"><span>${esc(b.name)}${b.acres ? ` <span class="small">(${fmt(b.acres, 1)} ac)</span>` : ""}</span></label>`).join("")}</div></div></details></div>`
+          : `<div class="field full"><label>KML Field Boundaries</label><div class="help">Upload a KML in Farm Details to select field boundaries here.</div></div>`;
+        return `<div class="field full"><h3 style="margin:0">Which crop(s) or field(s) will this apply to?</h3><div class="help">Choose from the crops in Crop Planner and the boundaries imported from the farm KML.</div></div>${cropPicker}${boundaryPicker}`;
+      }
+
       function continuousImprovementSection(section, title, question, choices, result, detailHTML) {
-        return `<div class="card"><div class="section-title"><div><h2>${esc(title)}</h2><div class="help">${esc(result)}</div></div></div>${detailHTML}<h3 style="margin-top:18px">${esc(question)}</h3><div class="checks" style="margin-top:10px">${continuousImprovementChoices(section, choices)}</div><div class="input-grid" style="margin-top:14px"><div class="field full"><label>Other</label><input data-bind="continuousImprovement.${section}.other" value="${esc(state.continuousImprovement[section].other)}" placeholder="Describe another planned action"></div><div class="field full"><label>Briefly describe the planned change</label><textarea data-bind="continuousImprovement.${section}.plannedChange" placeholder="Describe the planned change">${esc(state.continuousImprovement[section].plannedChange)}</textarea></div><div class="field full"><label>Which crop(s) or field(s) will this apply to?</label><textarea data-bind="continuousImprovement.${section}.cropsFields" placeholder="Enter crop names, field names, or KML boundaries">${esc(state.continuousImprovement[section].cropsFields)}</textarea></div><div class="field full"><label class="check" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--soft)"><input type="checkbox" data-bind="continuousImprovement.${section}.committed" ${state.continuousImprovement[section].committed ? "checked" : ""}><span><strong>I commit to changes</strong></span></label></div></div></div>`;
+        const noReductionSelected = (state.continuousImprovement[section].selections || []).includes("No reduction planned");
+        return `<div class="card"><div class="section-title"><div><h2>${esc(title)}</h2><div class="help">${esc(result)}</div></div></div>${detailHTML}<h3 style="margin-top:18px">${esc(question)}</h3><div class="checks" style="margin-top:10px">${continuousImprovementChoices(section, choices)}</div><div class="input-grid" style="margin-top:14px"><div class="field full"><label>Other</label><input data-bind="continuousImprovement.${section}.other" value="${esc(state.continuousImprovement[section].other)}" placeholder="Describe another planned action"></div><div class="field full"><label>Briefly describe the planned change</label><textarea data-bind="continuousImprovement.${section}.plannedChange" placeholder="Describe the planned change">${esc(state.continuousImprovement[section].plannedChange)}</textarea></div>${noReductionSelected ? `<div class="field full"><label>Why is no reduction planned?</label><div class="help" style="margin-bottom:6px">Since "No reduction planned" is selected, briefly explain why (e.g. already at minimum, not applicable this year, cost/equipment constraints).</div><textarea data-bind="continuousImprovement.${section}.noReductionReason" placeholder="Explain why no reduction is planned">${esc(state.continuousImprovement[section].noReductionReason || "")}</textarea></div>` : ""}${continuousImprovementApplicabilityPicker(section)}<div class="field full"><label class="check" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--soft)"><input type="checkbox" data-bind="continuousImprovement.${section}.committed" ${state.continuousImprovement[section].committed ? "checked" : ""}><span><strong>I commit to changes</strong></span></label></div></div></div>`;
       }
 
       function continuousImprovementIPMDetail() {
@@ -6738,7 +6894,7 @@ ${acreChangePanel()}
           (c.microRows || []).forEach((r) => { if (r.name || num(r.rate)) supporting.push(`<tr><td>${esc(cropName)}</td><td>Micronutrient / fertility pack</td><td>${esc(r.name || "—")}</td><td>${esc(r.contains || "—")}</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`); });
           (c.amendmentRows || []).forEach((r) => { if (r.name || num(r.rate)) supporting.push(`<tr><td>${esc(cropName)}</td><td>${esc(r.type || "Organic input")}</td><td>${esc(r.name || "—")}</td><td>Organic nutrient source</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`); });
         });
-        return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Equivalent product lb/ac = entered rate (tons × 2,000; gallons × density; fluid oz ÷ 128 × density; pounds unchanged). Nutrient lb/ac = Equivalent product lb/ac × (nutrient % ÷ 100). Total nutrient = Nutrient lb/ac × crop acres.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(totalN, 2)}</div><div class="label">Total N lb</div></div><div class="metric"><div class="value">${fmt(totalP, 2)}</div><div class="label">Total P lb</div></div><div class="metric"><div class="value">${fmt(totalK, 2)}</div><div class="label">Total K lb</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Product</th><th>Date</th><th>Rate/ac</th><th>Density</th><th>Eq. lb/ac</th><th>N-P-K %</th><th>N lb/ac</th><th>P lb/ac</th><th>K lb/ac</th><th>Acres</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="11">No completed fertilizer practice records entered.</td></tr>`}</tbody></table></div><h3 style="margin-top:14px">Supporting nutrient practices</h3><div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>Crop</th><th>Practice type</th><th>Product/source</th><th>Contents/purpose</th><th>Rate/ac</th><th>Total product</th></tr></thead><tbody>${supporting.join("") || `<tr><td colspan="6">No micronutrient or organic-input practices entered.</td></tr>`}</tbody></table></div>`;
+        return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Equivalent product lb/ac = entered rate (tons × 2,000; gallons × density; fluid oz ÷ 128 × density; pounds unchanged). Nutrient lb/ac = Equivalent product lb/ac × (nutrient % ÷ 100). Total nutrient = Nutrient lb/ac × crop acres.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(totalN, 2)}</div><div class="label">Total N lb</div></div><div class="metric"><div class="value">${fmt(totalP, 2)}</div><div class="label">Total P lb</div></div><div class="metric"><div class="value">${fmt(totalK, 2)}</div><div class="label">Total K lb</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Product</th><th>Date</th><th>Rate/ac</th><th>Density</th><th>Eq. lb/ac</th><th>N-P-K %</th><th>N lb/ac</th><th>P lb/ac</th><th>K lb/ac</th><th>Acres</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="11">No completed fertilizer practice records entered.</td></tr>`}</tbody></table></div><div class="zone-frost-box" style="margin-top:14px"><div class="zone-frost-head"><div><h4>Nutrient Baseline Extension Benchmark</h4><div class="help">Copy a simple Perplexity prompt that compares the complete table above with fertilizer recommendations for the Farm Details state.</div><div class="lookup-prompt">Perplexity is instructed to return one clean, plain-language paragraph that is ready to paste below.</div></div><div class="lookup-actions"><a class="btn ghost" href="https://www.perplexity.ai/" target="_blank" rel="noopener">Open Perplexity</a><button type="button" class="btn secondary" onclick="copyNutrientExtensionBenchmarkPrompt()">Copy Perplexity Prompt</button></div></div><div class="field full" style="margin-top:14px"><label>Extension Benchmarking Results</label><div class="help" style="margin-bottom:6px">Paste the completed Perplexity paragraph here. It will be included in the PDF and Continuous Improvement CSV.</div><textarea data-bind="continuousImprovement.nutrient.benchmarkResults" placeholder="Paste the plain-language Extension benchmark paragraph here.">${esc((state.continuousImprovement.nutrient || {}).benchmarkResults || "")}</textarea></div></div><h3 style="margin-top:14px">Supporting nutrient practices</h3><div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>Crop</th><th>Practice type</th><th>Product/source</th><th>Contents/purpose</th><th>Rate/ac</th><th>Total product</th></tr></thead><tbody>${supporting.join("") || `<tr><td colspan="6">No micronutrient or organic-input practices entered.</td></tr>`}</tbody></table></div>`;
       }
 
       function continuousImprovementTillageDetail() {
@@ -6802,14 +6958,25 @@ ${acreChangePanel()}
           },
         };
         return ["ipm", "nutrient", "tillage"].map((key) => {
-          const value = state.continuousImprovement[key] || {};
+          const value = continuousImprovementValue(key);
+          const selectedCrops = continuousImprovementCropNames(key);
+          const selectedBoundaries = continuousImprovementBoundaryNames(key);
+          const legacyCropsFields = String(value.cropsFields || "").trim();
+          const applicableCropsOrFields = [
+            ...selectedCrops,
+            ...selectedBoundaries,
+            ...(legacyCropsFields ? [legacyCropsFields] : []),
+          ].join("; ");
           const committed =
             value.committed === true || String(value.committed).toLowerCase() === "true";
           const hasEnteredData = !!(
             (value.selections || []).length ||
+            value.cropSelections.length ||
+            value.boundaryIds.length ||
             String(value.other || "").trim() ||
             String(value.plannedChange || "").trim() ||
             String(value.cropsFields || "").trim() ||
+            String(value.benchmarkResults || "").trim() ||
             committed
           );
           return {
@@ -6820,7 +6987,11 @@ ${acreChangePanel()}
             selectedActions: (value.selections || []).join("; "),
             otherPlannedAction: value.other || "",
             plannedChange: value.plannedChange || "",
-            applicableCropsOrFields: value.cropsFields || "",
+            selectedCrops: selectedCrops.join("; "),
+            selectedBoundaries: selectedBoundaries.join("; "),
+            applicableCropsOrFields,
+            benchmarkResults:
+              key === "nutrient" ? value.benchmarkResults || "" : "",
             committedToChanges: committed ? "Yes" : "No",
             calculatedPracticeSummary: config[key].resultSummary(),
             status: hasEnteredData ? "Entered" : "Not entered",
@@ -7610,7 +7781,7 @@ ${acreChangePanel()}
         lines.push("Continuous Improvement:");
         continuousImprovementRows().forEach((r) => {
           lines.push(
-            `  ${r.improvementArea}: Selected actions: ${r.selectedActions || "None selected"}; Other planned action: ${r.otherPlannedAction || "Not entered"}; Planned change: ${r.plannedChange || "Not entered"}; Crops/fields: ${r.applicableCropsOrFields || "Not entered"}; Committed: ${r.committedToChanges}; Practice summary: ${r.calculatedPracticeSummary}; Status: ${r.status}.`,
+            `  ${r.improvementArea}: Selected actions: ${r.selectedActions || "None selected"}; Other planned action: ${r.otherPlannedAction || "Not entered"}; Planned change: ${r.plannedChange || "Not entered"}; Selected crops: ${r.selectedCrops || "None selected"}; Selected KML boundaries: ${r.selectedBoundaries || "None selected"}; Extension benchmarking results: ${r.benchmarkResults || "Not entered"}; Committed: ${r.committedToChanges}; Practice summary: ${r.calculatedPracticeSummary}; Status: ${r.status}.`,
           );
         });
         lines.push(
@@ -8768,7 +8939,9 @@ ${acreChangePanel()}
               ["Selected actions", r.selectedActions || "None selected"],
               ["Other planned action", r.otherPlannedAction],
               ["Briefly describe the planned change", r.plannedChange],
-              ["Applicable crop(s) or field(s)", r.applicableCropsOrFields],
+              ["Selected crops", r.selectedCrops],
+              ["Selected KML boundaries", r.selectedBoundaries],
+              ["Extension benchmarking results", r.benchmarkResults],
               ["I commit to changes", r.committedToChanges],
               ["Calculated practice summary", r.calculatedPracticeSummary],
               ["Entry status", r.status],
@@ -9957,8 +10130,9 @@ endstream`)
         ],
         continuous_improvement: [
           "improvementArea", "question", "selectedActions", "otherPlannedAction",
-          "plannedChange", "applicableCropsOrFields", "committedToChanges",
-          "calculatedPracticeSummary", "status"
+          "plannedChange", "selectedCrops", "selectedBoundaries",
+          "applicableCropsOrFields", "committedToChanges",
+          "benchmarkResults", "calculatedPracticeSummary", "status"
         ],
         nrcs_programs: [
           "programName", "practiceCode", "practiceName", "contractNumber",
@@ -10484,6 +10658,94 @@ endstream`)
         let b = e.target.closest("button");
         if (b) e.preventDefault();
       });
+
+      function nutrientExtensionPromptTable() {
+        const clean = (value) =>
+          String(value === undefined || value === null ? "" : value)
+            .replace(/\|/g, "/")
+            .replace(/\s+/g, " ")
+            .trim();
+        const headers = [
+          "Crop",
+          "Product",
+          "Date",
+          "Rate/ac",
+          "Density",
+          "Eq. lb/ac",
+          "N-P-K %",
+          "N lb/ac",
+          "P lb/ac",
+          "K lb/ac",
+          "Acres",
+        ];
+        const rows = [];
+        (state.crops || []).forEach((crop) => {
+          const cropName =
+            crop.name || crop.cropTypeOther || crop.cropType || "Unnamed crop";
+          const acres = cropAcres(crop);
+          (crop.fertilizerRows || []).forEach((entry) => {
+            if (
+              !(
+                entry.productName ||
+                num(entry.rateAcre) ||
+                num(entry.nPct) ||
+                num(entry.pPct) ||
+                num(entry.kPct)
+              )
+            )
+              return;
+            const equivalentLbs = fertilizerProductLbsPerAcre(entry);
+            rows.push([
+              cropName,
+              entry.productName || "Not entered",
+              entry.applicationDate || "Not entered",
+              `${fmt(entry.rateAcre, 2)} ${entry.unit || "unit not entered"}`,
+              fmt(entry.productLbsPerGallon, 2),
+              fmt(equivalentLbs, 2),
+              `${fmt(entry.nPct, 2)}-${fmt(entry.pPct, 2)}-${fmt(entry.kPct, 2)}`,
+              fmt(fertilizerNutrientLbsPerAcre(entry, "nPct"), 2),
+              fmt(fertilizerNutrientLbsPerAcre(entry, "pPct"), 2),
+              fmt(fertilizerNutrientLbsPerAcre(entry, "kPct"), 2),
+              fmt(acres, 2),
+            ]);
+          });
+        });
+        if (!rows.length)
+          return "No completed fertilizer practice records were entered.";
+        return [
+          `| ${headers.join(" | ")} |`,
+          `| ${headers.map(() => "---").join(" | ")} |`,
+          ...rows.map((row) => `| ${row.map(clean).join(" | ")} |`),
+        ].join("\n");
+      }
+
+      function buildNutrientExtensionBenchmarkPrompt() {
+        const farm = state.farm || {};
+        const farmState = String(farm.state || "").trim() ||
+          "[STATE NOT ENTERED IN FARM DETAILS]";
+        const table = nutrientExtensionPromptTable();
+        return `Compare the fertilizer data below with current Cooperative Extension fertilizer recommendations for ${farmState}. Add all applications together for each crop to calculate its crop-year N, P, and K pounds per acre.
+
+Do not refuse the comparison because recommendations depend on soil tests, yield goals, rotation, irrigation, or field history. If there is no single fixed recommendation, use the state's published Extension tables, equations, or realistic documented scenarios to give a provisional low-to-high range. Do not invent unsupported values.
+
+IMPORTANT OUTPUT FORMAT: Write exactly one clear, plain-language paragraph that is ready to copy and paste into a farm plan. Do not use a heading, table, bullets, numbered list, Markdown, or a separate sources section. Name each crop, state its total N, P, and K lb/ac, give the applicable Extension rate or range, and say whether the farm rate is below, within, or above that benchmark. Briefly state any assumptions. In the final sentence, identify only the most important missing information needed for a field-specific result. Include the Extension source name and direct web link naturally in the paragraph. Keep the wording simple and concise.
+
+Farm state: ${farmState}
+
+Fertilizer data table:
+${table}`;
+      }
+
+      function copyNutrientExtensionBenchmarkPrompt() {
+        saveInputs();
+        navigator.clipboard
+          .writeText(buildNutrientExtensionBenchmarkPrompt())
+          .then(() =>
+            alert(
+              "Nutrient baseline and Extension benchmark prompt copied for Perplexity",
+            ),
+          );
+      }
 
       function copyGrowingZonePrompt() {
         const address = (
