@@ -62,15 +62,6 @@
         border-color: var(--clay);
         box-shadow: 0 0 0 3px rgba(168, 85, 31, 0.12);
       }
-      input[type="checkbox"],
-      input[type="radio"] {
-        width: 18px;
-        height: 18px;
-        min-height: 0;
-        flex: none;
-        accent-color: var(--leaf2);
-        padding: 0;
-      }
       .app {
         max-width: 1180px;
         margin: 0 auto;
@@ -369,26 +360,6 @@
         font-size: 13px;
         font-weight: 700;
       }
-      .checks {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .check {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 13px;
-        font-weight: 700;
-        padding: 10px 12px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: #fff;
-        cursor: pointer;
-      }
-      .check input[type="checkbox"] {
-        margin: 0;
-      }
       .crop-tabs {
         display: flex;
         gap: 6px;
@@ -415,10 +386,9 @@
       .crop-head,
       .crop-meta {
         display: grid;
-        grid-template-columns: minmax(160px, 1.1fr) minmax(95px, 0.4fr) minmax(
-            90px,
-            0.35fr
-          ) minmax(95px, 0.35fr) auto;
+        grid-template-columns:
+          minmax(160px, 1.1fr) minmax(95px, 0.4fr) minmax(90px, 0.35fr)
+          minmax(95px, 0.35fr) auto;
         gap: 9px;
         align-items: end;
         padding: 10px;
@@ -1358,10 +1328,9 @@
       }
       .harvest-year-fields {
         display: grid;
-        grid-template-columns: minmax(90px, 0.55fr) minmax(80px, 0.35fr) minmax(
-            110px,
-            0.45fr
-          ) minmax(160px, 1fr);
+        grid-template-columns:
+          minmax(90px, 0.55fr) minmax(80px, 0.35fr) minmax(110px, 0.45fr)
+          minmax(160px, 1fr);
         gap: 8px;
         align-items: end;
       }
@@ -2445,12 +2414,13 @@
           "Native pollinator nesting site establishment",
           "Flowering plant species diversity and bloom succession timing",
         ],
-        "Cover crops that feed pollinators and are managed for pollinator benefit": [
-          "Pollinator visitation counts during peak bloom periods",
-          "Diversity of pollinator species observed",
-          "Native pollinator nesting site establishment",
-          "Flowering plant species diversity and bloom succession timing",
-        ],
+        "Cover crops that feed pollinators and are managed for pollinator benefit":
+          [
+            "Pollinator visitation counts during peak bloom periods",
+            "Diversity of pollinator species observed",
+            "Native pollinator nesting site establishment",
+            "Flowering plant species diversity and bloom succession timing",
+          ],
         "Creating wildlife corridors/strips": [
           "Wildlife camera documentation of species movement/usage",
           "Track plates or tracking stations showing animal passage",
@@ -2577,9 +2547,34 @@
         dieselEnabled: false,
         irrigationEnabled: false,
         continuousImprovement: {
-          ipm: { selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], committed: false, noReductionReason: "" },
-          nutrient: { selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], benchmarkResults: "", committed: false, noReductionReason: "" },
-          tillage: { selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], committed: false, noReductionReason: "" },
+          ipm: {
+            selections: [],
+            other: "",
+            plannedChange: "",
+            cropsFields: "",
+            cropSelections: [],
+            boundaryIds: [],
+            committed: false,
+          },
+          nutrient: {
+            selections: [],
+            other: "",
+            plannedChange: "",
+            cropsFields: "",
+            cropSelections: [],
+            boundaryIds: [],
+            benchmarkResults: "",
+            committed: false,
+          },
+          tillage: {
+            selections: [],
+            other: "",
+            plannedChange: "",
+            cropsFields: "",
+            cropSelections: [],
+            boundaryIds: [],
+            committed: false,
+          },
         },
         skippedReasons: {
           cropPlan: "",
@@ -3073,8 +3068,7 @@
         c.isPerennial =
           String(c.isPerennial) === "true" || c.isPerennial === true;
         c.designatedTrafficZones = c.designatedTrafficZones || "";
-        c.designatedTrafficZonesWhyNo =
-          c.designatedTrafficZonesWhyNo || "";
+        c.designatedTrafficZonesWhyNo = c.designatedTrafficZonesWhyNo || "";
         c.perennialData = fillMissing(c.perennialData, {
           systemType: "",
           systemTypeOther: "",
@@ -3159,7 +3153,16 @@
             ? state.nrcsPracticeDetails
             : {};
         state.nrcsEnabled = !!state.nrcsEnabled;
-        const ciSection = () => ({ selections: [], other: "", plannedChange: "", cropsFields: "", cropSelections: [], boundaryIds: [], benchmarkResults: "", committed: false, noReductionReason: "" });
+        const ciSection = () => ({
+          selections: [],
+          other: "",
+          plannedChange: "",
+          cropsFields: "",
+          cropSelections: [],
+          boundaryIds: [],
+          benchmarkResults: "",
+          committed: false,
+        });
         state.continuousImprovement = fillMissing(state.continuousImprovement, {
           ipm: ciSection(),
           nutrient: ciSection(),
@@ -3210,18 +3213,32 @@
         const cashCrop = entries.find((e) =>
           /cash crop/i.test(String((e || {}).title || "")),
         );
-        return String((cashCrop || {}).plantingDate || "").trim() ||
-          String(((entries.find((e) => String((e || {}).plantingDate || "").trim()) || {}).plantingDate) || "").trim();
+        return (
+          String((cashCrop || {}).plantingDate || "").trim() ||
+          String(
+            (
+              entries.find((e) =>
+                String((e || {}).plantingDate || "").trim(),
+              ) || {}
+            ).plantingDate || "",
+          ).trim()
+        );
       }
       function syncNoTillDrillEvent(c) {
         if (!c || String(c.noTillDrillUsed || "") !== "Yes") return;
         c.tillageRows = Array.isArray(c.tillageRows) ? c.tillageRows : [];
         let row = c.tillageRows.find((r) => r && r.autoNoTillDrill);
         if (!row) {
-          const blank = c.tillageRows.find((r) =>
-            r && !r.date && !r.depthIn && !r.implement && !r.tillageType &&
-            (!r.disturbed || String(r.disturbed) === "100") &&
-            (!r.passes || String(r.passes) === "1") && !r.notes,
+          const blank = c.tillageRows.find(
+            (r) =>
+              r &&
+              !r.date &&
+              !r.depthIn &&
+              !r.implement &&
+              !r.tillageType &&
+              (!r.disturbed || String(r.disturbed) === "100") &&
+              (!r.passes || String(r.passes) === "1") &&
+              !r.notes,
           );
           row = blank || {};
           if (!blank) c.tillageRows.unshift(row);
@@ -3232,7 +3249,11 @@
         row.tillageType = "Compression";
         row.depthIn = "2";
         row.passes = "1";
-        if (row.disturbed === undefined || row.disturbed === null || row.disturbed === "")
+        if (
+          row.disturbed === undefined ||
+          row.disturbed === null ||
+          row.disturbed === ""
+        )
           row.disturbed = "100";
         if (row.notes === undefined || row.notes === null) row.notes = "";
       }
@@ -3422,22 +3443,74 @@
         return score;
       }
       const SECTION_CSV_SIGNATURES = {
-        crop_planner: ["Input Category", "Crop Page Name", "Planting Date", "Harvest/Termination Date"],
-        harvest_log: ["harvestPeriod", "Yield/ac", "Total Harvest", "Harvest Entry Mode"],
-        tillage_intensity: ["Crop Average gTIR", "Tillage Date", "Implement", "Disturbed (%)", "Event gTIR"],
-        nutrient_management_plan: ["Input Category", "Product Or Pack Name", "Rate Per Acre", "N Percent", "Micronutrients / Contents"],
-        ipm_plan: ["Input Category", "Weed Or Pest", "Product Label Category", "Rate Per Acre", "Percent Active Ingredient"],
-        diesel_log: ["Crop Name", "Ground Work Gallons", "Total Annual Diesel Use", "Diesel Gallons Per Acre"],
-        irrigation_log: ["Crop / Practice Type", "Water / Irrigation Method", "Average Hours Per Cycle", "Gallons Per Year"],
-        biodiversity_action_elements: ["Action Element", "Acres/Area", "Measurement Criterion", "Baseline Value"],
-        continuous_learning: ["Person Name", "Event Date", "Event Type", "Credits", "Is On-Farm Research"],
+        crop_planner: [
+          "Input Category",
+          "Crop Page Name",
+          "Planting Date",
+          "Harvest/Termination Date",
+        ],
+        harvest_log: [
+          "harvestPeriod",
+          "Yield/ac",
+          "Total Harvest",
+          "Harvest Entry Mode",
+        ],
+        tillage_intensity: [
+          "Crop Average gTIR",
+          "Tillage Date",
+          "Implement",
+          "Disturbed (%)",
+          "Event gTIR",
+        ],
+        nutrient_management_plan: [
+          "Input Category",
+          "Product Or Pack Name",
+          "Rate Per Acre",
+          "N Percent",
+          "Micronutrients / Contents",
+        ],
+        ipm_plan: [
+          "Input Category",
+          "Weed Or Pest",
+          "Product Label Category",
+          "Rate Per Acre",
+          "Percent Active Ingredient",
+        ],
+        diesel_log: [
+          "Crop Name",
+          "Ground Work Gallons",
+          "Total Annual Diesel Use",
+          "Diesel Gallons Per Acre",
+        ],
+        irrigation_log: [
+          "Crop / Practice Type",
+          "Water / Irrigation Method",
+          "Average Hours Per Cycle",
+          "Gallons Per Year",
+        ],
+        biodiversity_action_elements: [
+          "Action Element",
+          "Acres/Area",
+          "Measurement Criterion",
+          "Baseline Value",
+        ],
+        continuous_learning: [
+          "Person Name",
+          "Event Date",
+          "Event Type",
+          "Credits",
+          "Is On-Farm Research",
+        ],
       };
       function sectionHeaderScore(row, section) {
         let base = csvHeaderScore(row);
         let keys = new Set((row || []).map(keyNorm).filter(Boolean));
         let expected = SECTION_CSV_SIGNATURES[section] || [];
-        expected.forEach((h) => { if (keys.has(keyNorm(h))) base += 12; });
-        if (expected.length && expected.every((h) => keys.has(keyNorm(h)))) base += 40;
+        expected.forEach((h) => {
+          if (keys.has(keyNorm(h))) base += 12;
+        });
+        if (expected.length && expected.every((h) => keys.has(keyNorm(h))))
+          base += 40;
         return base;
       }
       function parseCsvRows(text, section) {
@@ -3472,7 +3545,11 @@
         let table = parseCsvTable(text);
         let out = {};
         table.forEach((r) => {
-          if (r.length >= 2 && String(r[0] || "").trim() && String(r[1] || "").trim()) {
+          if (
+            r.length >= 2 &&
+            String(r[0] || "").trim() &&
+            String(r[1] || "").trim()
+          ) {
             out[keyNorm(r[0])] = String(r[1] || "").trim();
           }
         });
@@ -3672,13 +3749,30 @@
               );
             }
             if (!rows.length) rows = all;
-            if (metadata.farmname && !state.farm.farmName) state.farm.farmName = metadata.farmname;
-            if (metadata.planningyear || metadata.cropyear) state.farm.planningYear = metadata.planningyear || metadata.cropyear;
+            if (metadata.farmname && !state.farm.farmName)
+              state.farm.farmName = metadata.farmname;
+            if (metadata.planningyear || metadata.cropyear)
+              state.farm.planningYear =
+                metadata.planningyear || metadata.cropyear;
             if (section === "continuous_learning") {
               ensureLearning();
-              if (metadata.programyear) state.learning.firstYear = /first year/i.test(metadata.programyear) ? "Yes" : "No";
-              if (metadata.revenuetier) state.learning.grossRevenue = /under/i.test(metadata.revenuetier) ? "under 150000" : "150000 or more";
-              if (metadata.requiredstaff && !/n\/a/i.test(metadata.requiredstaff)) state.learning.staffDecisionMakers = metadata.requiredstaff;
+              if (metadata.programyear)
+                state.learning.firstYear = /first year/i.test(
+                  metadata.programyear,
+                )
+                  ? "Yes"
+                  : "No";
+              if (metadata.revenuetier)
+                state.learning.grossRevenue = /under/i.test(
+                  metadata.revenuetier,
+                )
+                  ? "under 150000"
+                  : "150000 or more";
+              if (
+                metadata.requiredstaff &&
+                !/n\/a/i.test(metadata.requiredstaff)
+              )
+                state.learning.staffDecisionMakers = metadata.requiredstaff;
             }
             if (!rows.length) {
               alert("No rows found in CSV.");
@@ -3986,7 +4080,11 @@
               c.tillageRows.push({
                 date: rowVal(r, ["date", "tillageDate", "Tillage Date"]),
                 depthIn: rowVal(r, ["depthIn", "Depth (in)", "depth"]),
-                implement: rowVal(r, ["implement", "Implement", "Tillage Implement"]),
+                implement: rowVal(r, [
+                  "implement",
+                  "Implement",
+                  "Tillage Implement",
+                ]),
                 tillageType: rowVal(r, ["tillageType", "Tillage Type", "Type"]),
                 disturbed:
                   rowVal(r, [
@@ -4109,13 +4207,23 @@
                 "Date",
                 "date",
               ]),
-              pest: rowVal(r, ["pest", "Target Pest", "Weed Or Pest", "Weed or Pest"]),
+              pest: rowVal(r, [
+                "pest",
+                "Target Pest",
+                "Weed Or Pest",
+                "Weed or Pest",
+              ]),
               productName: rowVal(r, [
                 "productName",
                 "Product Name",
                 "product",
               ]),
-              epaRegNo: rowVal(r, ["epaRegNo", "EPA Reg No", "EPA Registration Number", "epa"]),
+              epaRegNo: rowVal(r, [
+                "epaRegNo",
+                "EPA Reg No",
+                "EPA Registration Number",
+                "epa",
+              ]),
               labelCategory: rowVal(r, [
                 "labelCategory",
                 "Label Category",
@@ -4130,7 +4238,8 @@
                 "RUP",
                 "RUP?",
               ]),
-              unit: rowVal(r, ["unit", "Unit", "Unit (e.g. gal/ac)"]) || "lb/acre",
+              unit:
+                rowVal(r, ["unit", "Unit", "Unit (e.g. gal/ac)"]) || "lb/acre",
               amountAcre: rowVal(r, [
                 "amountAcre",
                 "Amount/ac",
@@ -4400,7 +4509,7 @@
         return `<div class="card ok-note"><div class="section-title"><div><h3>Resume where we left off</h3><div class="help">Upload the Complete ZIP from the previous Roll Up export. The tool will find the saved progress file inside the ZIP, auto-fill the form, and return to the saved step.</div></div></div><div class="input-grid"><div class="field full"><label>Upload previous Complete ZIP export</label><input type="file" accept=".zip,application/zip,application/x-zip-compressed" onchange="importProgressZipFile(this)"></div></div></div>`;
       }
       const SCI_WHITE_PAPER_PDF_BASE64 =
-        "JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUiAvRjMgNiAwIFIgL0Y0IDggMCBSCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMSAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL0Jhc2VGb250IC9IZWx2ZXRpY2EtQm9sZCAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjIgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9Db250ZW50cyAyMiAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIxIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago1IDAgb2JqCjw8Ci9Db250ZW50cyAyMyAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIxIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago2IDAgb2JqCjw8Ci9CYXNlRm9udCAvWmFwZkRpbmdiYXRzIC9OYW1lIC9GMyAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjcgMCBvYmoKPDwKL0NvbnRlbnRzIDI0IDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMjEgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjggMCBvYmoKPDwKL0Jhc2VGb250IC9Db3VyaWVyLUJvbGQgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0Y0IC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKOSAwIG9iago8PAovQ29udGVudHMgMjUgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAyMSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTAgMCBvYmoKPDwKL0NvbnRlbnRzIDI2IDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMjEgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjExIDAgb2JqCjw8Ci9Db250ZW50cyAyNyAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIxIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iagoxMiAwIG9iago8PAovQ29udGVudHMgMjggMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAyMSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTMgMCBvYmoKPDwKL0NvbnRlbnRzIDI5IDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMjEgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjE0IDAgb2JqCjw8Ci9Db250ZW50cyAzMCAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIxIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iagoxNSAwIG9iago8PAovQ29udGVudHMgMzEgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAyMSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTYgMCBvYmoKPDwKL0NvbnRlbnRzIDMyIDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMjEgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjE3IDAgb2JqCjw8Ci9Db250ZW50cyAzMyAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIxIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iagoxOCAwIG9iago8PAovQ29udGVudHMgMzQgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAyMSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTkgMCBvYmoKPDwKL1BhZ2VNb2RlIC9Vc2VOb25lIC9QYWdlcyAyMSAwIFIgL1R5cGUgL0NhdGFsb2cKPj4KZW5kb2JqCjIwIDAgb2JqCjw8Ci9BdXRob3IgKFNvaWwgJiBDbGltYXRlIEluaXRpYXRpdmUpIC9DcmVhdGlvbkRhdGUgKEQ6MjAyNjA3MjAxMzQ3MzgtMDYnMDAnKSAvQ3JlYXRvciAoXCh1bnNwZWNpZmllZFwpKSAvS2V5d29yZHMgKCkgL01vZERhdGUgKEQ6MjAyNjA3MjAxMzQ3MzgtMDYnMDAnKSAvUHJvZHVjZXIgKFJlcG9ydExhYiBQREYgTGlicmFyeSAtIFwob3BlbnNvdXJjZVwpKSAKICAvU3ViamVjdCAoXCh1bnNwZWNpZmllZFwpKSAvVGl0bGUgKFNDSSBGYXJtIFBsYW4gRG9jdW1lbnQgQnVpbGRlciBUZWNobmljYWwgV2hpdGUgUGFwZXIpIC9UcmFwcGVkIC9GYWxzZQo+PgplbmRvYmoKMjEgMCBvYmoKPDwKL0NvdW50IDEzIC9LaWRzIFsgNCAwIFIgNSAwIFIgNyAwIFIgOSAwIFIgMTAgMCBSIDExIDAgUiAxMiAwIFIgMTMgMCBSIDE0IDAgUiAxNSAwIFIgCiAgMTYgMCBSIDE3IDAgUiAxOCAwIFIgXSAvVHlwZSAvUGFnZXMKPj4KZW5kb2JqCjIyIDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDk3NQo+PgpzdHJlYW0KR2F0JWBEZjsrISZCPFZqO3IiRSZYJjlISUBtR0NrXkNzUFRbNENPPF4lOElsSDM5V3RkJlB1UEIqXykoW0dAXkE1VlRxTGgqJyhNK2k0YTFJXUVcMlw6ZihoJ0lcVFMkJ1opNWpUVjA+WmIrbSpJZC0iWktUUVsyUUJHQS5ZJU8ldVxsbFY2QDc3XCRQIUlcI2JwJjt0SCVRJmgiXVUtaDZXK2hjT3VPJkFNIi4hbi4qWzszLGclcTQvIXNbbi41J05mUzZRYyNObGouKzRyN2RNPCMuRSpEa1soOGpULUBoTElVXjQ1Ti1TV0grOCpwJyxkWWUiMnJVLmBkZj87PkVoVzcoSS9oNldDVytKbjIoYiZnZHFQMGRQbCxKOTAzK183I1s3VSRvVT1tPFNxS0VfL1hDLlY+WkZDLVI8dS4zUVxiUzAxNSltX2E/OzQ0YGtvVENvQ29PbEtacmg5JU5NIWVvVmZfQVwwMTQrWltlamFeN3FZNTwjP0luayU+LmpIc25LRE9QUm5IUVJSPUZNQCFUXFInZzdRISMmPVRscXFiL2A8ZHVbSFNhK0Vqa1NCYFtBV2daK11KVExTZWUhXUBURDM+QVVmLEctdWtEZHJUMzk/SzU+RUBBcS5FKF9tPmhAZDxMXWpTRUhzLyNzMD84dXBsc0U9JmJLSWBXPG9nKm43ZTY9XV9oMkVZSyY0WmBqUUxpTU9LcWopJVVIZFhnMGlvZlFsaDpdMzpOS1RpNVRUb2grX0JGPG5sVVRITEpSOWFJcihqZjlKPCpWbTYuMV80UFIiXUxAc0NiMjEjaF1xX2kra0dSI3I/dGEmPSpAY1FlMUJQVS9GJjczRmw3TmVCanJiIipgRylORz5fQUdhKTNhXkU8XUlNaUFALE48WCpbQE5kRVduT1l1OmdOU0FCKCRfXj5JK01yLGNdUypbNzRNTU5PR2NUSz1FNExbaTFmR1M7Mm05cDIuI3NKWUU2VjQyKDQ7OiMnKCw6ZWVbUlIqMThTQlRDMzFpRil1OmxEX1ZrU0wkUj0wXS5NKitJMUFVb2FQOnVmc1otYkNAdUY/L1YmLnFmLExuLkphaEMvXHVfJyRUYlVkcltQQm4yWjpBYm9maTsyWk9POXFqcDc1Pk1VLjVgRDM7J2ZDUiJjdUFEUFhQZGVDPTc9SCUhPjhvRV1ydF5HMWVpUTJnT0dybisrY010O3BWR09NMCc/Yy9bbygyb1ZHPEY0USVySURWalkvQSs4aCwoJk9EaT5eRkNlYW1jcmhgKU5yPD5AVWBCc34+ZW5kc3RyZWFtCmVuZG9iagoyMyAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAxMzI0Cj4+CnN0cmVhbQpHYXQ9amhmJTctJkJFXSw9NTc6SDMlUk1zSVUoPHM5OUJyYUBWZTxlKGw8N2I4PkphUTooP1FOaGlYKWRVZVM2azBKJmlBJmpKbldIYClkUGlbPTxLV1diQGRfdSVVXytwUj88TF8+bGRxQU0hO01uXiUnTGY3PiQ1YDFOXjhXKDouOEUnOiY2OiRjcyFxSi9xOEhMSz49XEA/KkRaYjNBRVJwWVVEVkItJFBKaDA5QTIwMVViXDE7XzhRJl8tP29JSFBCRkpeRTNITmVwJFJeL109KWM4VSRgZiI0cG40XCUoIT1CcjA6USxecGAlZVlIO3EzMCVLLSNNWGFoL0RxWElAMFpOaXNkcGdyLD89RloldDAuciVzVyYwPyUnIWk5Uzo/J0xYPGRaLUJdbVtNUm0hLmguPmBWYSUvJSdzNkQ0bz4iKVZtNkUic1w6aDRNclRyRCNwIT1xY1sxJUtiXkpNYiE1RnVHQ3BoVl9JSUkyPVFHITRsVjwsITFiKDooLztqISw6Ris1S1M3XllxK0dJYlFwXHA9QVBlJDBvZUYhOlgzUT9fPEctPlJEbkRZVzxsLF1YVjEhSyZTNkc1b2xPQFhVL2lbPy1sNEVaVT4lNUJrO0djP3RIOk5JLVxcRy5ETmhUREM+WSZATl5wLTRUTD1JR2pOQjVlXT1dNyI8XCRmIl1WLiRhMVpeXVVRVVFWUHI1S2tHN28qWkZ1PkwhU1MmMVttLE1GLGRpJD43UmQ8N0MuWW9oNWN0YC5DdUA6SzMoTzhyMi91Oi85bGJjVVVORkBQVj5gQVhZOl1mLl49WV5eMWdFSDQjY01YXnVRKSI4UTlpcVtxZTtfXmxlZzgxRiZRV15wVnJoWz1NUEE9YEw5UW5dZlBPXElrYTFRNUM2UVdrUyNmMGM6JlRqIjAidCJGZkJDLVRWWGVIOEEhR2tXSGlHIlAwa20+WD1LKW8vXlVbY3VUIjNuMDRwNDxDTEldOk0nY11jYjJiPUA+WG9RLnFKTmxxJmNVM1hJVW1LKmhYNWVfXyUxZFEuc15kTyV0VVk5I0FJSD00aj42RmwxIzhdLz9OdTpVXjFNTU1TWmk/R1ZOM0ddQi5fSDxOWHBsMEZNY1dFMHVfMmE6QDhuJV5LQlZsJ2VuZlU6NUhaQW0+XSZmU1RHX0NRVmhUNVcnRVZSU0lUVl5cXzZZXTwmZ0UxbzFGRjU9RTJpXEswImsiYmdAIk0oPjdZWlM7XmBKU25ENGBaNjpbKzEvO3A8YCNfWDxxPThSamZWYThOL2VOPmEiWlxsT0NvKmtrQjRUS0QhIU1DNzxGSSdAcmplSGFFUWYkIVclNilMSTtJP3NMb1QmWEs5Yl0wSDU5XjBJZCpwTkc8R1RqY29GU0xmRk1vbixddDtPXEgmM0FzNURNL08rYkpYTnRzLzQoSDc5MiglTEhXJ11DNXBLVEpKLDByVktccnNAT3Ijci0pKWYhZWxWSSRlXTtpNVtOQG9DVW47UWBlS3BdRj0lcE4+Lk40LyVuUSZmX3VWNjxBUFgxSlQ5Pj5OO0g3LTBAS0RdXypDQTBgJFVLLG0oYkNVWmZwW3Q/JWtgOT05VlJhO1dDP2pANCMiK0BEK0xMcyZmW2gjKC8taituJUstcTJpcTI8V1ckMXUlRFNpQDhRXyUlTVUiK0BEK0xXMmlxW2gjKGkwTkUrXy1TIzhQUnRwTWokPUllLGRtc1BrUyZeZDdVJXVkQm5LMW0yIjcoYXElMH4+ZW5kc3RyZWFtCmVuZG9iagoyNCAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMjk5Cj4+CnN0cmVhbQpHYiEjXGFgPy0qJkFAQltxVC0wOykjRnI7Q2ZzQXBhOWFISDovcnBHJk1QSj1ARVNZVFhBaEFJWTZQRmE+K3VZSyNGP1xLKUlSbDs/OChhVi8ySGEqbC1EPTpIRy0mPms4JTJZWGslJG5MLmVSPzNhODBRSCIpR2VCMUZRbFRsMTE9TE1zb3JraiFxZUptQDE9LklbRFZGWFxdYXBDKUVEMmwjSitEYCc0MjJCMjxJJUVKJy1oXV1tb0hudSZNRSc1dWE4VCI2SlgqOllPbS45QmlWb2VOJUskSyhtQnAiNyhoTlcjTGJHKF1eRDQyYktkR008b25bOnR1T2pTKyVbI3FeLFBvZnQpYzBpWTJWdGRVc21xREJWPFxOKl5dcW1qQzEwaGxuYTo4WCFmPzViYTdbIUI0ajReaXFVVXU1RGhDSSFMQU81V1s7LVhsci5eTWVxVXVcRlFoVTdAP1o2PSRNWnE4dEorcmROUFsqVmJGUT9ya3A4LCRnaF9SPV4qMzlRKmJPX0k2Sik3RilbNHNLIl1ESUU7RyExTXVTSWtULGJaQCVEYTJBdU9PQV5LK0MpN04/OjhRK0MsXFBSTUU8clFRRjVPYVY+PVBJakBkakR1dDZZSCMwQEktW0ItZ0ZhQS1vOyFyPCZTY0wqRVsvKTRWPnVILTopWDtAVmYpQ000QEo3KDdTIkNlbkhKcWE0OHA7JmxrMXRGVWBLIidiLkFPYz5jZTMpS3IkYzoxXWE4WTA0N0VZZV9kLVdpVydzLjFuTFEvPnBDRy1PPD9oJF1IMlYkJWVJU2ptQi5PJj9pVEM4U3VnQzZjXk5AMVUiaTxWKT0zLiJsQl5fNzBuQHRCJWlSaS5yQWpGO2cvX2VYMVpTL1gsbzNyO0dvPzcyaSE7Wj5cQSpMQHUmKGBjJEFKRy0vb20pQDg0OmdbcVIhdV9rYisvOHMpWEAzL1UwSm5gKFNBZC1oYllqLCgiNzotQldLXi5gWzgiQzc4JTlXY1phLz00TzkkdUxAc1cpRCktTSJTdD5UO1FZMFNVMlwxUjlvcD9uczlbTl1EJnU2ZjFHK0Q+QnIzSzpBNXMsWic6bF07QlwmIj4+Uz9FQC1AcUhCOSZkJzxTbDspNGJdMThvYGIrYlRKXyZlMjoyMTtwIWQmOGIxV2JpIyxZOj0vWDhabyZ0SEpxTGlxQ049T1FTOyw0WHFaaCVbQlBQWyg6PDAxKlx1JExCMnVkRVxoMyNMMVljWUNZaT4nck4pSVRMTSNrI21fWjk/dGQkajY4VTpkck5oK0EzKzlhazJlYzpOWjNHNlM/Klo2XCE1LmAmVXVqJk9COmN1aVsjTzsoXzAjPjNDTEc7VEpcREUoV2soN0pbUSw3NDgjbC5dQmZdT0tmSEZAaUFXJiw8JGVRZT5OJkAmNTU5M0ZHPkxYKiljNFFPJDdXM19vPzgkREkoQW5zK2gwSlYiaTRcUWgoUCFiXytQRy1dZj1Bc2BALi5lTDlvX2YlQjNFYSY7RG1fOCVhQk1BUXJAM1xmS2Q0OFsqSF1NZyRtTGhFOyQkXmNNajBZWW1qbW5lVyVmI2Q6KmxGRVJVWWluTVZxSkwpVWxgUUtpJmtgXXJtU2xack5NViNpRnNPJCFQbkFkLWdNWF5BalRzN0NMSVNjMTZsbipWLCxYKSFWaS9EPypyImgqU2BfW1BFWnFEa3RwOz51KT9MVzArPlsmVGBcUzdDaDlHTDVXXUpEJyYqR1MxaUpVIVc1QyhgZy4nJTtYPT4zIiRTU1c7SiQwaV9ITERPY0gjS3A0PSJwLVBpY0xFW1JqI04rSCdPSEFWVUZtYEYlUjVdbE8pSlxGO2BncWBmXzVJUS4rZzBca1EoPy85KGQ3WzEvaS4uIVRCTEU2TVxsNWlfTGhnNzVBVk5rUlxYPHJqTUhEOVVBdFdMM1dab11iSGVOKmxONzpBX081LlA/VD00amJnMS8yYCtnVWByQEVVRElaW0siTDQ+XVk4IUhxVz4kcCxGKXJdMV0zTjdVNFhHMi5vVGQ2TVAtNGYwKSw0RVhUQjJjSTpfYjY3akUzYy9nbWFKO1lma2JlIXFlYGxZXys+PS9waUJWPmI0ZSJEIyUuczhDbDdpXj5DXTc+M2hOMFdeMGEoRWlkT2BpbF5rPWVeLmEmJDhYa1BCb1JLKzBpYCUldUQzSldMIzsxJyhxJyxRUzk7YkEvRi0scmxbYGU2SyNNW21eTVZhbHM8M0xkUUVTWU1bNEBXT0JgU24vbDNKXlUnSGpeaExMZG1GXiVBSk9kIS8hJWVINUkjVi9pVHVXRWVaVjJCU0xwMTVPIW0sVmBHTG0qLDNhWm9CcmpQRTRYKV8zX1ZgQkksNyUhayFnU05WXkVVS1FdIWlMR10sJjxTa11XVmQ+VzZTK240VCc2biNJQl9tdTxeSDglUDBzYlFCIzJBJTNBcTIhJmhTcUptRyk3KzcuXWJAK1hTODJtXCldQ0RoQCtXPmNScEU2ZUdxbF5iVigvVlloKysjcGomP1p0JmI8ITI/Ok1JLmNJbSlROT5mX1RscUxyOENuPyVARSQ4Xi1iNlJSSGldJ108UThMNjQjR14sYjpDJT5JXShWVXVmPiFIXiZxdF88MzdlYl82LnJqQ21XRDp1KEVwaEpcKTlwOXM7ZjpjR0NiTVRRLEA+cmVNSz1mcFwvW1FbUz5CVXBYKWVYM1FiRiRxWFhHbUFTMlZPMWFsTF0/NkVcWnFNIi1KLWQ1ZEVjYEU5IzRmOnBsRF1sMjNONTZXXjk3OWVkQEVTNVAmTiciVGdkUiczPC0xVnMhbWYmQ20/JWtiQT5wLj1jLytjSlw/XUZKSVRaIyx0JTZZbS9TQyUpOC1YImBfQG5RSCcyamxgJmBEVGtiWkJHIXU6cT4uKUwjLiotR1cqPiRKSUkiRyNYQVJWUGtsLFtPdVw5NSdyb0tjTkgrUlkvJSFTQik+PixxM0RsR2xiakdIZV5EWTJDTDVrMUwsQixVVitST2hoQnUvbCc5OFFbNitiRmgsJWtOZz1NWn4+ZW5kc3RyZWFtCmVuZG9iagoyNSAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMzk2Cj4+CnN0cmVhbQpHYXUwRDlsaDc0JyMhVTRvTUpYW0JZSSZVYXAyLjomblUwLi1EaTowPyhgJzNLSk9cWUFrITMwcDtjVzs/dE1xWVAuOVhoYkkuZ2ZKRjpHQ2BwN087alBjLzxKIzNDc2BzJiNAcTtfZGY9SFhiX0xfX3BrXE4nRVY2cWtLWFFwaTl0OE1IITFyNkwiX0lmJkIqVWFRZ1JSYCNqTzc5ISpSYCQ0RHBjMDxEQy1acFZCKC1DaG1NRC5mJjhPdCVxLS9OMCksKVgoZVBmdTpvcEgtOV9qRmkiOCQ5Si0rRUQ5Tl8nSyItSThZPCNpL1FDRU1hJl9BazFBI0tnVyx1Jik8OUVpTThpTVhpRWMndWhDJUVuW2g/YS41ajtmaGRkR2crRWZNYE1UXjUwV0tWSTFVYmAyXTxNSFVaP1JiSDU/ZlYpdVkhQjlkOlQ8UlMwLlBaREAqV11YPyMpPjBaUUw7bTFuJUguU3VjI2M9QEM2VS9oQnQqSC5xXD9tV2pvcF0zaTNVOy1AI29PZ2NedUwvIW9LVXFuNDhwNycvK1Y0VExUVUtHQ0M5Z1QucDFvYTd1OV1KaEFPSi4kS1hkVTw2RyFVOltFVzFNTzRyOCRGUWlSMlE1MypaPVQvUEVKS2ctRzwhIjIiTGJdSWNvKy8jPlxYajBrckxXUFlZNDRaKj4mZUFEIicoOGw5PydwJWQ9X1sqYmlTQTgsVTFkUFdvW05LJThecWtZcTZXQGA2O2tfJVxXTCJ0K0lVME8lNyE5cEFUV2AwLHIkZjpJI2NTcjVcLmFSZmAuMWRjKWxvK0w2NFBiRmBRJGUqT1JBWG1TKWA3VU5AUz0pJVxoMGssOnJfXS1NW05bckU1KzhhKFkyUGVtXk0nLiZIbk8tPEF1LVBnQkpTPSMiVytJNUVBPyZhTHVgckJKOVNLTWBsIVdeWGVaYSs7STUtNF4yUC9oOHJqUGlkZEwwWUNpO1U3V0MxLjleakBKPyYjaF9PUkZzLWtpUDpXPlU1MFosYCFcSFJuXlM4KDllbFIpQ1BHQXA4OSRnMFNYZjhqLWBwQWhvO0U1JGY/NG8rcl5nV148YjovbXA/J3QlaTJlT046LShJWGBCW15vXic/PDFLdCtRbUNOc0lmUkZrVmxqPy8lNFROO3VfQSlGKHBFTl01QWlANSRabVUsIWZRZG5EIShTRj4sczEhKTY1LCtbXkciZlVBK0VPRT9jbUolOlVtUnVtNitQUjgnLmddZzlyb2kyW0AxSTwhQi9CSGVsJnMzXylgcCFDcUlQIkIoRyIvL1onYjYzMmRLKTkzOyNsQlk1V2RFUlIjbVhmOlVXRWVHb0pab0s3cVotXVY4VkJlLGBvMlJeaCUtSSlTPDQoTVshZW4+N0YwLy4jOGM3dFBQPF9rcWRDVj9GQS1bOidAWWtqWG00WmlpIWYrIlwqck1jbnFCO2JoLyhUYz1wU0IvZ10xKSItQSdeRE9eJEgpKlJjUFJoOkQoNj48YTVVcWlJK2Y9PkQiWUNGaSZEPDwoWUJOSFJMPV1ROHJtYzdYKUwiW1I3RyVvRmFMW2dVK2IqTVlhPF1TND1APGkwWyVmOVkqLis8YTdZYykqaGk4cCgwYz5QIVw6VyxsT2lJIkJBcypuR01YKmUzSDEiL0ZLO0U/ay48a1lEIWlAKSZzTyxOLjBDQG0qLiNkVkkmSiQ6XU5OIjYiYVBNTlAsMkBFWFIsUjFaRGJSPHFyMmk7QC9VS0FEc2EqP1YmXDpuVnFOXj5ARyMuZEdXRk4yRGEsaFRmJixmQEMrdV5aVm42aCdeK2kmbjZTOD1taVRFTz9SZlRqdDVjIVxQX0I/aSEpVUYiZVgvOTBWU3FYWUlZbFA0U1dcdWVdbWwlUWNmJFEkYU1tLFdYWXR0YnReNXNkTHRZO1s6LFVESF49M0Y+MnI0Iz8qO3Facmw9P29KTTlLMmZaLkJKUmA2PFw/Ojg6UV9LPChHSy4tYEpJOD9gUG1tLEAoJjJQcVdJPG5MZGg0RTcockIvcC04OD81cm5vbV42LyJjOCJtJzBoSWZPRVdXTlpVbWAhPmd1UTMvTj8iMF1kOVNvbFYlbUVERilOblU1YC5McWViVCsqXyYqKyJAKENPcS5FZlVAYzc0az8tdFVsVzs1KzpxUHBYQTA4YicsZ3RRczdbbXQ0UVxobm0xQmNuLmwrQTgxUWRJZm9kak49U1hEVipaXiZaUWMuUEMkVmhXOz1URl1UKSkzWl9yQ004Ljk3YnEiSD4rZkY9cE5qYyhTLnJgX3NFX3B0LHFXWz4tNXI9WCZHbXRWWl8qL2E7UTpuQ1lmIkVVJmU8OS5zaVQoNmo1MVlDRjUuYGhaRzxqblpDMjdAbl0uTWs6RzVXPz9raiFiMFBWNzJjLEg/SmIyUWJCT1taQkZlNi83T09ITzlQT1FHYjNXJT9kXD9abUZNazJJNW90ITorLkY/Sz4sQmlMSzM9My1pYEpPWyVjSzwlUDNySHNCJ0g+VDxiNXBrclU+cS1DP01RZVZBMlkmbWBVKjVNJXFKc0EzUlhnLnNwKFU8Pk0zdSEwU0NDVV1CJ0hQVkNuR1wjaGhwO0E1Sm1NLSFJYVooNDg5WE9JMj80bkUhKDBkPkNwcFo7SU1hUTpgR1grTjF1bXNWRWhBdVdDR1dNalwmM1tPQW5zPkRMXSttMWQ7SWVOcWciWlpoN09jPkgvSWUvLzY7KyxIYERedExHPTohVVonXCpjZGpeP1pFJToxMD43K2QlSkciUzhjcmVeKjsscCJVaEc4VkpOLkJyXTNkYTI8KktvPytjcExcZlBRJGYkQD8tajguTT05JkJXWmksJGNAQGs8ak5EOkIqKjY4dCloN05wWl9nWS4xa1NYNi1SXF5fc3EoLS8qNixCNHI+Yj5NNCVKPmU6J2pmKUFuVEdFNGJzaC87KGZDI2pvcjNSWSxFb0VEcE9dITxiVlZMUykwUWBfKW86WThYRF04TEotOTZSRjdOTkI2akphOjRsaEk0Ylc4cSsqNkNYVkJrcVpPSzEmcSxWTWBhSGQxQClyRV9VakohWyVdMnBGYCsmQEc4L0QtMUtQIUdTTlY5UlFuNi0hLmtNLU83Ym8hdXJsSTw4Rmg2VSdgMjYmbClHSSdjTEI8JldtWC9GMC0taVg1QCtsR1d+PmVuZHN0cmVhbQplbmRvYmoKMjYgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMjA5MQo+PgpzdHJlYW0KR2IhI1s/I1NJZSY6RjVVZlR1UzFDPTJzVlIlYixqLzZvXWBST0JUMlxoR1EnQ2dLYnNiYFQ4S1RLZy9zR0VhTFs7WENpOy11QCc+YFM2bE9TWGolSUFFMV9YWU5eWiZBNEInKiVRUS9kRFRWRSNUNFYvSDUhL09lP3FuO0xOSUEpWlRjPGUucnB1VjA1KCVpVk9ybWpATUxycT9JOUtHWSMqdW10PU8+KkA1JitVMyomZDRwPiRfYjg2QjxaTiVkZHByUTY0Y0xLW18lIm4rPUNoakgqX10kUT1GVV1xZ1FTL1NKPDUtKFMlTVtoKitELV8yZURVJCsudU0pNmtzUk0+QmUvbUNXalV0NC5Ja19fbE5tNmdmXmlFTWNMNiprYkRAVWxJU0c6X1dtIiosWDAkaFxcbGpBJk9VcWZbczhcOTZGYGxWU3QxWEBnKCsnVyJnX1dpQEk4N1M7SC9aKHMrPjxELDs8ZFVmX1w5WEksPEE+dG8zRCJmYEE/Yy1yUSQubixGZGZqQyZOYnAtUmFgOENMJEJZb1JvSFFHRjdcRUk+aiNhaGthVStBYWY0UCJQSk9OWjI/QyNnLVRgVUolMSh0L3VQZ01UakBiYXFnKzwyYHEkQjskMSFicipEKGU0WlpCQiI4dWNmcHJuPmw5WUU8U1FEX2pmb19NQCNlKj0nRDBXa1JdMCVZVGBML2ciLWIpW1xrZTIiSjNZUlIpTWZLaS9tMXEmMDoxUVlmLCtEZi5sJ0AwUmRhUD5FMXBXLjE8VGpPVEwxOGBcZUFZNDpJPC9RLE1BMCdXIWYkOSg6aytoQyFnSzlaZm1jUzxSaUdURW8rM3VII2VdbEgjMEUvWi9lcWNNYCY+dGBOVl8hWC9gZVQ9NkNRPy4iZTFoN0ZIP09bWkF1STchUipFIkI2JWYwZXM+XWMoXTxyTFtUNklLKG5ALURVY1AuaWxEUlZna1U5JlotLGgrMV8wPT9FJGsmVTA3XE45aklQL3EzSmU2MEJKT2k6MTQ+QzZiW2cuLi4/MDhmPWIoLW1rIW1kQzM4X1hII14mMElOZFYrZG5EMEpXPSFYMWFmNUVNT1JcYVkoK1Y2XydNczErbkRodG10S00wO1xoQWM3bE0vXjkqLyc/U0IrKmhNIW1ZKi1SXHRRWmI0V3JpZFJoVURMQU1jXjZEQTpkKVstZCx1bSsxbE07JVciYUFrJyk8Qzk4WSghQiQtT0whQ2Q+QmJTSDBMOUltXUJHclsxaytbTkRgVC01Zy9DViZtZGJMUiJOXzJTQGg4OWFCJz1TUHRfYlB1SztOWClFQV4yRTVJMyNCUzUnUSRLLG5TaUc/IjhiKDAlZFBaV1tlcmVdOUs7UUk9TytWTGMrZlpLQiFtZVU8UUVLLThjLEc5LF5ZVCQ+MlU9W2FmXihnVERzM20+WSUuYGtdQ3VLYmpJP09Ib2lfVGtXPW86V2oyKVAnKmNgUTxXV0hdWF0qXnA4akYjPDkhQTlLbTM0S1AtLjtuWTI6R1ljPFpJTyIuNDtuZl8xWiJvXSRlLEk1UUdGNTl1L3UmRlYmJiFuV2wtcU4jRUdoV0UwX1tRLWRyT3VwKyslMWQmbllDJS1aSVMvQDAlU2BVWGs1cVl1IyhwUUZKTmpmaUBhUUs0Y0orPGRCUlxkPTdfPltZMjdYOzpScnV0RlROZShmOmZhVTplXnMnLjN0QWdeVzYlbzFSNF8nMFhLaltiI2JZKXBgLTJZL2E1aD88V2RaX05ZNEk3VnJAJElCYWFcTSJPIlIkU2chYyZjaCg5RmZPbSo1ZSM7QjhyNTgyM1lmPSJgKjovPFVRSk81c05kUUFzZWRMXD03Jz0xaVgmbi81Vm83PUdgMCU0JzRkNCgyXSV1bkwxJEtCYDBhTlJIVkozM2hzPDshXStIYmFxTiVwZzVYcD1GSlUwWGddT04jdTlfXltSWGk1LWk3OWVdazssUlBvS2FrcGNCIi1fOjNXLVcpSS8rUmEjT3BvUVBjXVNcUGExJDVoVEA/OkduNWtTRWRvPW1LSTgqIl9APDZAdV0uak5qKWxhW0RnWzNuZWZkdFFCdSNNQWMlTFdALUc3UWkrPVVwP24vPVhwLDIkOFVnNDZGIU1fPzg0bnUmY1cnPCVBY2I4STYlWnQ5MFpjQ1kjLE1XPHFxaE1cNko5OlMvVilXZyFtVVNGcTJHcUZiYTEyb0g+IyE6Qm8ldWlUPGJnYVxEL2pWNVlXRD9ZN04oUW9rLXRmOSteSWNDN2llRj4tSCVFSzk3QlI1ME1wY2ZzKmRyM29raDsnOkUxQkllVTBdPXJeTz9NN1NxO0MxZkwzRjMmPFFaR11HTytrV1dAZCI+cGw5NW44Z0tMPDJSKl4hJ0Q9PylBcjl1ZkAlKVFAKVZsTV8rU2NKZjVSLTBHUmddJSs/WEE0I1hHJyhXRkE+UlBhREpZLlxvbllLOCdCN1BKJGhDPSMyL2hEZiRbZDRaRj5NR15fUVxlTVowYEhmb1MyLSpIOmEmaik2c2xvOHE8NUlELSUwXk49SiplJixqUEk7cU5Xc1QxcFEhN1ItX29OIlc/I2M9J3E+P3EvZFs9NTJxKTI+TDE8S1Y0P2IzVk5Ua0VOc3F1MlcsI0ZDRzxzWy5XNWFbSkI1JUU3Sz5mclkuKnNmQURjW1ZRbl09OlE+WEsjQW5fJFU8QldtdSEhJFAwSihAPEMhXF5DIUMnNz8oNjhnaHVBUGpfMT5UUz1qcER1XDNQJzklUmREPV1rPHRvJ34+ZW5kc3RyZWFtCmVuZG9iagoyNyAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMjc0Cj4+CnN0cmVhbQpHYiIvKD5BcjdTJ1JuQjMzMC5CUlpfRk9aS3FUQDtVdG4uVDZeRHNJJDU9PGtNNzF0ImlwKVtYXmpjM3E2Vj1ZVGM/PzdrSGVGTSNBa0Q4bV4ycjcnNz9XP0hXQlsvOmtrVGglXVRhW1k9dEU2K19QK3EhSEVmSSxFJGYwcWYrJmM1MVhHYjgoWi4+b2wyKDpgUy9iPkthRU4nazMwXVFrXFxkZTZTJ29QYS8oR0ZnTVtgalhAZDg3cURiPUlXR2E6UT1pT0RvQlVOND9OQVNbWnFtLic2X1VYQD8qUzZncV03VFg7a2RxJytLUkVCO2toQlpnOjkpPV9lLlUpIiwnVzFNS1NeYFAiX010L2VZdDYlWVtgOCpNXWwuVFNOWV5lb2AvWj4hT2khTz8wJW10K0g8VC0pXDVJRVZdPSlPZkZmUks+WFU9QmlhRCJlQSdHWW4hKDI5ZFguYi5oIW1WLCI1OyVtMT9SbElBcjxqYUVgLGhKK0RXOz9iNnBaQy5mS0lwPjhQXTkqbV5sajc9X05yWEUmPFdzVHBtMVhbNWA2VmpuJlw0bFVyVnVaKD83WE0iVDhtdEdILlwtPE8oOSxxMm5fKCQ5Z21vYzsuUEBFXDMlbmRZRyQ1NEdQM11CcFdJPVt1KFNLbFFZOSJPc0MpUjgtSFpvM15OTG4yaE0tbFRAb0ZtOShDUzRWanVJMlY8W2xzNCJRQUshRWRzMVY8YyhmWC8oTjEhbUJOUCRmLV90J0w8Tk0/Y11yMjdSJVdtVSprVmE5b0FeUjphRks3KTVwdThEam42dS4hZlY7KFZNNTNVamxSTFAzP2pLK2JeTSkvVVxHW1hgVz09aychSDE6YHFVLVVKIlVCJCgnImw/QTZKUzJfJEBTKz5kJ0pSbWEpLSNEJ2FqPCtCXDZVYE9UcldgLVxCZVRhcSwpbS0zOUYqY0o7SWZyQnEoI0Jgbkd1WVhLPClkQT89PTtYc0ozJFpvRSk7PSkqIVlcTSMqaU8ibEVkRiw6Xkx1ZzRiO2NtSUZpNS9fRSw+KFExOFxtaF43XC9RLFdcTjg7QVo4InQ6JDZIXGYsIixocCp0ZG9TXkJjKFYuck5YbmpPZjFHcjEzUz9EbGojLSFtTmRNLWAhYUFLdE1TRV5IQCQ4VD1SdF5PKERCQ2NGPE4zbVZKUDFXKXEoaWwvWmNzZyNCZ0VCJl5pYmBuUytrJDpVSWU2YDRsUz1AaiNCXjc9QjVQJXJuJW9yYmxIbDAoISZwP1VfKGxUVj01XlloamsoJ0FrYEBIPCl0YWZgQWFgSSlfZSlsMmw2RENjdCZSTm47LGI2WSxzSSNmJXVAblpjQi5yciQ6cCU4SVcwamMjTHQvKmQ3LkRmcEklSm0sZzBQMSVUX0RjImozKVdvVGtBUWFTSykvUztBdEFubEg9QiUzc1xub2xBKyVBXSgrJCdcMW0hQkFhZkdGSmh1V0I5SFdfSmVFbCc+Qy80RDtbSkNhYFVXLTVyLXMsOipnMkIyLEJHMVdhLS5fZVgvJUM4RGJqKzFqPklhV1gsNWQ4ZlZLSUhsXEBMI1xXaTcvV3FzUDkwaVZAbypWVGRmLW5rSFBOWnRgMFFwLWRuMzdGS2txWygpTzVQcE09cCM/KE86NFtQb242ZnBmOHVxJjZfN1lONzdONUVoLS8rOW8kcys4MiQvSHM6NS5Na1RrLChrNzYqZ0pnPTVGL1cvWkhtPiwxPzYiW3Jcb1A0PTcmKUt1W1BpaFdURG5sRV9uV1tUKHNDcTUzWVFudWA2I0RXRytZWiQqbnIqVG1EREU9cDomMTcxRE06ciktYztgQ0JRZl9kYTAqNShxUl87S1pyb1ptO2pQMVZvcFpMXkNoMHNPbVIoVC5DLGNCbFdKLjJGc2U5NEU9ZHRIJW1eaVBYYztwcUdPIVRvbmdpQiNbVyVFT0doXyJATT0wdShgSkNDTjt0Qlk7WmonNi1jYzghYjY6PS9vZUVfPl45Ql4mOC5uPHVTSEo5S21oY09eWFstQ0lCPiYtcltXRyg8YDdSZk1SKTZWVGw3UF4tJy8yYV9IZmBTWkpqNWhYMVk2LVFZTTQ2UVRpJWZlMGE0LVw8YlU9aFksIjxpNkIjYCJFajInRUdESm4kQDllXyUyaDlORiZlZzotVFErI1t1QHM7TSlMLk5Jbz5FcUZbVFFhZFVfPjFmTEMxPS8+NkY+JkcpNWkxIkJkUVIuLlxNUEtqVkcjKiVwTHVxP0RAS28qJmhSNkttY3MpX2hbaXNoQGV0ZUVhRDYuWFgoNC8kSCJOdStkLlYlKElxbDBeIlUtP3VZcVNIMk8yN2M6X0MhTWpqRGA0MzhUIWRVbSFBLD9OJEVGc0szaGZPOjklLyc+OFw2UytFTFQ7ZVpuR0JtbEVRT24jb2lANilnMmZvQ0U3XVNVcytGUFlWQi9eRmMiZidHaXBILkc5QUUpSl9tQ1RDYXVnMmc7KjxSNiM6IiwoRy9nQ1pSajYtNGZSbE5VST50RlNZUSomXkNUI1tGYnAjISlvcSlAJClhSkldNTFWS2k2MkVxQVQ7P1pKblpxOCFRUEYoNzFKPHEoM0cuUUFyLVRROWpsaDhRLSJHWSZfakRyJm9WLGVKXjo7WmE8dTlOKy9KbzlZPWVlSj0hX18mPERAZjc6MTFeNTVqOz9KUVUvby5FL1M5JSQ4NDRlLFpuMitYIzUxUjslSkMyUi9janBoQXJcPmheVyVyV24jbCMwS1xePzpqKUMqciUkUlFwUklVZlNcVz9vZTtMJHNOXUpvZSFrSUlzL0RrYl4rODk2Q19JSD5nR28wOlo0XDNLYmlUQG4ock5mZDY+SmY4ZjA2bTM3JmFobCxfOEdMSTUvPTtMPmk1QnE9c1ldU2JVXCtZYGU/VjM5ODFvUCksTHNIKiE+ZTZPdGtwSz9STjtoOj9EbD8tTFVaQ2VjJTksakpGPWskUi9oUlAydWNrOk11KmMhT25DREA1ZGNRUz5OWC0hK1Q2JjI/fj5lbmRzdHJlYW0KZW5kb2JqCjI4IDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDIwMTIKPj4Kc3RyZWFtCkdhdG08PWBgPVUmOlhBV2ZVJ21eKlhYNUNUJ2JVVDhhTURiYDF0OTlvR0pociNyL1c2VV9SUD1qMT5dZ09RQWloUComLXViTjdVNXI/KT5dSG9fJWxqOGNBIkUtQ0pyajIsNy9ObE83YUkiNy1vYWslMUFjJFZKREo0NSMuSDlRZixfTT9KKzooJElsKC4lLz5ianVxXjVPYilxczMwRWBVbHVdUFQ+XGE/OUspS3AuJHQlKWBJVCUhXmNeTTcsPmAxOEc8M1gjakZGQ2sqJSFVX1kyR0pEKjlKK2xpLCttaFxMOEFAaDklOGAkTj5hNTgyYy9xR1IiMWFBMFlMLS5udE5OQih0NjsoNFAmc0c/QjZEYEAyXDBVV1c8TmswNy1RZ2xUYl5YX3VHOSFsQ2tnWzpMVEtXJlgxR2lmLEpzPUhzNVZaPW00KkFLaDoobVxKTFAnVDAwc0ZGZ3AjQ2BqSVA6cTguTCw8UDBTQEdoQ14+YCs0I09NVzlATjdiRSZfdVZSREVQX10zMSgxYkElZV1zO0sxR1grPytTcXMnUm5aMnBlTig8ZjU3OS5MJHA2PmNxdGgqUzJWQzwoUmBiYG0hKiY0Jjs7XCcvVEpHVUcoRFlaLCRlQz1CK2RFbSRdUV9KNydzbEZGMFNXYVM0Zk9vUkU9b2JYQGVhbFJsISFBLHA2JnIyNkFCa2FIXUY5Pl5VRE0qUkRnVE5YYEVgWHU/ZzIpRExxWFMrLV4jXVRUOjQvM21QTF0ia11XRXNxJCFfSSVRTGZtU2tYPTtfRyxCZT9dcGhWU1hDV19BOzdAMHIzZVInKjcrO0o9NC1CL1InKFltR1pMNypUJXVPV09oUDNMbTJRVDg3bVNbbHAqPitWa0JjOi9NXz1dKStjTWhUKF1xJU1tTlpGOHV1SkFbKzQ6STR0I1xuSnJCLUhLS2UuKT0/bzhQYz9iPFQ8WWZZLUsyT2VmSSIzdHFcXD1FLSZlR1pPOjghS1g6YzxDIldLNDBCR2NwUE9ibmEzZ0Q3KT8yWFg8bzZeTmhgbk8uWSZBUXR0QTxjbEtWOkg4LDVsWjBaWE5EWlwwZjA0bko8LUcqJmYsPi1ERktCRyc3NEBGX1wxTSRrSTI4TjosSyk3WGlmTjlCTUpjOF8mOV4jOmY8VDhqIlcrQyFdI1gjW2EwWS06KFdULVQpc090cFVuWGYhRXQ+UixDakNhRDAwIilSaj1bYz5WR01fK2k2a0suPS5TXipUZWtLZGRKbj1TNGF0LDhZVjxAcTEhWV11K1UhPlFmT3QsTFRFSl4qZlQkQ3FmOFc2USN0R11gNEA/SXQ7IV9JN0Y4TGYsRlY/V1NeJFAhcDsmWyNQcDJvKzMlOihXNlxvKW5NWSpYbjJwZi1MUmZXNTstVDpWUF5UZnBbKio6JiViIXQsMjQ8Plo4ZVVZXFpMS105OG9NLTRXclcmc1EsVFhYQk84ck9nJ2pSb0tRW20sM1s4dV5oXiNsQi5PYEBhX2ZFIT1RYC1DRkU6aVBUW2dlMmFCJighS0JiKihkJTFPdVZvImxlRzA3V2Y6b0JsRzonKSkqM1hDPWNfWzpfQWFKdVpvZT1SSG9HSTROcl1lTm0vLWNsIS03VWhrPmBsLlRbQUo0SGM/XlVgR3JJbVZaKCoqIzFtT29NdHBccjIpNmsxZ1hnaDRFUT9gdVNYJzdfZjJGTmFrXWBnJFomcEwnJz90JUBeOD1kRSpNQ0AzVlFIajJkODcqJj5VJWBJXGVyczVYOi5dZk4+NTYsT2hfUjlWN0YtLlAiTi5FTGRKI0ZXN2hIaVtfLTlhLDdWQTxdWmhAb1RhYFJBRz5PNVZCMDBSbl8lTUJHJVksTzsoWmJLTiY9aEdfTV9QUiNcQWElY2tfQGBXOTdrSFNpWCtVQiE/KzgtPFM6RjooTGFePmo1dFtbJDZyRGRiJixzMUU9NVs3SiFRW1hRM0lvT2QnJ20yJk5fX2okdV1LS2tMMSJoPi5zWz1bXSEhQTR0YSdfIjUmL24kXlNgTG5HdW5IQHA0InVccj5ULmkjbidQRydoMihVJkxGcSdkQTc7ZE85QW5sSm9bcDJbY2lrckEqa2wyPypyXFRBa1AkI2gqJmZuPmo+M1wpOl9FTl01T3BETm0uXSdsQ1ohYig+Uio3PkFUIj5xNEM8ImVYMGUsckpCbylqKjBBLWtpIVVXOjtqdTtUUW4pbCJac09DK1lrdGMnKUJoUmtoQm4sc0JIcGNnYU4zUEInU208MF9ZL1BJZWQkRGVgY0E9Qk1zIzMtNk1UYkBLP1EqXUtcSy5iWEhKRU0qTypPTmNLZTRZUTo1cXM7ODpwKTRvKjEhWG51WShnPkNGNXBNXERzWydrRSc/Pz9wM0I2YjFRIyFfTEFdZ3BIa15ZMGc4LmBnPz1waltbMnIuT05QanBVM3ErJ2NdJzJTQVkzbGZbXS88Miw3YEpKLjAnWjMtSWotPipbbUp0LElAXkAwOEJUcCVMQkYpTj9ZR24qLjNiVi1PZXRORS5QbFgxaW5sYV81OyRfNik3Ojp1O0YlLzxOYEM7W1srJiwpOy5VYDQ8VzBZJFJMTyQyb3RdckVlbG89IlEvMShqWkckS0tmOm9GKTEyXUsiOSlARVdyO1AtQUNWJSdLJ0tHbiFyZToyc34+ZW5kc3RyZWFtCmVuZG9iagoyOSAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMTY3Cj4+CnN0cmVhbQpHYiEjXmdNWWUpJjpPOlNiaTokUC8lVE1dNHA4OTdKVnRqdFNJR1c3ITxRSGFIQzc8dSwjWWtZa2Y3bTpHQSQ7VistXW0zcFNRLVhpTC9ab0xuazIkcmBSY3VQUUlBVmlScXVTLzAhLlpZWyMpIm9xMV9nSUl1cEo9PzJyblxtVlVlNClkQFxVYjxjb11LKy1Nb28wW2g/PTo4cVV1Oyc/QENKSDdHXm40RiUxSjxBTDVlcEZuYmVbQEpEbDBxKTZDVm00WXA+L0VDSkpgJUMiUWw6W2RUYChAUCZGaSYqI18zKTxXXDA0ZStbNE9cN0lNQnE8ZnIhLiFZRCkyZC8iP3BeV2smQVc6bE0pSDRaMy9pZGlsaCVmXyJuRz9UK1pzMi8na1UzZjxJS0MiMmpYWkdOXD1NX3M3NkUucUpVVF4jUVVnYE8oXkVDaCpSL2JdRyJsS1o/cFlDVmFySShjJiZrUyYhMEtCU2E0XTc0UFYuUUBaWl9Pbl1FWDloYTFUM0stam5MYClYXmtfITtKPG9ASVUqOF8zIXMjVTlWRSFiRi5mLz9fcGQ7UE1tczIkTiMzKDcnci5xUF48L0JuUUpicHRcMF09YGMpJXR1Kk03YVJtNmdzRUZFWWFRXWdvXT5ydVJSQytXajAycCYiQkJkJFFtRG1zIT5uLSg2WTlkUTw/bFFEWk07IiZqOi9wLU9mIUApTygyLUIzSEVAJiFYWFNsXEgtPV1ucSZBS1RnM05WWVhrKXQoKyUtSmlja2ZbTWhuLnUvOGdyZl5wbGdFO1VNXEpPSV9yVz8sRjNPKFA4PG1BSm8oXVRqI2xdWVNLZl4jRjhtYks4QVgjNyQhSCI+Q0YwRVhGTTs+O101KF43OWBTTldcVC0vLT1YVj0vSkJecidpNDxlTydwLytZRiJnRy5ya1o/VSNjPjQpTUYrLjhXOWZpLFwzdSkmRUdeUCYjcE5XP0khS1w2cSFENk9cQV1JLyxpXzFgXmhmUl1hczhKRlkmbGppYkUmYkI3Ti5uRlNETm86ZXR0bGIsVGZyamdBZjYmVT5UYipTOWQhVEQnNEA7aEgmSGclJk9CQDRzM0NSZDkuJWI8XlMvaS5OT1EqMkolPVlwV04ncj1rRVVdUFRCY0BTJXJJPUZsY18vaFNTPVxBSjBaNV83ITVjXWxlZy5eMjBoSTUwLyZiQVh0KTt0P3EwKFkiRzxQJzdKUGEkMDk/JFBEYVwwc085XDdMZnN0KENULTZLQkQqMGcnKVo3UVg4MjZZYWRKTlkmMFBhPmxDJCUwM2ZDR0NgKUVhOVluZk42clolNUB1QjZHSjxdP0dKPW5XN0skWGVkX2JHbnVSVl1mWEwkPmxYPSczUChbQ2lALFslZWgkQm5WY0k3ZClGMzNQWSVEI103PCsnV2JIYWV0SkxgW14uTTczKiVWLU9YdEtLXVcwRjEnM1oxSENQM1BWQnJeR0xNITw4WzYtS1NwViE7OEc5XUtPKE9zUXAmXDYoJmZRQjYkL1dyQGEjPm1kIkBYJUo6LWIlaVEnQ2k7ZFNdMTRYXEVVVD9JWGQxKGhlN0NgYEBEYE45PDNlU0I7bTktQFdvcGRtNkIrdDJJUz5JLUVYMGw7Y3BtX1dSVzhONTUjJGFHPXQ9LzliLVhOXUxpdVwuJGpmRSEiPDFaXE9iZUthYDlvKC9LQjg/YCJ1RTpPNGRtZlRuYjtmT1dIOkt1V01uO3MuMiZYZj10IUJrOU4nRSc1L05MKGNEXjcsQkk0VC9sUjBQMj1lblc1Tj06UUVBXi4wTnBMcEdiQUMvRkpbNUQ4YVNDIVskRD0+a0csblg2MicpNidrTU5Xa0pKPi4+a0AiYi9mU1dQMmRkN2dQbEFUOi9NV0EhZyIxRiM/Lm5iYTc+aXVaSCVgQWlVKj9eMyhraWJIM3EpWTU3KUEzUyJpWl5PYk1tRW4lVkUtLG87N08+TjZvKkU0XCVZSz8oJCYjKSZjOGdwW2BKOF4oPSxUTFEsOStqbio/WiprRGBVaTRnOmZTQilWcTFhR3VJPGU9I2oyb1hBJUJPNGVqZGdVUj8iUVk6Iz4rXVA2JWpcX2JKayZuVGhjTiFhYGhCIzRsLlFCJT9xSDk4dXUzTiktLCptR0M4U0JDSiVBQmRGSWFJRiclOVpeSj0zREVUTEJWbzBKPnFrT3QxbjpuLlFFLlQrKjRKS3E2QjQ6LnE8QiRHY1FYYSNhMkguLC5HZ1MsVU8raFksNjlCLzovZk0mUlJgSGlyX1NSMmhzLStZN3RxTzU3bi4ucV4pTVM3ZWVsPD9wPXRiNkFUL1g5XlA/OkxLYEh0aEU6VUFWRnBCcFtoNiQ/VVhtUUlDN0Y4ckEiQWluQz0vVDJxQUBJYSMqI2I6NWYkPDdYKnUtYFYlWWtjNigja0JYOUMjO0khKTpCamVSUk5hbl86ZEdPJ0AwMWwtXGVGNkBGL0gmdVZiVm9yZj4kREo1RDxycHEsI0MmLWEwVVU5MHNCREFRMnFTbWpkQ1spJHFtP29ZOU5TczguLl01RTc4dShJKTs0JDhCYjQuKDQjaXNucSFPXzBATW90az1mLFlpbjc3ZyZpIS9CNUgqbl5DMGc0PDEuTF9RaydSTzlCQ15RbDAiL1tIYlFxWnRPXVgwK2U6PzEvZjQ7S1VTUERhSlNPRjQwTSY9TEwjJFFPMGk7SChWS2skTy1fX2MjaFdUMmVfcVhUWl9MNyJmTzFOPV0rZS8uQlFeZz1qPW9NQkJULiM9T3VaNkNcVlBpMnInNT1GaEtcKFhdLWpiXUA/b21VJzwvbixgPmNlUDwqViRdK2hbPF4uXTprVUtPMytAXSZbKDc9VyZZIWZtNmJXWWtVI34+ZW5kc3RyZWFtCmVuZG9iagozMCAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyNzI1Cj4+CnN0cmVhbQpHYXRtPD8hI2RqKDRHQElTNEQ5UCouTCY8WSEsW1pvSjNLNzBUXkc/VihdXGQmcDgiPlEjMFhJUk5JJGcsaGlWXiNuVVxMTTMrUi9vPEhWJT43U2BwOkxIRVlNV2hzOmBvZEArK2pLLWBgKlEtRGNoKTQjb10rI142cUtAdGFkXSk3KCs4bDhLN3BCaypEKSxlRGFJVGlII1pMbS0jKUBtclAnWGErKkNJOzAvNnE2U1AxXC9kUmJAPihKUmdtUnVlRjZyY0NKUUBGYltTQFNVclk1JWJUTj9fOldOM1JcXktROyNgMS5XNmdpKXVAcD1aSl8yTlRjKTFDO1dPcFQ1RjgsJ0ZOSVIscmpUPktWcEhPRTAyMTlNbG9XSkspQzc7JTkmZFhFVUcvQXFvOmpfVUdLQ1ZqVlZAR0FjLjVQPiM4YHEzWDpcKFE+XFY/R0NwWVpiP0JGPFlLJj1yXjhfIkFHP3U3JiouWDhqUi0pQkEmRVNNWFRyMUlBMDQ6cWVbXnE7RTduWV5naTohIWNxK0EzPC8uI2cjSUlIM1ljQFxfaVU0SlgpV21MT2ErczVQNmtrZC5lXEZlZU5CN1Q5WSJvNVh1ISQ1LU8jYFF0Ul5VZUk0Jz9JZ1Y/YClBbEcwQmNqX1JfZSNscVNsbEBWYlRKajA9KiY3IT5fSFhURklFVS5wXlkoWiRSKj0wQUQoV14jRCVvKjc3QlpVPFRmWVMsM3BaLlo0WE9jVylLYkVAWEoxNzE3Qj4oMzJcRUNOc11VQF8iRC9tL2NuZVFhTE1wN2xbUmM3RWBqMWYmSiVtTWUrXT0+SkIjQkxwbkEwRG4tb2xdZUh0OkovKEVBKT9UQVAzRzRmVDB1Y28rQTteYkEhQmdWbWQkYEZEUkZCPFBfSD1YSiltRWFtZHBnOydAIlooUEA6UjJyXCdjZi09RXFMazA3JEUkJ3QhYmAkPm8sYyRJcWFwOlcrY09HW1ZbSSs9VG1bS0UuSCc3UU1jMUVGZEs4PWFHO1E5Y11WNkJiaSRNZWtJTkAxXyEvRS0oVWpvMltMaDAlcTEuYTBeWmJeSGYvczIpMHI0ITV0aSUsXmQyQU4iKiFiMUwjTk5ELlVjdUc8bzhxcmdwcFAmSyo8NzhpMF4lYE8tW2xsJll1dHFBUG1yKG83WldXbyg/UiUlMis8P205aShdQ1pOY2IoXWorK19oLjxAN1QvP0w/Q3A0XVhfOl1RQWBbQ15ROUNoMEY1O1hNciwiXSJfbnBhXl00Qlg2SFVOaipaPGYhOW0pbVo3PEVsVDBhLnI2bFFSJDxNP0EqdTpYLmBRLy9YPEw3OSYyZCleb2gvQiZkU10tOWJLU2lTN0llY1gzU0hgKjdXOy9pJmlQKFdJbV4lTSUsaj0ickpAZmJpJ1kjPmknRTMvUWMuKk0nVG8/ODRGKUVeblhQT0RlSWNCcltFcHRHdU5SSG9LKyxYNCZQVFZYQEtAMTAqWVJPM2A1QTFqKlliOG85USM4bEwqLV8oT0FgUk8sbTNCKEtwY0ZlYHFKWm4oRStxbnAyblgnWGQucG8qMGVxKC1YKTtUTGZiWSZYIyFCSnNYPSwsakdqcj9TTl9nKjFscTJVLnIzK01uL3NQV2lgRVwyJS1maD9zSUFtUjVQQVkuOihWXD8+Z1ZKbDdUKyhTQClvcU4/U2FZMmdgJHBQJj8/YkltIXMjWy0kPChCbVpPRCsrdSpUM3BsM15hZEpHUWhpKF1GWUtqPEZsT2xcbzBgSWsjJmopcz5yMSFJOVNIUEAzcVlWcDVSQGlubTJYUis9bjhZcVNSaTdrNWQsUk9acCxJT2FnQElTMFNVXDtoW2pGJ1Y9YmMqJCEiQWRDWWBVN0VbJ0pnJ0BOVW9UXjRoNCJILDc7W05pdWEvZz9IOU5icytCb3FIOF9TIy0oYilLdWVJLkxzZG40UmcqZEZROUdDK2NWaVA0UU4zTTpUTXJsYDUqaVgoZjIhNkooYHAzTThDWGtMVmsxL1lUYG11Y1kxSlNIalVRRy88b15kcVVIa01eLEojViMiWydXSlFqV2Q1NCJeOVEyMkpFRHFlbTw0LWQpOUZuJTxlZGIxPFghbE5IMWdxLlN0LyltblR1UjpHV0BDSil1ZzFvUHJkPjddUFJcSi5jT0s7KnFaTVNAYENbXGhBVkchNkxrYU4pPU9LPFg+QkQ/LmpZVi9fb3NOYXBOWGEsTzhaSSNQKD1TOzdaN2cvVjdAM0kjXDFVZzV0cz4zTzxMJ1I9ZTFGOz0oLVo+Uz9vSGNAaEBgQnBrTlQtJlwvQjNzXmo7cD1IJy8kUyF0LjJdaFJJNlxoXCElTDFSPjBaYEJLNWFXPCR1cSc9YGluLzc0RlJFVVpnKFJKKD5OT0VeUlVhclgzNkxpS0FTVDlALiFZPmYpOj88biksXlZJc0AwbT5XOzI0V2daVTU/XG8yIiklKEx0TWwlTWA5PDVHTl0xTiU9TjUpcEU0bDNLcigzX11VTF0raztpLDdCXXFmdURJaDdPYz5xJmcpL0dDVVZBOCxUWCIyXikjRGtZOUNmUEVBQSVVK0RfME8paVdSQTgmY1tcXXBfUVg4U1NFOGlMR0RsZ0tWbFRXSzVjRi5EIlM9TmAkSjFHbFxPWyNUJThHNidyNCZoalBZS0xvYklxLS4xVk5YSzRsJiVEMG1ILGskY2QyMkxeQmlGYVBrNjVEMlZnNTgrcmNUajVpTzpjPCsxKjpTPm1qZ2AwV1hOMmAwYzFYP0I0ITBYPi9HNiltRmAnTjxMZkA9MycvIVZtRS9gPCUyV3RROyFJKVNZZ01INXFUQG5VRFxfPEVANkgranNGNiNJO1kjXVpNR0RjWE9XSU1tbiEqa1E5TVI9Z01RP3VpLDBNKGowYlJqPyJwO0FZMF8jU1hBXGJbL1JaKSdnJV1MMVhjNGBhXnVbQko6XzcyJDI7KGBcSyRbalg1aE1eSkxdVGVFZSNbISwiMWNNTShDRWthNGpEXCwxQzpdMTk5JXBfanVyPyVbYCtPS09MSD9rcWJIb0FJY1pgQEI7aTAnJ3F1ZG5ccF1SYGNPVDhfUWIwRm83ZTkhZC9uUG8kK0I+YCJoKXVGP3E/TF5TbWFMcWJSQGhrbmpsL1pZPmxNZE4+LGsnQnBDXD9NLExJVXByWjZddEUnTCxSQmk7PWFVaz5LUmtjbitaU1ouc11YWyMna281XzZSOT1EbSwsV1VnOD9IMmtZM0U1OWRjXU4qJ21pL0VxZ0hJQ0JoWDc1J0hhQERNM1QhPzYtaTwvczorTU5WPFpXYWBSXWkpOi9iYSY4Sj5ZdWpyW29oPFIoJlpwK2o9NDxFNUIyczMnZmM4KTRKXnFoIkpGKFZEKCE2NSxBJmE0XUxdWiluNjdsXSlGazBuRmpHIlU0NURBJUlDQGVZUiJrPCRwLiNAQCRQRGs8Ij8rJXFvZDhIcURwZl8tOWxsInJBaztSXDpOXFREWXQxVGhkIVMyX0I4MmhQYk5NNmEyOFM2KW5JRD9nY3BATURBbi5WYzRVMTtDUE4iXzJgLjImbzRIWSRnSyplKm07UCRCPjlCOkNCNGRpOysoJmdOKlErZU1ycl04LCo/a34+ZW5kc3RyZWFtCmVuZG9iagozMSAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMDUyCj4+CnN0cmVhbQpHYiEjXD8kImFZJjpGNVVcQXBGa0JUaEExMW5BNSpFVDJwPURYLGxDcCksInMjclA6LiEsMD9CcnFQbzRVZ3VKV2VQLHEnWXE6ZUgjVFMkXnAoISoyYCkjSCRNamlrW1Aicz1KTUlLYmwtcV0pRVFDJTVVSDFMSk5SKlgzKk9cZGFYaV1LZyZjNiNycUlYQkw+T3AscExkbF4vNldbWjNAKzxFMGRcaUNYP2MlRDdZPm10Y1laU1wuYTFDQGBQL0JtOGssXGFjVVA/SU1QQkYoXTMzVEpfJjohW18mMCdIUS1SXVwtZmN0Y3AvWzs2aHJsO1ViVTZcIVFfKDdSYy5VN3NrMWIiOS9XWGhYbS89NT9kcDpASyc0NUxBc3M+IUQqbCpcPFQlbmZaNjtQaT1mbUFVXzA/WidIKVg/UVNaJ2dRMTBvPlJrMEtWZlk5VkQ1YmdAMVYwU3M4T2hQY1xZVWA0ZyhGJCRcbChPPFYzQGNXTklVJCpFcG5TVzAjIV5ITGEtNjFXMHJmZiZPcVw7SmlKWVklJFx1QSxTLjRPI19uUl9JJkgtXjcyYiwtTEo1Sz5ZWS1WVyxIJkxNMXRaRUAub2tBJ1Y6Vl8sTHU+VFZaOS9UZTBucSlaS0o8WVheZ1lHLypnN0VyOVQpKWxMdXEia2VKMUZzKi9OZUxbPCtgOFE+RzBdZyxNYW8xXlFRP0k8Ni5LXGhtQDkuJlZfI09KMmtzNWpKZWIpLVE4ZTssKVJaOFhLP1FCa3A7c0pXdF0xRk9OR1xXYDdHamNBcFktZWYmOCFcV2N0Z0FxYmwrY2ovQWFWKGhZblszXGtYUDZXOV9vVVJnajZeM2o+V3QyNC5tZiU8OUkpN19ASnRFVW5ENTRTJV5tX1peKVtBLWRsc2QzMTFQS1NwViE6dHBZMjtWbE41N0pBYFk2TmsvaVoyRiRuNC82Ik8zYXFLInI4JS8yQSM4LHI8aE8saW5ZRT1TL20qKDN1RHMocTVsZlpVTihYMkRpXFIyaVp0KCFYTHNuW2UvanE/Z3MwOC9GWz9iN0BgRyorP0NbbHEyMm09O15AYG1COmBMM1U4PUxIWD46J0ovQD8ta0orI249QWlhTVY/Vl1pcz1VbDVoIXRTUiJhZCJbZG83Z3VXcCRnJE80Xi11LkVdVnU/SG5DVmtTXDRaYUghWkAjaXNCJl1HbCRmciVbVkhsPCchPzUzLmtSZTtsMnIzVm9QLFtqaW8uWSFePVdPI1RqcXM3MU05OjBGNFd1NjdYcS1BOz4ub1hrLk1XW3VpNT85IVtIPCt0SUljVEknIm1kIjdwdD43IU5vW2M2LWYudUw+VzBuXC1VX2JRaTlWISg9UjtUMkRTUig6Vj5VRC40NCo+KihVa0JpSG1UO1NMZF4kYyk6KzozIiU2clFYSzVkMT5qSWRYQTJhLSorWjRXUyYkP180dHIsNl0/RCMvZm4/LEBPJFs3TWBJdVo+T1xiI0B0L0FOPT4kZm9nOjo0ZlAiNGpDcEJ0XSpgSkdtcjcmVDZyMilgN1ElY0QjKDVDOGpoSm5KZyYiJGlIInQqQDBwRU5hcEFqak1QamkzMmg4c2NiJ0BzbktGJ1cob3MnNytrTkZ1K11kNnQ2ViI9cEp0YioyZkQvQ1RVRydvUUpyclpyNDFabTRmS282W0kmc3E/PjJdaEJVL0A2M1BudCcoLUZxbywtcFZnNF81K2AhPidJaiUjSnRmdGVCSy5fa3VDUjZOQDM9YFAodUlob25bWG1hRm9HXGEqa1cwVnJALiIxSEhpPmhLZ09QaFRJTGtFSlFaTHFZJ1JdXiwqSG5vVUM5PmlRNXJcOCVIYVc9aiVlT2dSNmJNKlZmX2cpZkI1OGBqYEdtXUw7KChSPD5tbEpJZEVGKzU4XjFWdEBUYWQpOStGYCtUa11QVV5udVZzMEg7Wjk9NV8rbT9LQzpcVyIxTiM/WUxmJjhYbHVsJElkOGg4M3MnQ1c/T1VpRzRbP1pAanNfRmVcUSpKU0E5OW44Y3NTbXI7MSRZITxzVWMoNHBaTWJyS0I+TlpMOCUlPnI1Py5mOU9gJkZHKDRVJ0xjM11FRiNsVSlGPEJ0UTUyc3AwMUEmUW9WWz1PTG5QRihTdSxoK18xUE1WbExkMTUlWDlCKHJ1VC1xNTYiWXAtIi5ANSU0WjZhJVJXUDRBPV85OVk4b1Rzak5KVEBVLC9RS0dbRmJSSmk6JWgmJCJfZiFASitgWT0/Y0FIWnUlLTdcSkwrKCNJSjNPQVV0Zko0JTpaTlhgcSxYL2AvZm9zIyIkV0pCSjhKXm4/cTImWnMlVTNTZjVdWTlkKkxCPl05R0JSJWRYJlYkY0JTWnVlNUl1USZwPTZga0U/T2xNYFY2WlAnSFxxKGpzckU1XFZtTHEmJ0AzPj5jKTszNDNnaEk/b05EVC9ZS3NYRlAlXURkJT8jXkMtKDBSXHU4aGMzI1MoXT1fK0dcYW8yUl9TXG1XTD9IXHI2VjV1P0k7QTonJkJYTW1bRThFTiE1LVRVM0BocSp1az4wY2E/KSNaTktWIiIwZkM7QTNWVklgZzNUT0JuPk5pclpVPDJCTiM8VkdTOk9MWmQvU1lRYE8wKUY3RUlWYGNJZ2c6Xzc7ZjBCOHRnIjlbJzVEbW0+O3BBUmd0VU5tYVRHNnJRLiJaQi9kVFtkNFAxKmVvai90bWIzPDY6c21CTCwhdF07fj5lbmRzdHJlYW0KZW5kb2JqCjMyIDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDIxMzAKPj4Kc3RyZWFtCkdhdFU0bFZsT3QmSEMkX1lvZ0xkMHBea19vW0InbExMKSZPViFaQlNuSGA+RS5eR1ZmRyg/KFpqKTgjKVNIaWpXXFJAZ3A/Im9xYlQ2QUpwYEJSdTZCKkgpPy5AYV11P2xpIVtKYmI8OmRncENdNG8wSGJgOGVYK0h1UylsTXUzUmlrb2tTWEc9TnRTVGJCZC03I3BfJyFDN1BeP04zcz9vaGQob0VXUWxDRj5CRCwmQjxaR1M4ZjFROyUvSSxcNEkqVDdkRjJpUiRBWj5zKE1NU2Y0VUZoXzAjYmxgQ2tHW0FTaVU1IzJaXmJqWy1sIjBHVzlSUFNtUWxJNGNIPic+PzBtcFQ4YEVjVFQrKihdRkhhKyMmKzM3XWBRcmBmXTs4PzMiPG1OJ2pAWF9JaW9lZ1YpSTJbVF47a1M5SlQ4N1RMaGo8Wjg5RENpbE08YT9iYFwnX2E7NVo+J0FmaSwoKGNhQC49cStcVC5ROiMtVkVyKlotZVUkcm1KYlItdCFTJSghVV89OEEjNjs1S1xvSFE8TU1QKD5AZmxxYyQhPUxAVVNrQkFMQXMhMS5mQUZyMCo8KltCNWguY05bXXVfI1hQIztlTSZCX11HKFNRWmpzUjs6JWRWUixkREwsS2QwZUs2ZWRyJWonOkFzYmlBaSZjVks5IzY8by5kaD5dcUo1QGk6XVFBUWBPMCg2cmUmJzwiPzNAW2xFIz1xSEJ0NEVcSypyIS1gZU9gO0NLaW0zPV1BbTNda1doXWNaMEk1N01YIyYwI0gvKCNPYFVoZjckYFFQOSRXMk8tMVkoVWgpRHBvS2JUakQqWjlVS0U9akdyJkUvZWtlZVxdc0ZpYUYpMiNJdSxKPEo9I1kvOUM9XWlrYTgyYUYpL1FDXFYnaztAT0QzKElIRzlSPkRUJUhaalE2R2E+WDluSE5oRjRjPVwkKW0lZHBXRFFxbTI5TXBGV2pgQSMwanBnIUovaFNKKD8xZUBjbj9Vc2hdclxkRkFzSiJZXlM+aWJWal0pPmAwJnNaaT9OdVkzLihWKzRsWyEiTVBRLyJzNjtjX0NXT2ovIU5KUHI7cyhIQDAlRGhdPlI4SFE1SDg1LEwmZSgwQ1kwNlBOTy1HRC9cLW1sXS4rdDZGbFZiOS9fSFhaMTdmXjEnPXUmXkNAL1BJdG9pKzczTD1DU1NPQyE5QE5zVUNbNXRqcV1VbEIkXW5MPEs3YmBwTCE/LWAjRkw8Pl1MMkpTY05bM3BHczNXNGhWbG8vPi0vLC0jb3JJM2Y+ZUY7OzpMUF5GZ2tGJV1IM0BlNSw9aT1WNGptcS1fTCJqSWpsZlhQNmVQImE+LS9gJz1iJHExP1ZnSiInVDhvW3UuP1ZuXShWNFZsJm0hYWliOyE/KDFubGxHbUk8U0g4ZyFcKHNaTW5kYk1SPGI6a2Mnb1UrX1g/NDRVVmcucVQrWmlaVnElPT8pO0lWKT5wIitOSEMzK2FRI2dSO0MiNUdwSWRdMF5SQEEkaVRlR0o2Zlw7L11xUHRGcDZuOWJLT1A8WWM8PWxOXnBvOFxUWCFXb15talY+V3BTTDspRDFnODc1R1NobypWKlpfMzArW3IhKWdgIjNYb24lZWUyRFBcOzo0dXErMCs9OS5AXGRrUGRQPEtkSTNeMD5dTjdfblcock0lKThjXDBJMzhbUEwzYjktJiYlczIpMWlyMS1ySUM9JVxFRkVCbUdbPmpYWlo2LXQ4NmJLUllpSS9KdDMqJUhBR0k2TFsvInRRQj8vRVY+Yjp0VVBsPXVaUCIhSisiaVAibEYvNkZmWmNoYTV0LHA9Ul8kNTlTOmRKO2lPK2QtZkFILUxJNVIqMy4pJVA8R3VjYSxHY2RjVj5dPm1GbFpHX0s4Vyw4LihzNUxUVjhQRytcNlVKS0cjIWY3LzYyOkZCNTloZClkWz9VKlRFXylkNzg/JHBTJVJBZStjNyRvRVYhM1tONF45QDFiNHFBMF1wZjYzUUdFKTVOKlpoLTtaXipCZU9xZGllblVqRXVwSVxyb0Mwb0paUUFZc2o+Kk1qbTt1bjMjamwxWGJyJkFfa2ZHdT4hWmMlZjc7I0o+WS43ZS0+YE1qUj5mLEUpU29NNStKQiViVExCclVNKWBTRlgtcTdDaCk1LjlMPWtDSS0zZVcrLjIjRUolRzQtIlVTM0g2XSU/SEZxSFZrb2omU28sSD85L2hucGg2YEg1REI5JWJkN1MrMGtbXVhsSGgsRUZYaD1QOkNCWC4lQTJPRm1mSDJvQTdmPj0/bjJuTEQrL05vPUluWGJmXHNcaTpbZyJDZkdKPiNqJkJGIldYN1lIT25cXVFWLVtPSTUpWiUvOFZkbGFtVkRKTFMzPzw3VDBzWi0kKU5dMkZXLHJKLUhTVExOSEw0cGUnXnFzMV1URUlZV0lcTzNYS1Nfb2pDM1xBJVk3TTBHYEFxRHBxcCcjJyhQZmpaVDBbT0BgbyVDJyMoMU00K2hdRTA6ZDB0NmxUJChiclhRPGBLZ2QkPEhiaUBvaSdUblY6Nm9pT3VnKilqby51M100PTNgUkYycT5kTU9yW0RmIWFQPjhxb05HRlRkLV08MzguR19tczdgSj83VD43ZFpQOzYxRyonXnFyJ1c1NicxJTwzalQsKFBbOmI0bTZxT11ARUpCaThkLE1nWGw7ODY2VE1rLCo1ZGItSi8nM2BTL0llK2hlaWZLKWVEUiZkKDpdO1t0Y2RhXkY2WyhGJlIiQ3VBQkhZUDhoRDV1KjlZLT8qQF46QTgicTxecSdvP2IvLEg4VTkjTVFsZ25MMGxJZGdJPTRgcUBCbkk3cTt+PmVuZHN0cmVhbQplbmRvYmoKMzMgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMjMwMAo+PgpzdHJlYW0KR2F0PS5nTVliKiY6TWwrYmZeJyUySEU2Mk5XS0M0VWFhYC1SXyU3P11KKSpYLyJlMmwwJC9GRSsyOjIuQF82ZCxHW01lbzNSU2Y5JSM2VmBNTGdbLUIpXFw5SkBCI0pdNC9ROE4yT0k9YStzMTRHVy5oX3FvRlctSjEhTj9FUUJAaF5pLyQ3aTpkK0glWSFXWyYtXDNWcWxrU24kbG4uKDw6S2piNl1JVSRfXjZEJGlycmoySEpqJD5rWEk5ZEljKVAtUFZbX05sTllvYUxcaCRxIVFYKE5ZMk4hOyRiMCVYTFdebFkoLEUpUEQzTHJVL0UmZjFiQjA9Z1dETikqVCUrSGtgNyI6LUJbZEMhSF0hOzhIai9POChuXiJYQ29AXVJhUGU5UUo0R1Y5KUtkdUotQlg4Q2Y6L0o5WT9icThGTWVgNjxvYnFkOGs9bFEvZG5OOiJBOEtXYVg3b2s/SVhMSCZCdUskQDNUSmkwIWE5ZlpEJFwqMS1eX1lDRlY8bSRJYVxlTTQ7IiskLFBTWjczUyw8JGlTLVVJcHBcLT9dWFtCTT89NURzNGwtLzMrZkR0PSUwWjVQZV1UMFozaisrVj4zKCsqWGVPV1h1alpjXUhrOyMnPV41Yj1HNi90NFtDWHRrcUBrUG9gX2ovZy5ScihZOyQ2W2BoNT1gX3VpNEFEQC43ZnFXZ2wxXEdrSGM+VDddSldnYyEsVHQhNUQ0L1ROQU1bbSsoNjhtVzcxMFgrWDQhbksqamtjIkhEV0E9ZWlBUDFjQF4/cjElZCY5Rl48TDZ1aD4oSEoxJSpiM2BhJXRPUyZILlhfdFwyLyJqQ1I0Y1I3P3FnK2JcQENdaig9QGNFI1VpV0M5c19sdXBlKFtHKD5wNSEtLj5JdEpnUCgjV1EqJltxUWo2T25PRzk8XSsrIkQ2RWFka2BOLi9CcVcwQitydVpCaFtnXWtsdXNWZ3Q4J3AydSMjOGBxIltcJSJJb1JkZEJWYGYsRS4xKCxzVGtoY3Q2UWpxdFs0YmNuN0E2TkpCXGhCTSIsMENYVlskMjpmYyIuQidealFZXDRkWTgvPF82RExdWVdOPDAhTEkvU2EmWEgvMWhkJTgzXEhMYT1UNnNKOGBUaVRrMUt0KEstKWg2TTVPSWN1VHNgV2BRXyJIcmhbJzYwTkNYZ1VPIWZpb0IydEcyYlYpKE1NPEQoQCVqRkNRJCg6WD42YiVURyc2PkBqP2wybmwiJF9lI0N1KVBgTixNVGU6KVJwQDYuRUJWYjFsXVhfOCdXNmRVKlhnPEJaJzdqPFNUNVo1WygmWWoiIm4qNTRTQjNuJCZrTFA5LW5yZzwmQkMhPWhiNFAtMCVgcj4pMSFKKlxOQGVsP21GUktBNmVoLFxwSiFzTk5DZDZGSG8iYGQ3Llx1YW87SzxbWkEnTCtpZk1mNjY2bTw4JDsqRjFoRmo3MSRzZGRabm9qRkFHJmVKXiNgWjI1YF1OW0NaQ1U+UTs+IUFIRTBUQWQrWk5MOEVEUDJFKEMpZnApV1AxKERldWFMZjd1TylQdEN0bVxWbSRvbUxqY0xiMS9UVG0rLTVGRi1jK0I7TVVlYz4iJiVTP1AiJ08zJDknWi1aIXBBazV0Z1I5UiIyclVMWFYrME1ySGImbGRUSEFSaGBhNzBxb1RNXF1zPC1qK3IxNyZuMmZeZmJpSCkqZGEkNTZyRyEsRmQzVDIiQ1BUJlcjJGM6dTBtU1xXamo9XUlFQjRnSSgiNztDRT0jcVNNRj1ZalhbXnRxNj5rP2JMYnAkRWVpPWxOOkcjZF1hOEFFYFY/WDY1aWVCLjVIMEA6RGMyLz0mb24iQmw7QSFYcDw1UHM0YWVOLjlVN01oa11hLzlNLi9cN3VlJ2EoW2JXPltcc3JeM2JRL0QpMGBbUSJKTjtsIkAucDE3UU9yUjtCZUYwZj5PVjk6XEEnPHFrLVtVYVw2L2xhZzNPY0BmKl9tdG84aFhCclNwV0lqLDpVbSg9bmgvK0MkM1stKm8tVltjc1xqJGttNHVSZ1klNTVxJ0k/Oi8zYGY9JFs5ak1BYkZvVGhUPWkxUEtuIT90XzNKRjJcTyo5NmU6UT9jZmc0S2g0VjVMPFUvW1toM2tTVShwciZIRXAqKTAuOWgtNFM4Q01sUCMobV5uSyUiNWk8Ul8zTUVlJ1toY14zI2M/Mi4jMGZtUFNHRmE1Zmd1W1hZaDYvcy8iYVI2ZV9SaF9CQiM/Nz8mNlYrTFM5Z3NQYlNdL11HQHAtJCZXUy9hIjBWJEBfUV9lYmcsak83cXJrZmU8ZE91Yi9JRSU6JzoySUU6MV4tbFk2WEE+VUNKL2YlTWVIUWNhNGhBZkNLV1xXaT1EUitWZHM5PyplXS4nIlBxIjsoPDtrRVtSRWFGdVltXWpvKnAxR2tZZVZoWiJyNnJeUVxdJGRgZS02cTU0UyY6LXRtQUAxIUdUUjtYUTNTVzRQOidlLWcnUV9iTVU0anMmRFdEIzklYE5TYT9lbFJlcDApcm5eUWZPTDVdYGhIMm08Yj5AXmFTcywsV2wvXWFGanJpa1c+LnQuVD5hMEtBXyUzU1dpO1o0altgZmtWL1FjMTs8aGREUS1TQm1zMilHUlh0QiJmaywkN1RBWXRcP0U9PSY7RlYwVDtDdCxXPHBBdDo4TmdxTUBdbkQiTzFdOlZjSWYjNkgsbC5aWGBzXmc+ajFVJXUzTTozQ3FZY1Q0JSZpUTlbc0hpM1gnNT4lXUEocEwzZi5QXScoYUM3LVNiIVNpWF44LilxVVJnJCtiVDcqW0trb0prZmUvXXFnJ1RUVHVuTzYiNC4za1RtI2c4OmswK0RATztBa2VIRkJtNlA0LHBIKzRHJWhgcmJoYXBNUlFhQ0UiWGVdZUVQJWEnPzJMPFdJSStOO2pLPlxiTEc3ckBHLGoqJVlQRjIlZDBhSSo6YDNha19nZEIlciotNl9ncDZvVU5EYmVGL0lhX1ArRGYnSEM7ZXJhQClAXGFQXTA6USpSKVw6Qm5OcVloKDpDOVBtJG1nZGRKcyMtPXRdfj5lbmRzdHJlYW0KZW5kb2JqCjM0IDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDE3MzkKPj4Kc3RyZWFtCkdiISNcZ04pJSwmOk86U20lYDx0KGtQaCduczUyNFwnQHMwMjNWWy9LSHJBc15dOiRERm8oWGEiZltGSVpxQDZCZCEyVzI2L15cZmZzOyZBTSItT1tmO1xqcjFQXSRqJHMzVCYtKlNyQ0AiJkBMaz8kUURVLkxlJGRnVnNCT2QnIi9uKzdjWWNRQjtIQTQ4PisxLCNDUksqTGxqTy04PSMibnUqOVhDW1hGWypySS8uKltaQU9bPjotTW4jOUJQaV9GVyFkNyNtZmA4K0dcWS5RIiI1ITljRHJISCojJWlhLkdcPSVaJl9iLWw6OSVLInBePzVZPiYuOFwiXmZqLyReZ0hCcjtMSzBbWkpFUHIoaTNCQC9eRFRJalBeczlCQmsqLHQzdGE7RllANFFDSUUwITEmKGBJIjZBV0hXW2ciP3VbaVpMOEQuTyk9PVAnOSU3N2Y3WiVFZksvT2NpJiVucz5MS1xxMilsXl8sOCc/PElrNGVXYFUqPSRRQCtBKEVpYj9XNiJbaVosQVV1IXJNbF9rcUIrMmVBJlxfPSokKl0kVjpMWFtIMjRJKSlfLytlVD5aViEjZUY2Si0jN1g5YFpIKUMpK0YvZWlOWyM9RCRpcGplLERqIzRaVXBJZ011bCkvLGt0XFRJLGpRMl4yWC9XaCpNXCUtVz05TllsPTZeP1NZUGo6WEM0Py89WFdjNnU1XCM2NkRkbC51JzhrZm45TVU7JkxYTyRxcFdvbklCZVQiVVJIKiY/KiVGayMiI1Y8T0c0JE5aSCxDXmUwdVpqbT81UEpEW0QmIm0vOiZHWDcwJCRHcHEvLElaIjdaV1R0KDFxYV9hJXFzOCktPXM2REgzTEVNTUhiJT9WN0NXNi49aWlzPi9hJ2MrVnUsOj4ocVQhSj5sRVMmbmRnbixHOCFLZiQhLmpZRSdLc2hMXDIxb3VgZ0xbbio6YkVsZCgzMz1FQUhYTFVcQjYpM2dMJ0kkXlVLMGpxcFpZVmBTVGxacihDOidWVStMdS9EPXVcSElFLy1aY11BTylwM0NSTUolTSYrcVdGVjJAM3MxZ3IzJ1lWNWJERigoUEJsb3UySFxwaT47OjpqV29MMShKUCRERnExdVxbNzZbbU0oK08rUjBtUz5ROzssT25nQmNxV1ltJ1oiV05JVEQzYSRbP2B0IjkhXGVabVNKUnEvYkdEJz5sYW9GSXJWXEk+ZldaMl5Ja3RnIjxtY25pOnBqaEtIJEBiUjtsYWhlWl1HYk9iO1diZkg/T1FGOUtrMzRAP0lRXjBlM15pPEwsV0FaUlFOdCZTYT5razE7I1g8U2t0bTtVQFtASV8+MUlKK0ZjU0ozPSFDOEBpTShjTWZtO2hKJjg/YmhHMUV0YnVKMC82bk9AXCl0RjhNTi1AUy82KHJeXTpgIiwvXWxKLVojKC9bVyVlYkExPVBmU2pfPHBVTC11YFptUWtoXzdJOD1SOCVZMWlQPFpnZ19USVdSJGoyQExjOkYnOTJIPW5AcztZcW0tO2srVkNQWz1vdUhTanBEb00wbCQwUjdlcmFbbU5QJyxTKFkwKllUU2gsVnJmQ1BOQjtGU15RYDI8XEFAMmk/YE9KIkdYUzk/cEpgY0dTWmBickwlSG9HMFEoZGxmL1hJPFhzbmtMVzN1ZiFjLmZkVmhXQ2RpKitjRj5hRFEoTlBMYEQ/RTVJUSE/ayZcZyQ2LUchUWwtSkVAaVloT0M/a1RaZWBwJStaTToiNGdfXGAnS25gQj4xT0ZfTSUkbl1WbnBYO25uV1JwbjEiJFxbQThUbFJARXFHLW4oZituS0FDR1QoLGtIKDx1KTk9SSI/bCUrT1RNOCYoWSpfQl09Xyk7Ny5sSm9GI3FHNjBdbiRIaz0qVEg7WSQldV1gXSpiVUgjV3VRJFY5Ql9OPm4iZFJLaW1yK2Avcm8qQWY4U280QWtIK0s6c2ZqWWdNbUNxNVBraCVLRD1HZCJTcWdVSUFbcUdJbm05Oy1bUmtxPmYsPy4yM2ZaSGNxTlo0U15TMl8vc3A8Tk1YV3VsRi06OkpoTG81TFo5UjJVZEtkPmAsTCZDLlBWTipIWFRgMlY8OF9LSVgzO3JyZ1pRVlUtQitHUU82WSw0SkxXaU0/Pis0OippNmxeKCoqNVNMMVZvRjotPmtDWFhHPStxKWAlS0ZxcVddKkFtLERxIk9yJEhyOmQpXTc0b1FlOV08TGBebyonPm90JzZHKlxgMlRzTylQdD1gP1dvPGU7PFIydDJqSCxaZ18iUlhRLm5ALlRPM3VEX0w0LWtmaGspQ0xKSH4+ZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgMzUKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDYxIDAwMDAwIG4gCjAwMDAwMDAxMjIgMDAwMDAgbiAKMDAwMDAwMDIyOSAwMDAwMCBuIAowMDAwMDAwMzQxIDAwMDAwIG4gCjAwMDAwMDA1MzYgMDAwMDAgbiAKMDAwMDAwMDczMSAwMDAwMCBuIAowMDAwMDAwODE0IDAwMDAwIG4gCjAwMDAwMDEwMDkgMDAwMDAgbiAKMDAwMDAwMTExOSAwMDAwMCBuIAowMDAwMDAxMzE0IDAwMDAwIG4gCjAwMDAwMDE1MTAgMDAwMDAgbiAKMDAwMDAwMTcwNiAwMDAwMCBuIAowMDAwMDAxOTAyIDAwMDAwIG4gCjAwMDAwMDIwOTggMDAwMDAgbiAKMDAwMDAwMjI5NCAwMDAwMCBuIAowMDAwMDAyNDkwIDAwMDAwIG4gCjAwMDAwMDI2ODYgMDAwMDAgbiAKMDAwMDAwMjg4MiAwMDAwMCBuIAowMDAwMDAzMDc4IDAwMDAwIG4gCjAwMDAwMDMxNDggMDAwMDAgbiAKMDAwMDAwMzQ4MCAwMDAwMCBuIAowMDAwMDAzNjI1IDAwMDAwIG4gCjAwMDAwMDQ2OTEgMDAwMDAgbiAKMDAwMDAwNjEwNyAwMDAwMCBuIAowMDAwMDA4NDk4IDAwMDAwIG4gCjAwMDAwMTA5ODYgMDAwMDAgbiAKMDAwMDAxMzE2OSAwMDAwMCBuIAowMDAwMDE1NTM1IDAwMDAwIG4gCjAwMDAwMTc2MzkgMDAwMDAgbiAKMDAwMDAxOTg5OCAwMDAwMCBuIAowMDAwMDIyNzE1IDAwMDAwIG4gCjAwMDAwMjQ4NTkgMDAwMDAgbiAKMDAwMDAyNzA4MSAwMDAwMCBuIAowMDAwMDI5NDczIDAwMDAwIG4gCnRyYWlsZXIKPDwKL0lEIApbPDA0YjdiNWEwYjBiNzhjMjc0NWY3MDI1Mzc0NmIwNmMwPjwwNGI3YjVhMGIwYjc4YzI3NDVmNzAyNTM3NDZiMDZjMD5dCiUgUmVwb3J0TGFiIGdlbmVyYXRlZCBQREYgZG9jdW1lbnQgLS0gZGlnZXN0IChvcGVuc291cmNlKQoKL0luZm8gMjAgMCBSCi9Sb290IDE5IDAgUgovU2l6ZSAzNQo+PgpzdGFydHhyZWYKMzEzMDQKJSVFT0YK";
+        "JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUiAvRjMgNiAwIFIgL0Y0IDggMCBSCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMSAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL0Jhc2VGb250IC9IZWx2ZXRpY2EtQm9sZCAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjIgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iago0IDAgb2JqCjw8Ci9Db250ZW50cyAyMyAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIyIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago1IDAgb2JqCjw8Ci9Db250ZW50cyAyNCAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIyIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago2IDAgb2JqCjw8Ci9CYXNlRm9udCAvWmFwZkRpbmdiYXRzIC9OYW1lIC9GMyAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjcgMCBvYmoKPDwKL0NvbnRlbnRzIDI1IDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMjIgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjggMCBvYmoKPDwKL0Jhc2VGb250IC9Db3VyaWVyLUJvbGQgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0Y0IC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKOSAwIG9iago8PAovQ29udGVudHMgMjYgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAyMiAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTAgMCBvYmoKPDwKL0NvbnRlbnRzIDI3IDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMjIgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjExIDAgb2JqCjw8Ci9Db250ZW50cyAyOCAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIyIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iagoxMiAwIG9iago8PAovQ29udGVudHMgMjkgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAyMiAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTMgMCBvYmoKPDwKL0NvbnRlbnRzIDMwIDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMjIgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjE0IDAgb2JqCjw8Ci9Db250ZW50cyAzMSAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIyIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iagoxNSAwIG9iago8PAovQ29udGVudHMgMzIgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAyMiAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTYgMCBvYmoKPDwKL0NvbnRlbnRzIDMzIDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMjIgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjE3IDAgb2JqCjw8Ci9Db250ZW50cyAzNCAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDIyIDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iagoxOCAwIG9iago8PAovQ29udGVudHMgMzUgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCAyMiAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKMTkgMCBvYmoKPDwKL0NvbnRlbnRzIDM2IDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgMjIgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjIwIDAgb2JqCjw8Ci9QYWdlTW9kZSAvVXNlTm9uZSAvUGFnZXMgMjIgMCBSIC9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoyMSAwIG9iago8PAovQXV0aG9yIChTb2lsICYgQ2xpbWF0ZSBJbml0aWF0aXZlKSAvQ3JlYXRpb25EYXRlIChEOjIwMjYwNzIxMDc1NjI2KzA5JzAwJykgL0NyZWF0b3IgKFwodW5zcGVjaWZpZWRcKSkgL0tleXdvcmRzICgpIC9Nb2REYXRlIChEOjIwMjYwNzIxMDc1NjI2KzA5JzAwJykgL1Byb2R1Y2VyIChSZXBvcnRMYWIgUERGIExpYnJhcnkgLSBcKG9wZW5zb3VyY2VcKSkgCiAgL1N1YmplY3QgKFwodW5zcGVjaWZpZWRcKSkgL1RpdGxlIChTQ0kgRmFybSBQbGFuIERvY3VtZW50IEJ1aWxkZXIgVGVjaG5pY2FsIFdoaXRlIFBhcGVyKSAvVHJhcHBlZCAvRmFsc2UKPj4KZW5kb2JqCjIyIDAgb2JqCjw8Ci9Db3VudCAxNCAvS2lkcyBbIDQgMCBSIDUgMCBSIDcgMCBSIDkgMCBSIDEwIDAgUiAxMSAwIFIgMTIgMCBSIDEzIDAgUiAxNCAwIFIgMTUgMCBSIAogIDE2IDAgUiAxNyAwIFIgMTggMCBSIDE5IDAgUiBdIC9UeXBlIC9QYWdlcwo+PgplbmRvYmoKMjMgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggOTkxCj4+CnN0cmVhbQpHYXQkdT8kIklVJjpNbS5mSSYiIldOXW85W1lINTZnLG0kdCRPJlhIX2pkbHA8KyZBJUBeamc5SW9sVj9STlgrNkVGUXM9bUBISyhYPS1MM1R1MWchITFdREZxTUc+YzpwLEBpX1ArVnNiQXFVM3BrVzk8WFxLX1Q1XCk9IyJuIkRhOSdJJiQ+QDlxMy8hPDBOITZsXk4tQCg0QzkqSjpKJmpvTTdNTlRxMlI+Q0MpTV5aaSNuMEguNG4vR0pZcl9RazskYjNdIXJkLmpVNkxoYzxNbW05Zmptal5eNUczQi1CODxHdXBXJFhXQEpEZ2xHWE5vNy8zLCY1VUNlRklRNDJFPzRKS0BkX0MvLElKZiJZZSw7RmVeLixbX28jJlwwaSM9JkE4YF5pOT8+Sj4vWWhlOmNcSCNJR29yPm1nbDhGZW4qLGk8I28lSD1UNCprRFsxIjJlbl42U0hWXD0xP2FbWkEsUWxWVUtLL2dIQ101YFRgdHVQTmouPUFvb1JmTWBRXzgnLyVeaU4vUVFpXnI+JSdWUV0qKSJcTWouQ1JnKzREK3E/aF0zYSdjSFxCUHBjRlh1cktJOjhWZjVKdS9kcz81QSM8SCc3Z2AhZS1fOUtTQkJZRTlePk0zR2JlX0N1ViNuXlkvR144aVRiRXU9MipUaVZmXzcvRC4+JDpmZylwR1pqN2NdNkJscmUxTVJNMGpkJShNLDZhPDEjPmxuaiZVKWInO2dGR0pdKlhmSUdFU1E7REskJTlaLnI3ZmhhVzo6NTA5Xk06NmgwSy1PUy5eLGZKIjR0OktGUTplYS02aGU9aVRzJiw2IUQ5VmdmSU1ecihjYkJMXFFwYWEicF5dVlIxPEgiW2M6amwmZzYzKTEocj9HbFQ+VSJaMlE7RE0/NFMzPm9aQU9RSDZsPzR0azdFLC1VKSovO0JTK1xKLl1KV3AvOTs6RT8+QU5sRGY0XlJlMWxrai5HSDkrS2BkKWVHN1xVPjo2KG1HV2ZNNj9JMTYoJlMpUU1KcylKZjA8JnJlW2QzJVQ3MlhJZE9AbWQxP3JLKSNWUCIwJU5uV2Mla2ZiLW85JTwzZ0ZwVSZoNEVHSjNOTSZJOmw2cDE5Tl0kPm5Ma20kNXU3WVdfOTNRc0hPZyEmQGBmZF83Tyc4K2M5J0dHY0wrMzlKJGFXPmZSPDRBZHU9LGdWTyNOO2M+ME8uJC9IMktnOFlNKC8pK2BdbFI9O0c+KytqU1NubDIzVSVaR2k0KScmRyMmWF4hUj9NJkN1IUZiIV9MXWZtUkFzWVtvYTY6XC5CXF9yPy8tQyFdJH4+ZW5kc3RyZWFtCmVuZG9iagoyNCAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAxMzI0Cj4+CnN0cmVhbQpHYXQ9amhmJTctJkJFXSw9NTc6SDMlUk1zSVUoPHM5OUJyYUBWZTxlKGw8N2I4PkphUTooP1FOaGlYKWRVZVM2azBKJmlBJmpKbldIYClkUGlbPTxLV1diQGRfdSVVXytwUj88TF8+bGRxQU0hO01uXiUnTGY3PiQ1YDFOXjhXKDouOEUnOiY2OiRjcyFxSi9xOEhMSz49XEA/KkRaYjNBRVJwWVVEVkItJFBKaDA5QTIwMVViXDE7XzhRJl8tP29JSFBCRkpeRTNITmVwJFJeL109KWM4VSRgZiI0cG40XCUoIT1CcjA6USxecGAlZVlIO3EzMCVLLSNNWGFoL0RxWElAMFpOaXNkcGdyLD89RloldDAuciVzVyYwPyUnIWk5Uzo/J0xYPGRaLUJdbVtNUm0hLmguPmBWYSUvJSdzNkQ0bz4iKVZtNkUic1w6aDRNclRyRCNwIT1xY1sxJUtiXkpNYiE1RnVHQ3BoVl9JSUkyPVFHITRsVjwsITFiKDooLztqISw6Ris1S1M3XllxK0dJYlFwXHA9QVBlJDBvZUYhOlgzUT9fPEctPlJEbkRdJV5GUT88ZihoV0xkVGpBdXE4MGc7KEU+NFRxU2lYbTBMNyJKWF1bVFI1VmBCUz4+XlIyYkRyal9aZj0qPWpxayRAYVhOWE04MUg6Py9oN2c0aSJgPmU7UGZpXGhpLjlDZjk7aCIrX1F1LXIldWwlMF9XUGdOKT5LVDdcT0tvTS9WZEJZVTA1QEhtVCVNayddJTNYXygtYSxJVC0jWCgtRm1tZDlFNTA4c2dvXDxnXGtDUHV0bWpoX1piNVNKdWA8QC5GVCIsY1xISWdHTCxqP3FHcy1SMVc3ZmkqLFFFZzsnaTFYTE0wOXB1Xmk4Z2thRVM5KzZZOTxUIVREUWphI2VFTC0jSiFsJmBdJzpqaG1dcFUnNEZJcUs0IWMtSUdZK1M9UEgoRDxoQlhyTypHYGdQK1doTTg/LWFTRT9rTURyL1lYSks5J3NgN3FyL10/VGVrVk02JigkMm5pPjBWbWIzZUVtOCNPPGctL21nNS5yOCxWXSduUldoJj1lSy1YMiRhN0UhbkVZQCdlKl1YVVhANFk8QUlvUUE6QmUxNk5AUmlhMFdHQDZgXGRvMW9HbHFIW19mdUBgPyQnIWs0QDI5PUVjYVcoXTtkPmQ7ZGhHaSs9Py5ORFw1OFs0XFNiXClFPmUrTEYvU3RbSm0/YCw9S0ddQEBSV0RdKmtCLS1nP00uLkhZRSVAPFlNXi1ibkxmQVVtbXI3L2tMPz9vbkh0JW9fWjU7Xz48JWEyLC5fYCQxI3NDXWlmY25LV1JPK05QMzc1MEo2dDsjZzpabGgmaClXP2BtRyZIYjhcNGQnMyNeOik6XjdxU0FuSldELzwkKjFOWF1gNChWbF5zJCF0KDg2ZlctKVNQYTRYcD8yVFRRQGA1Q0pIO19YSChbYVU5I1IkbGUhQ29yJVNDPnViKD43TWUtZUdmRm9uNkhpXi9MVE4xJzdiZFVIYiIiQEtkVDdbY2VRbWgtWGYjWjRVMmlfYVtnc05cMTZSVGZfJSonbFtHLklzZ1ZLJ3BAV1lXZjlrXT8yWV8uX01KTmhgJjZhSiNuZ0JVTVJQXnUkTl8zOVpFcjVFPzwiU3VMMjpSaFtkP2pANDtKTmhgJjZmVEVJZ0JVTW9SJlcta1A4KyxjYyw0Y0UiZ0JyJ0JkPGBGYy9acyxkIVRCXHBeXHFUIVFrKmgkM34+ZW5kc3RyZWFtCmVuZG9iagoyNSAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMzI0Cj4+CnN0cmVhbQpHYiEjXGJBdT8sKD5cOixtWk1SUDBdIXFoUHE+WGMxMyxePk4qVl5uPCIhQiZZamI2ZVljT2kicGM1ZiYrPVRwVyovdGFlOEwyZU5obkZPLGouKGlrMkxaWUVSMXImLVFoOi4wK2lnR0BNQihPRUJtRTlfYkVLXDpYSm0jR1l0cnEtRjxhI2MyZFpdMG91Zm91SVY7RykkNm1bZldMdEBCLzlna0pWbzs1RzI2bTlBKXR1NkIwKm5KTDghWHNIRnUxTWcmKyJPNUM8YidkXWpvJyZhSWdZLTdaNV8nM1oiZmhHcU1eOD0hXyxxYkVoIi49ZTg1U3MudVBjMkomMjFTM0NlcTxtazcmSE1rNileRV8+T2ozSjBhVT8tI2teMSZKYFEzciNbbmlcb1MybVUobTAvalxfOGAmS2dDWDcwYm1NOFFFWT0ralstKjhYYzhRRTQhYiZgdTZQJF10aTkrcmVVUUVVUD9WLS1IakNvJlZlO0dZdE1tSzghc10mdGddWS86Vm8iXDZMa0Qnb2g4RVpITTcmSjZcZyw8SiFmY21HQ2BIW1k9RicvS0tnYzFtPj5NcEImWlVoZDppUCsmTyVLWSJlKW5xND9mYUwuYU5EOSVdU1FSbyRGU11faClaKlA9PmZXPU1mZTtBP0dcXT41J0AoREVsOUs5QTUiPTg+Sll0Oi5VRV9LMi5ZJmNVK0FcIlVEUWdaUyFlOSk4TjI6ViJfWyhtUz4tWik0JGZIJkVqUEJmNCJZLj9DLSMwMnQsV1pHKkA3KyxcKCoiUCtQK1k5VEQwblEnbyNbM2ckXCEqc2FdVFBtYE5DPVg4K2QzSl5VPWs4T0NMRGcxcGcxZmo2TF4wa2Y9aihEQmQ4aDJgXSp0JU1FOGVaO0RybnE4XlUvZSolay0vU11lLFc0I0gqZ2NBYVdmODhhTkUlMkMpP0E+UGUpUDZVMXU2UVlYVC1zRDI/Ok1zXTlJcEw6I0I+VFBQNV9sYSM7azU0c00lWi9TMVxFb09rT1AtPD8kby9AO1ZPRWxvZCQ+cFZmOGBOSFI7NG0/TjhDQ19aVU1LSGVzLWtQJ1BoYCptXys/XW5nPlFqayUoQTguTzE4UFpKLC1cakZFKSxPJkIzW3VGQTVVI2loNSFXRVhERDgjYGRCYC8+M2U1bzheZnI6Yk9WSC5eYFBzWSdUU0BJZD06Ij80MmRkOUxKblg6ZS9RYWteTD5jXT4sNkg6I1Bsbz9vLVtlJk9QXGI1KjNUX1YrJkJhNmg4ZCNOMkwhXz1SUmcrQlRBOWFjQ0xYUTJFOyk2cS5UPG5GaXReYC9oOTxYJ1hyMmEqJ1VxdWxsPzFSSkJPQSZVWUBWRThfMSNII11fa19uQiJnPTVZaS8oIWJvV1FrXkRsI2NIOExMPnQpL2I4Nm1eYyJWa0NzV21ubCFXZjJaPXM+WkpfM3AuSExqKTIpYF4laHJYZVI6XiVsIig/TUU0XzVnZy4obS0nR3A+aVorQUhRI0Q8QHA3aG8oLF5xSkQ3NyNDMUxMRkxlNWQyP2NuQ0AvcTpxZl5UKSdHUF46MmtNcy5zZ0JNXF5NMi5ncEkrS0xLPXRHJWJhKiU0QFwoN1NVQFdcbGpVU08xWEoiaU8/PHJAUl8+Nko9b10uI2VSImIuaUA5PHJbc3FvaFpgTjNeKG11Y0ZwUSddbTkiQWgjKEFcWSNdNlc3aitcLSxPNGEpLFhUKFlncVQ2VzhbYmU8QDxoQlAzUDlcaEdeX1JUUFxkIitxLFBScWslLCk1KSFSJy5HczNbW1FQTmtgOGotUTRKQCJsUlZgQEFMUjhaSVFOMW82dDZmXGMlZUNgTmpOKEVYRlZsWFMzTF1NSkI2KWdKQFwibTk+RF4xOyNtYDBfJkYtbEdBcz4iQ1BAXyw7ZWRFT2gybDAnMV0uNElkbzdVJWslLElUYFktLzBGPXBUQV9LUCoydTBuLDplL3AjLCNhbStsYzpaVisxcVVOcUpZKEYwNFchOyUqVFtBXnJVJ0FFYG9rPmNdWzpvTWZTOCcqRnRfZzI7NzJFdV1GbltSdEdXRkljRFxyX2xQQmliNEVIVHQmTDBsMV83LWBQRmlKLydzJVJfJUg8RWhTXWZLZ0piL24wUlRrcTJiKEooRDFsQChgbWVVR1kiKyFLR0JkK2YvYDlmVEgmYV1eMFMic1o/ck0lVFEhTEhjLiMnKiVrM3A/VDY2bzBeQjFkIlNwNWdnNk1CPlRTLUpNME9GK0hBQjJdKFRQQllNMSQyV09zTyJXLD90O2AhSCQmTVtsNG5zVihpYVw+IilHazpJbGh0Km01SV5xTEQvQFpgdUdWImNiM2oxcyoiK2VwJ0oiMWpQQmAqViJjUjJhTVtDbURWNSc/VzgkLDRnI0s6KFEoPUMrOCUiMnR0Y0gvaktgWkJUWkJCI3FcRkBkYj9tMl1wNkcrZGsmaSR0R2BIYmMmNXFgXGwvMkVJQmorQ0MyZlZxVTE+Q2BlQVsnX2hVYU1lYV1iPFwnLClkXVB1VF5xWU5qJGBPTFNPYEpWTE5JS1opcThuYWphLThHTilZLDRlOFRQbjMlZUlHcWdCRnV1KC9VUWQlT0BRY0NvZUdAPidAKWY+XFh1P2BINnIrUTxsT2BxN14wKFdrak5VZDJEVS5fUCJwLThjXUYwKkcoIipwKmhAPkxrN2A3bWVJOEdUWC9YaGtDP0JQTUBQXyZBVk1vLiVkSTJMQ2RYK2kjTSE4azpVbV1KcyksN1lkQkFoIVhccFMvN21oYV5jYGtOInNoLnFwKWhZbnJQLDpnQTVrRT0kJjhSZ0soST9OYG09dDxILCkiST9tIjxUL2QmRkJOWiFGO0NhZFwkM2BTSW45RFI0YltVUGJAMnBMNWQ4MkVQZUNhSVxaW1whZ15KcFg1Q3RyQj1kMms7LUI9MD4yZldPZU9sR2RxSFs3QlpoYHUiViI1NmhKMlZZUGRdXidDLzIuS107LHM8LENmMSM3N19ASWdHZ0ddRy8xJyNwajo6dFZnUz8kL2ZkS1RcIVhEPHVVLzFTQihlYkVDUTw7Zl02OyZeKyImNFFTSE5+PmVuZHN0cmVhbQplbmRvYmoKMjYgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMjQ1MQo+PgpzdHJlYW0KR2F1MEQ9XTY4MiZxOSJGajxKOTRVMlAyI0wqKDQ/XT9LODpBaDshOm41PUBwOmpNb2FvUlRJRHFyQEZvV3BaMWchZmFVKCEyPEZfQiVFO21cYERcaDI0blNLb1BtWGg9Il8kKWJub0ZGLCwiYEA/LVo3RjMiYEQ7SDpeQEdOa0FMK2ldZHI/cVgqYCEsbUJFZUJibnVeJjVZWiQnRkpkUlJhW1VlVCdCIiY5SyktTCQ5c0wvYT0jcG9PWV9uZSJKTSR0PCdUbCRbaG03ZE5xZFslZC02bVRDViNbTzYrPUJVa3UzampLZHA9J2ZdYkxzMj5yPG0uVUE/JFByXGVpV0VWZyNFYjRCX2wxLDovYzMvVydvVCYoa0JSW3JmbSckZyE8czY1Uk91RiYnQUQjX1wjPVpLLm03K0RLZWgscGBRVitddC5WVmMxUFpEQCI9Kl5yKFduIWtGQ1JTLihbPWcnTzAlMkNgV2A9Mjg5NjRYIWg2LWctJ1tMODc0STZxXyJgKSVKKiZpXkZHY2osZFRGakJxQWtxdCw1X2ZFLG4sMTxRMmUpUEZMW2RWJSJeUCo4VS5pIllNQ01SI0teUG5EYltkaFUxUCc/W2FnPik2aS8nX1ZNJW4yczBjTk4kSz5kOk5cQGs/cCpeIU4nX2wra14uJG5CdDFVY0deQTY/IzE7R2dWIVg3Sz1DZG9OQFJPSlBzSk9gJSxaMiY6S0FtP2JEM1RXWmVIVEZeL2YnbGxcOU1LMyMlJV0lajpXX3NHZTBETlVRNU1zZ1NYJCMuSVYxPV0sWjlMJXVub1ZLPTlESmpSMS9HTWVbVj5xVV9OTyxPUl1gPUs7OlcpIllkb2osI1BCJDVHW2oqOEFcU102Oi1jJTQ8KSNISlo+NzpNQ2s7Nk9tSDRkaSY6I3RwVDhcQVBJJ0tGVXAjaT9UPj5QSjhBYVwtLTZoZG42TkIhVC4wRzg+P1c5TzEqMEM1JHU2IS41KyxtOUw9SiZCTylhTTtGSUxcSXJJNnQyLUwsVnEoXllWMWhSNU9oanAsdSVuSyU2WTVBX2JacGJxS1FXKXJEY2Q9K2MmIjdKO2ZLJzBPMFZWMFQ2QV5xOCdsQ1NxNFg8RCxkWjllZEFJZD01KFk8SittaElDSzwjayR1NjBobylQbE1BWEopKDNJZGUyQ1w6amlNS1VEL2ZOVm8yQWpBa2QjKlovbSVmdSZjLClHc3AqUjVrZmAnPDw0NVwwU09YJ0VlaEJlSTAjbyQlOEclO3FTOFc9YUpXPTVQUGlNbjFBbD5zQEpcYkxBTlxmYVFMdCQ0XS0sYWsjQiw6YW0oWSlSbSE1QEFgOStLWEddYV1RXC5jYj1eay86NVVgLF5lIyNEJzg/aFZLWT8kSk9bdCdfMlQhaFdyaUkmJSU3NjEyT2FBZGQqTGhFLz5bXEkuSkVvP25cWllCLTBWK1k6YFNPYSQyMFl0VCkzQXEtaFUsLVskP205PmZxPXJwa1pJX24hUmNdciEuRGs8aDpKOWk7VzxXNlc7a10kJWwhKFwmYGMqYE4oUT8/T0pHTmFyb2M9MD1TNzomMzxdbmpYIlhsQzA2Z2JrNW5YUVRZRC5YYmlIWnM2clFyVGY4IiJTMiRIbnEnIypFckRFSFZiNzJOWUU2JDk5bGwibGVqKllEVVxUWDZNLzIsTHBjIWBaM1pnZUBOa2MzdVROXlEkUS0nVm8nIl9mcjg1bThRTjc9SV5mY2EyamNhOV5rJiw6KSNSMW8yXDc+JlFvXypEb242OzxsM0M9ZDgxb2ZRN2lMQClAS1NoRShrcW09XS9RNFY8Q0xzbzdMLXMpQXBYPGIxKCQ4dGgzWENyK21Hak5cbjklJmpZZEwsQmotajtoSm5SZ1hrISVPVSdaZVlKaExlJlIqXlAnUU1oQDIqanAscDI9OiNYMkopPUMoTSJecz8qLXNtWGdjNS9MYjJHODxHVWBiWiFKPF5YSy0xZVZUVnVrMkYiczpUJ21waWkvaVxVNXEhNCdDY01NamgmLUhjYD5MKW86VlJzaWdOQSRcR0RMcFFCVT48R1lsNz5bK3QsVD1vN1grY1IoMmlXPDZgX09CLGt1LkNDNnMkR0hCWkFNTFU5XzxOIyZlZWdTWz5xXGRPOjw7aT8mcVxvTSxSSzdtTURWJnM+OWZTPTBCNE5IaXEqalM/Ozl1TXNeR2A4cF1hNEQtMDZoXCxnZHMpTTFHUlRXWmhHYmhwMypnZl1ANUx1WE05Xz5aKCsiR1RaNj8sTCRdNloqUiFISkMjc2NHUnE7JjYjYmZeJUxuUl1wWllLRzIxYVBAJV8vV1EyMiJWTUJrJmBWaF0wI3VgcCRzNW9hME4+Xk4iNjFYKTcsVjpYcy1yIi5kdG8+Z1BiVWEjTEdZOEtTcSJdPWc1QSMpY1EjP1VxSFI2aD5ESHApV1lRUV1qbUdVXCc2QDpNKmVYVlhrViouYFVlX2wrM1hCa2RDV1FuQixwUFBGXUcuNGlJOEIqSGMtImcrM1hAJVlGNk5xPlgoUXM7ZUQkXSFRQ2c9R24mYG0vR2VBYyEuYCpPTVEtVGFlcS1rPVdmKmImST5NcURfbV89I2p1PjZCN0xaRTxaN2JUQ3ErWmkuLiEmOi4+UG1AVyJiNUZWKD4oQkxgJUplRWlCTksyUiRiPXRrSXQ/SmIoW3JcQiNzRjpWMzBEKjNfc0BYaCtgJzxjV1FJUm1DWDtIby1SXHJHciRIJjlvY1tSQWlTIyhsdGJlL2QqQjZVNUY0Kjc0NSstMWA9Qm8jQTRQXC5ZUFVwLjAyQDA2bUIsM1gwXmI7LD9TMjk2NTVrZTZYImczOG9fImYxSHRnPW82dTozc242XD9jW1xkJDpKclEwKllzOClMJ1tGR1BAaHA0ZXA7LWImJlZ1QUVtYGYoSlkkZ3EzQG5EL0ZzL09QRVhMIlVwMk5MTWNNViswKFJOJVhyZjBfWU9kRzxQIkxkajNZalkwY2ROTkszVF5WRkUlczNlaitjL0lKMjgzVFk6LEMoZSo/ZFI2ITk5W0ctcUUpXyZCYV0xWFFZZmFzKm0/QW5BX1RwOmFScEdhZltgZGA+UXU0SGo5SixcMUlIOm1oSWVjPlU2ZFVbTycmdDciYU5MPltJOXBIb29wbmRSI00iWC4+SGBuTUNxXGtQTUk/OTUsSCgqRWMqIkRBbm5rWWtnWnVVckw2cW1bOyozOEdLLiVyRGVNNiRDIVlmS1NiczlRUFEjaH4+ZW5kc3RyZWFtCmVuZG9iagoyNyAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMTYyCj4+CnN0cmVhbQpHYiEjXD8jU0lVJ1JlPDJcMVtzPi9uUUVwX2J1N1FacTMmYWtjaC9dME9XJzhhOl0vK1A5bDNPbmNBKnRtcCZjaThGNGpeZCJlPE8sRShSQ2pnak9vP0leRDZzKlheMzA4XFEybC4pMXReODFRXnE0UygucmdxdWtPOF8wUThKJyEjLGEkI2MoLlMpQihEMilqbVxtITooKCY2W1IwWi9gO0E7VmZZLmRzL25TIWtCJytwIW9hLVwnLGlabyIpIkRSNUkmZVxYNlYkV1AvSWJsLltGLTB1M1MxZVVJbmA2NGMxOipkNy5dX2dAYWJRXm1IWzdkO1dfZUhMVlJham0+M0IkV15RYzwyRkhPISlycUFlUTVnaGE2WURjaThyIiM3Mmo8VjEiTUYoWydKVyouRjZrSiw3MCFaRWJkSmgxJ0F0KTpMJFEhO1I9Zys8YFhyQmBSO3RtL2cuVE1SLVtwJVY4UGo1K25DYHNgKWgsQyJuQVg5cDk7bXIiaCQsRWFuUERrMWVILDRtTSglRzJKOkxiJGNwTGMzMScjYGJRTWs6IjU7OThSSDNnOFhGJSk7RU9zJStMIl10VyVpJT1Nb09iJ0A5a0hSKVM7K3U8dWYyN2F1Si02Rl8sO3RoXT5TW0BCNWduYSRaQEdsb0djNlNQSTQlISNdRSRxYzxmZT1jODQoZTk4UiRwZmwxRlQ4PkpsQlBubDVDNWlCJTtII0BPXWBKLCU5Yi4nKWtFVGFWUmJLTCM1R0Y+VHU/WEkjMHMycHJmKUw5MTpHajplUEE7PDFXJz0xOmVvKkdHT1pdOSc8YmpZTEl1LCU+Pzg3XXFPNDxYWGduZiUpKHBJRDUsKW0zYmlEJ1xNaF1RJTU8JTM9ZVJLQzFZZTRxSTg3NTw2L14wSGxOYTNeI0I5X0xjbmdhbGA5bjFbbSJVJCYjU2s8LU1BM0NlVGtaaC0jLTtSKGpSKjpdPiMnb3ItRE0tdVRwLmhtKThxdUAkMypDa19Cc2pLZT5CXS5tO2MibW9iaCs8alMtR01LRzEvP29DRUJmTSdGQmhvK1tqJ0MmL1RMXlY/OihfWGUzXFZaNzY7O2dQcGljZVotWkBIIkhrNHJIWzAyTkpwLGB1QUEhMENeaTk8VTQ7JG9WXzU9ZFRGSDA/QDhOOTU3VylaMGhELmxQRzcyP1I0O3U2PXQjYUZMc2tvdUtqPlpoPCRvSVRyZm5cJy9eSmw3XVchQjQkP2I8YF4vKEZDXypQIzglLmVmODVbQyEiVkVXZSZyUF1zY2NzPFZjRSpZVy5wO1ErXFJpc0VnYnRJNy5dIjxaU0Z0UlsxPC5VPHBfNlBQOz1HcWZxQl5MNWxEVEIlWERpQCMlLWU2TDZENSNWSW5uK2dcWDhZbFdNVXQuY2ZpInFOVDVudU1pKTk2RVBCa19HaypYU3IyRGB0ZlsrZFAqb3JqLk5aPVosQUdvSVwyJWBnRm1RI1NlT1VKSTglajNbZy9Tc0dQWUEhJylcYEYpMDVcdSkxQGBUPzBpLWkyU21ocXRwKXFZbkFtPnUmLEZJIj82YD0qWzQ4UCdLWDVrQyI5MDBfV0o3TTIkSS9qOzY6YF1ESEV0PHBEUFI6KSciTFRaaW5WaSJZa0s6QTYnWlNHPF1eMTBcWUJNSERsJFZZbGhVYmxVIlpwX085MmxvJT8/ZGg5SS1UU109Xzg7ITd1PG1cdGI9SWVfVixrSDcyMSk6aD9YWyhMWlU0RiQnUitKOyhRLzxSZjlXOVA5bEdDXXIkIWMqTWNwTFxrSilkRmJcajI+TWF1IVQ9QT1gIjkrcCwrX28jbUc1NVxFbGdxNypvTTBqNiZTa2ttXF0nOzNERTJhZ2RyW0VGY19QN29kLko8LCZsXVpiLFgzblZgUzZqSGdLNFclbyFQWCtXPWU5UGNzZlEoWktLaGVEaCJtQmJiakxSMVs0KVFpa1I3PFwiaG82XDo2J1I9RmdzMiFUbkpRZ2I9LjFqR2NoTEQqTVlLRjJkS3VcQk1VMVEqL3BDSiRGOTNnO2djW2RiKzkhMDg3ImhvMTIqRGIpVmQjUmwsJlE9ITFZW2ZWTiplPlttOEtZP1FYZGdsLi5yOUwzUFEnK04scz9KVmxqYXNeJy4oTDpWPDRtYVNoT2tuRHFwIj8rXzNjXFxJZyVFPG1ITCpWJ2soJVIiXzE5WCouXiUhPChIXVtUTW5qSSwlMGIhMiRMR0x0PmtOYTZXSWx0X186Kk9mLlBuS0RkaV0zc0JFZ3NyTFE/IypIUFt1WS8+KzdGPU9hL2pOJzljMz9abT90REpFKzN1aEVzTV8pYnJQQm1uSk1TYE9rQU9JRmhNLDg/c0hnbmIwakBvYy5UYGQ/XyFfKGJhVV0sXy48JE9sUmVlKDBWMV5YUUhibylnYUtpNjpARkZdLjY0MlA3YzgtZ2cpTiI4W3BwaFhbUFBoQEVNOy0lZk5pRW9xNDdJLkUjSlkkSV4ocTRFNTk3IyRjW0ktYj9oXWc7UUNnRVoralNMXlBUVjhbQVJRNENZUmxkbGppUj5UYSxoZWQoOVw8ajpbKmNTIm5APlEjYyleOltOcDRPQm1xWVEmdV1DJzJJNC89PixpZ2NHIUFYaGA8aD1KQnUlMiMzcHFdRjhPXjdXcEIkTz08TlEiMEdeZyJoaU07OGZYPWwpZk00SSg7bjdLRnJRYWUjSm1jMm1eMDxccSg0ZzxYTiRuNlkiYSdmVWgsc1FpJCVaKltvdDtpaFohbCZAKU91PE4yITpJTF9Vazc9Pz82OjM1Z2JPOy9RQWU/Ozs3RkNpM11HKT00MmYqV20kUmNoS3VtRjMmTHA5bi9KQUxIYnBeNClgbWcjXSQqOiJ+PmVuZHN0cmVhbQplbmRvYmoKMjggMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMjI5OQo+PgpzdHJlYW0KR2IiLyhDTiVyZShCJ2gzRUJlYU5TIUBZTVlwXWZuZGEhMGMqRm9mLygnUCRSJ1QnOUtsSl8jakNrMktTSFMtYmhHJDZ1MDNyTG1uMWNBISlwTW9WUkxQZWVBSVZlcyNrPHB0aW9eJnRbW1xXI0JDZSRJbEhwYionQjptSTswUiUqbE85ZHU1NCJlNm1pNnE5T0IqQztlI2ZxNDxpQWQnY2xhXUBVczM5Y2lYSFZvV1FjNF1NOUpMYilebWdPVExTIVQ0LFRQREMiMDBxYmhzTG4vUCEvZUxqdHNXWj1PP0I0YjM6QzYkRyVlSzJITj03MEFBPFY8KDZoYFYyQDMjKUZrW1loNSQlKVgoXFFzSXIyTHNQMUM+XmRlZWxlKykjckY3ZFIqcCpFdExFbCZ0XFhnc2JQa1U6JF4/Z1UxVilYWk9LbkIzIUhXQU8zQiZVOjtiQ1dtITVgOm8zU1hGXGFlQ2IoZWhAZTBcbHNNLyQiVFZoS1MxOllrST5JUD1QUSclMUJHRVIjMCQ2SF1qJSclNDQ6JWhZNFZOYzAzKCE0OWdVcWp0S2VBOiJhIlpsJmgiLWc3MSJGZjRNWmhOWz0uU1knV2gvRlJBXShBcmhDLWVFQlBCKUQoXzxwLFJfNU1eQTxvckguRlpTIlNpLyI4cT8iR3RLbFhxVU0pR1FBNHRyNjBeY2YsITZwRmo/dDc7UT89PF1ZaTByKGs/YiI9THE4ZzphSDNbJ050XkU2MExVLkNfP0E8blYnLCpgVDFCO1U/RUk8QkBBVXIpQUYtKWtEW29wLigzdGsqdS1ySmBmIi9oJUZSSGtmNGZVcFQ5LW5xVzBZL1lrImBLRVpGTzkpL2VlWCVuKVJBKDs5QzFBVUdpZGpwNzcpQC1QLjJzbDxVRXFLUylOZT5jQjBbN0c6R0dAYiJEbU5SYDhOUSE6QWxWSzcmQzprJk89ZittLmQ2P3VScismcSQnXVxLPVVmNzVuX2wkLSVGQylkS0Q0RmtUQyI4LCs8WyZBWVxeSFI1Mz1GSmU5WC5nclBjJzdhOCMyYSVaKWNjInU7aW0jPjNZIyUtPiZvUzFSbCckPjRrIUtIJWFEOFlOL2dcTjwmQT1cbjFFPFI8b1ooIzk3X0pJQyclVTlQdE0lbDcpMSgxXylAQEMlR2EzYVVVakxITnJ0XzxgVVlyQU87SFlnIzFBKUtIMzJccSlLJWE5Z1Q7ZWM7Pmw9JkkjZDVIJTpFPGpuR0NQP1g7VjtJLiZmVShDKkpAXipbdWVNbmJfOT1wams6NS0pZG9pOUdIQlckPyFxTCg+UC9CIz09VmksLz5GOFpcPmoxYlpQMCxmJXFJU3FZPz8lQGpXcW9rOzo0NlpbMTlNQ00lKT1vcnQoP20pQDM3QDZecmA4dUlpLUImOGhPKGdHM3RCP2Y1cz0zUlVNcT5FcjNjamNlVEhQMSFSVGBzQkBOayVlKDRKcVBOUDZvIVw+OUo7XFErRmQoZ2xxJyo3WTleIkt0VShpb0xHJT8rJyNja1RyVG5WIypIVnUqLCtiIkFSLHM1XCRcMz8/PHUxOSk/KnAzZmJfImhaXSRPQC5JOFUjWmpMKjYwWV4zPmouNCc+SlhINWkjLCg/PUNnVFskPD45P08jXjhmREFCOSk2MG9nJD9naCUvRVlHcz8qYGoiXFlrP1omUTkhQjM3X0tEY3JEVHBIV01PVW8/VSdHUClib1lBKDY0bi5fb1VEIlFLSUcrQF9HWDBWTEY1WXMyZjNdPFAkLVVBJi1URkg1b2UrOmlnLDNhSmloVktKWzAqI2xYJ0dAUDJsPm4nIVQ4ImFScWskUiFdJytmYEZLUVkwMy0zcCtiWUZUZGIlV2x0NkEhRiovWE5SYiM1OWZCTmhaMmRmc01LIUA9Z2haLy4mNChjL1YzaEFXMiFKJnJvOjx1TG0oJ18qZFAvO0BLbFBjZypHPGtaRG9sPiYzTlJwMzBmVjpmUjo7KUkpSDlcdCw2K3AvMlVRMTdgRC0/PVdfVyRqI0YhbTB0al4pSXNWOUsyRjhuNiFZWSplPGMwMjsvKWhhTFxbMDgmYEREY09DKj9zYlJmRFkqVUxfVSIoWjBEUEkjKToqS0xoOjFdYTNZSk09cGdTWDZUJXR0XU0/SHVDKi9VKDAvPV0sREJSKWhsXmc6LmAvTFsoI2g1R3BTLnM6Km5rMCgrNWlNQElzMWYsWzBhdScsVSJWR08hO2gobD9dPj5TXTtoM25LVkJvSkpyOnBSLWpJYSVJSytTYyNYSXREcSIhcjlKNXVnNmk9WERrOTpfP2xwIzFZUUZUbTljLGlQWj9bbF5iJjg/KzhWdCVgIiUnN1JKMDw9YEheaypbLkViIz9lZVBHdG5VcTo1PzljSStUcE0/NkM9JFlaZllWOix1ImpZL21NSEcxI29UXVBVVGRdcCkxQkotWGAyTWw+THJVbkRTRWdeMU5dP3JeJHFaVThCaHJNOFdlJ00lY0c+ODlZRk5GcGxdR1dyTms5YGkyLDc7SGpDQVgwJFMlQHEiN20lXkIqUV8zPEkuKGJfKWQnWzlBZUBdMkokbCpgSi9TZSE1Il5rO3BHNlRAXCMsPDhaa1xyJyY1amk4TjA4TzdBVy9cVXJCIk0wNWgwNmlEZ1dDWi9wJ2hmNEY7b2kwNy1CYzoyNUw5UD9hMElMKEcmazJlU1RMLS02WlpFViI/MEFRVS9IIUUvUzklIU8iZD8sWm4nVGxPQS1qOElyZmo9VCYlJF1RJSc+Xi9gIW08MypNIitaU2wsPUVUUEBpV245LiYiRW9LOj5lcjRsLD9iUS1fMiokbTYjPWhRTERKSlZuRXFKbjw9VUQrLDZccCppN2heQmAhImcxZUxoYTlESkRGWzg5SWthUGE4NSg/MEVAKzVrXmEvcSQpR1hqXS9xbzxnYmpQPldMalEsNzpbJG4raExKViFYT2IqNmteRHBtQVMtaEU7YytFcjMrbGklImhFYDYjMyJZbS88bDA4OzRCPURJQ0ozLVBzMSlrT2U6PUluciEzbWxJSGl+PmVuZHN0cmVhbQplbmRvYmoKMjkgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMjA1Nwo+PgpzdHJlYW0KR2F0bTw9YGA9VSY6WEFXZlUnbV4qWF8lWFskKF9CWXFvLGdOdFNNQkI4RDNkYCJePURVZzdYMGoxPl1nT0NkKls8MCZVOz4oQ3JBKzY3czNJdVx0UjJaUmRaRS1DSnJqMi0wTU5tRSo/SXRFVVNhbkhHYUhcJVtdXnVFXyNxdUFycSZdISEvLU8nOGdNXWlFT2s1MkI2KzpPWGxKJ0hzN1V1TkF1SkNsMWg6Wl9naCouI0U1LGRhPGBRbGpzUCR1LzVvU1BDb1czTWNFRiJzdTp0WTJHSkQlRXJqIV8jI20oMmtrIUREKEczTy4vNCYwLCRjIT9qWjM3SFFBcEQ0WTtIMmZSbTJGPT5QTjZWP1hgcENrLDUjblFEaFRDUi4lUWRcLlM9IS9UL1IwIWkjWTZbOlxJSDsvayojYD5fcXFZVWdOYkFeUkczY1VBJTFnZHVKcjteZmNtY2lpMztaQFBcKzY+XjgsKzUlOyQiV11oK2tFNzJ0TEJPSW5NTVJoVTooZFZMKkBEMUssJHNKJ0cuP1F0KWdwKiZtKlolYixrbm8vcTBzIzVcOEU2M2FhS2UsSlZJbzhES3JLJ3BhNEpkT1dJOlQkIktTUl1kQWMzZklla1UkYCRGUmgrNk5VQCQvalVKWERhakBQMjciV0gwTGYsQk5ZX0sybm0rQ1hdLWJYb3RRI1hKVStkO1JyI0BLOF0zI11dMiJkZylZZm0rXW10NkEuQGMjWyo8bEtESSxxODJcciY8ImhoYVsiWiRQYlNcWkVDY0xaZjBjWFVSXydXNzVDWj9nakZdVy0hJDE1NzVXayRrb2QsMHVvMilrUFsuZWpfJUZXPWgoOGZnZT9mMF4hRF4kQEYkLWtlLTwjZTs1a05AIVJYMmtjYF9PailIL0hBa29SYDklIV9LS11eNzphOjgnQ0lqVCw6cHVJaTU+V28rVlRCKiJKbVFQLHJaVkE1WCIwa1JCTFw8SXQiXUg2aWQ0UTs5SCg2MDNrbj5zYWNIbjZsMl4wJWVgTzdAL287cGk/Y3BPIldRKkReTVdqNDMzU0xaYl5jTmJHQUo5QS1ScDtTTjFtO25vVDdPI0lvVDRuVDovMzkoV1JOYEk9KkEhKmJGU0I3L0U8US9hPVdHbGY9T21xZSpvJTcnaSoqUiteTC4rZDdlW2BbKyphQSFbYzFFVy8mUWVpT0EkQHJDYFloV08+Im9LXl5FVVBqZ2lSSVBvNWZOJVtfPlBtcSdPZDIhPkBrNFQ6Q1JJRGphSCcsSlFxUWYsTjQqQzljJE0xJF5BI1lIM2RKR1pTcERLTVokOT5WOXA8bU0/RTdoZz1JT1AvTF5YRFhiZVkqVjpXMmJISGhiRllsa1VTNyFiOlkxVFBkLlBpNlNVYEpkIkltcGFxVElhSyZEOFZdLko3Zis5PWNccClgW0E/MEVEckNLWF08MDMrNzUycWhlWGRnU0B0XUkmaWIwMW9DO2dGZj5jX0M9UjV1W0NHJXRscWsmMExbYHRFTiZpam5DNjIpNUlWP1FuN2g7NC0xU04pQydBZ09LMXNNLykzZTMxXERYLE5rZCYiLDZiJCEnRzNLO1hRLTFaQilydE8+S2pKQ3I9Q19GNjlfVUgzNG9xUm5iblA/dDoyc1I8WztxUS1cMnJAVEZwbCxKIVZZaDwtOytuc28uWSwqcnI8bGwqMihpTF8hajslbktEMGVqZS8vZ2czN09RLC0/YnFOX2olbGlvcDwpMVllJ0hFMUZ0QUpITENpIS05I2RBUSYpLGsnbDUtPlBiTjUrRDhGWS4vIU8wK29HLmBRVGpHL15TJkQ6Ki51cjgpLlo6PERpLVdZKjdRL1xmLDFzOEosO2dUcWBQV0piZEhdTUojXGhaKCtKZjFlYVMxPD43Jz9WNVZgKUZUTkMrdUpAa0pxXzZVXTBGIVVgU00nW2B1Xk5PcjhsQ2IpbE4mNzJCYUchMCNfU3VDOSZJR040dSRTbjZAUUNhWTVMKW5qbGptRUZYRyYucFNESTYxUGRoLGVmXiVKaGJXIjZtI1JdczRAZktpMT0oM0dBbSIxWU1TWWoxRm8mXTxBQDYxakRPRF0ybVleWztGOEsuRmtQLyNCTkQ5W3EqZyk4JGU+PUtgTTNham9gNlRSPztEZWUqWUsoZE07VikvZDowbGw3cmJaPlBvO01cWVZrK2Q8LWo/XGZdKiRZV0c7KlxAKUQoK0g2IWplJUB0YVp1OTo5TCtUKFw8XkFgayJEJFMlOUcoLSR0NWBENydlTCU5NHVdNSNrQUZSQnNwP0cmckVwYjoxLW4iPVQwWCtMP2pYYUt1XW4hTEtHblctTGIsXkp1YSJMLWNVXVdeYkZlamg6aTYhKiIvQTxiIzlZJlUlWzkzRUMxS18wa1xlPlVUT2VjTlJSI3BIWmtuaEhWUWFkQzNJbzldNFY2aUB1U0Y8JC0oJ0tDOlInOkIibD8zRUdJXzNeKTlHbFRoKmlYazRjU1RcS1RmUj9ZczdMRjAsOD5lOTUucz4qOVU4VjNuaC1nJF9KU2pmUWxrQWVyYVMoMjZxLGlCWCs2bkkoPy0xZkMtVjMhUFg9OTRiIU86YlorP29yIlg6R0hfaUc3S1ZlZmgmWSYlM1wuVFI4bFJmQEA5JFs4O2NEMy5wRCM2IVotbjZzR2pSdGtQNF5FclxlXUVfUGQsSVFPUWtZMm5GS2tSWF87Yzc+JmEkYztUJygpfj5lbmRzdHJlYW0KZW5kb2JqCjMwIDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDE3MTEKPj4Kc3RyZWFtCkdiISNdPyN1YyEnUmU8Mlw7dEBFQD9DUEBwU0g/NzhMTChzMlUtUUdjTkljX103P2gqUCdFbGheL29qJD8+Im4nUTsqYSpeQiFSQGM5NDNMT1U4UG04Kl03XyM8NikrUmsiUG5fSTxoaUdDM05qJCgkUjZJbnVUVSRnP0BOLVhucSkiKzdMcCFrQTQtVV1AI0kmVk5JNnBjZGFNWWVac2VOdTw9KUJoJlcnXl5gR0VhKW50RTdFYmtTUmttIV5fIXFNTiplQE1KbFVfSmMpNEIxQDcxUTQ7MCE9Ll88XVNyR0U8M2hyVXJtc2tpNEtcKmFxYWdaJF9GRi1PaS8uOFpQSjs1OWpIOGlzLzw0NDpqN1gpYiducl0tV3A6XzYwc2dDSSxhb0IlPWoxbmE2SVwoblZUXitvXTdzOXJtSk4iZzdqSWFPOUkyM0pqXkFEYVhsSSQuIjNpRSIuVlkjJUgmaFY8QFNFUWdpL086VUFpOzFcXEY6JSVOYCNPOmdzZVpcYT4yN0dLSEErNk89JjpHL1JtPmtkJUF0Rk1ZSF1oSFdvI2JnSzltYlBzIzIqT25APlU4VlYhaUFyV1ddXVYvQS1HSjZQRS5FT29lLVdUNExkLSk0MzJDQzhbO1dlSVUyLFVTMmBNKDI6MD5cdFUuUXUkRG5sbyZAVXBmUztAUERVK1AjWGQtNkZkJCY6JzlgbjJQVWFOWylSYUROUz8lPT86RDxUTiMxViYvcmNdNl8nTU5nUy84VSZycm1aWlVkJWM/RFE/MTRONSNcPEVAU1BsXXRpNl1VUWI3YXNeXGxdU2Quc0pqaFEnP1w9J1IxLUA3c2l0bWZxVjVeW0MnYD9AS0QwVy5UNyFXTVAwJnBJT1JPPktVbSUmdEkwP15FP0xibTozNE9HQlVvQW9NNkkscyJJSkE2JjYiVTUzYlY7UEw2ViZnbHJZdTFrdVNpNm1zSypGIWxPKEJYTjwpT3EzPmFVdHBtPjAlUTFdOzlqUj8/cU1oYk0tPVVBLFlkTi0sI05ETC1JUVwiWShrWDx0YmE8bEMuWzptNEBEZCszU1ppMm5oUEpRPUFbZS8/UDAtMWZRdFhcOCpHbFAuV1NOUFwhSDJxV0o4JEUnTGNucl5DPSQ3Vjg2Nyw5QEknJG1EPidhV0VpJXI7cjlfWEtsIlpgK2xPW14hUlVnbTh0ZmUkSEhwSEgoWmBidWkuTk1WZzJvYl5STURtLVA3JVJXVVIiSGhicj1SKG5GPWtcOGEucDJIPlMyWT1xYTxFZUYiVygha11CKkBcUCtkNj8xN2woPm9RXk9kOFMibXBrVGNnZy5acFcxTzJbaUUjM28iZ2pgX2QrPS8hUzRcWE8sJjZOLXIjK1snOnM2MS4jVyYmN3VBYms+LldnVFdMI084Xk9uWVRBTjtyRmNlKTRYcCRrSydlWUJFN1RQM3M7VzRNU0BXN0c9VkYrJTRBZGktNCt0KidVX0lYVyVnR2taZ05lbzloLE0qQEhvZ1VuL09LVV9oMVYnTmw9SVpzWCddayZfWkwmXlgoclgrKyhVYlpCaSkzWUdvUWBAbS4lSEIxcExxUVNVUS8+bVJwOlhiOFNuWzFAISY9QSNoYiJ0UHBscWxwcEJZUyhYI0ZpKDFsP3I0PTMvUzluPEZXSSJFWUc3VihLZEw9aC1zRS0uV0AuQGxSTHBMcVFDaWloVUU4dDItLjhtQUBKO0luQG5ONm8vcS1yU2xgNS88QFQtWTMtPFJTZCwoayEtXkcnY0VMUSJyOVFaVShkK2kqbUwoQmxxRl1HRCUydGtmLDw5Zj1QOiU0MGQ4cz5LRVQib0BcVTYsWzZtZnQhQU08TTpGNmR0SFNoTDA5O3RyTTJ0XE5UMEpkKWwqW01JVGl1WkgpQXQyMy09Jms4ZT5qcDsjVUwiUVpiOTlWYzEqUF1GZENgNG5VXzAjVmpuPEBvK1pSbyNtMV5XYzMtcz1CYSs6Zy5UOWBoOC89SGRyY0A0Rlk7PVgtS2EvMjBxZlJ1QXU4K1ljTFBkWGheWi47OSNOP29yX2Rsai9pPHFwOlVXN1Q6W1NYYzFXKjNeaChaM19DbE8oUTw+Zys9PG8wP25mbk5SIkBJXzhgJ1pJUDJXVjE7PUprcWExXDJQLGkqJEE7Uz5SUGBML0pAa2IyYlooM1JsM0tGak5GJmNrbWt1S1ZDakgqYjlgblI5YTs8L0deYmp0PGUuSiRxNkcyJVJuU0gnSzInL0ovTGJZLGw9MztGWG80NFlEfj5lbmRzdHJlYW0KZW5kb2JqCjMxIDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDk1MQo+PgpzdHJlYW0KR2FyVk1nTVliKidSXVhWYmJKQiVOOiomI19aRlBBX0Y7KiZoJFBRLCdJWGZVTTdHLiEuUzFyQDc2ZU1BUGpQOGNAOV4kXlJALGpQVyJdUGRkV2NLT0U3TnE8M15vTDJdMSNvLSFvNXJObVQqW3JYTkFZZS9cbWYpWCxFLy9pRDU8RmhsSllsTURfP1VSTT51cVBaPmkyajVZWSNXcm0rXWFvTDA7ME5oXl85cExAbUQzYFRbPUFeRF4iKyhqOFZbJFc8RVlZYjVNIlFPaT4/bDUyQFEvN2M9JTpFL2UvaFx0KUw/LGYqTSFta1hUVGE4RU5kJG5OX2FabW02I2JgUT5HY088UjklaktDNCFyblYhbm47SERqXU02KDw3KCRUbz46ODdeW251MW5wa3AoMXQ6clUrJylSbV5RKSIiRkMjMi1vOkhSMGJRIUdzcnQiP3VTJlVSLDxAOzxiVVAkL0pzIXIoMTMxU0IrV3AyJitVOjwpanM6LicwZClvIUFbZzJHSFs4UltkKjAmL00+OVlbVkhRPSUqU0woMl01XlhqNShgJUcjPCJbLEc1JCthY28kOG1GTj9DZW5lQTpvOXBGYG4yYS9AXyohbDtuPU1vUEkuSS1aQlI+STpOQFhPLmAwNCUyJkNVIS5BQVBFRSFDbmlJXltcPDVjamhRM11sPyZZSDNucidPIS9cWWorXXBtajA8PD8nQzdXY2gzaGtsb0InaElsaUZaMkJZbitjMUg7SzUhSy5nRU5BMEkwMkUqbiheTzUobjdhKCVEZ3FdaS4rZURYbjxSTig3Z2RTM0BxK2FtUTkwXyxrWGJXVzR1VExwOUNfSjFxJShGMV1Xa0chZF8yLnI/Kmt0JlRsJTZNcERhI2JIU1UyXV1dWWBwMSRtYWI1b2lPcEpIYm8/OV5IKGtUQiVDUEw3LnJBLVBxLEU6Lzx1Klc+VXRtYzBWWVQtWXIscC00TSc5XFBrbjZEXVkuV01wP2dDViRobnBSTjYoNU9FYiRsMllgSU89TzorR0QwJG1jNyE1YlohbVJqRHA6Y2xfQkprWFcpLl50MT8sZiw4a0Q7S2JObUknWDknSzAvSCYxSC0pYj5bOVMmXlpHYD91UFdNSGUxPTAwWDVzazc0PFAoTkNyJk1nP3FFJCRUMF5pOmpLS2ElKHVdU0E3ak86PTo5c2BxRCRILzpEbFwlQjc8cGc9Vk11bEAwYDpcYFpfNnA8dGBbNUhUMyhuJlRhNloyK0xnJiIxIX4+ZW5kc3RyZWFtCmVuZG9iagozMiAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyNzY0Cj4+CnN0cmVhbQpHYXRtPD8hI2M/Jz5FWDJiVSlXcSdScjQkU21HNS9xUV5AOy9FRkhqZGkyXkdNN1UtW2F1MTc1bSNRWC8saGtuKCZnNiF0TWhOXkFrMlZrdDgrc2Q6KzVkKEMudENEbyhnbSdyIztEXiIrMGMqSz0pXj5kcUw2QDBAMnJlaVlYb0onOzJlOWhgLFBWTDgzcktFJClEUmBVJ042KVBGKU9QVC1gODVGXSktUlBMdXQjYWhnJCosVSdCRzk+Iz9KLztoLFchYlAzbnJEIydwM01HP1okQkZUIzAmX0RPJD5ySj1pKWNKWVB1JXA7QzFVTlIiOTYvOWo5bThUP0dgPEJmYSwrSDkwPC9YPjxZQDJOVVZGWl1TI0gtUihhcG9lckdYKlBRYVZpNl1lVC1aLGJcaVxIKE9BXj4+bHU+LlppK2tnXFVPZS1dZ0E1ZCIqc0ZCT0omTi1MSEQmUGJVVSMxKlMyKDomS1gxcjwzaWZlJSFbcklMT15vRiZfVEpQUU81J25zVEw0P2xKaCJocFRVKG02UzA7RDM9WDVuPjBmRGdXLklUOTAnVE5yajplcVtCWGdLO11gW3MjI0JwTUhaNWg8MmZrM04xQnBIYXEpVz9CdSYvJykqYzlWITE7WEkxU0RTVUJSOGFDYmMwWD9LVl1HciFNWTkpKVJNZFhqazpEKzw7WyZ1YjAuNCk6YlA3dDNmW1ReRk9CNyVcJzxCIk9OT2pxXCooPiZjKyRjWl8qckZfcy1AQzAiYEhlR05ULkxCaD1eakc3XTlLSzpFciEnUTo5IT9oVV5fQE9Sa21zSmQ0IkgnWjo2LVo2K2A7PWhTZURLRUdPTy0jKy5oLio8RGRVNXElUzwqWmdqSklkREUhPEk/KkZbTDQ+NCZoOlYhZC1rSE9EW04/XFdNOFlwRyhDU0x0bywuIlVHbEBZSmdsNV9BQTI4SHVHaSlxYWREYS8rdTxCaWUxYFRBJVs4PCdkYkk8XGtqVGxpWm5WYi9gZXNoM150cTUuRmcvKistME9kRTVvMT9MYS0vazl0Vy5mLitTYCMtTS9yJCFqIUNDQU5YL3BsK0s3TFs8Ti1gaVpKa2I3MTJII1ZwXiwtcToyM11NSSVqXSJhKyR0NFwhMzRqO2FecFRNSVRFLy9SZmhqZjYvVF9HI2ltVzUkJm5fKFMhRDFZTSZbR18uaEloPzdnXy08dEpFcHQ4OEJWal1zZ19BMG1rXm5XZlRNRS5qVi1iN1Z0PUkqS1FSWkg3MGtFQF0xKUhrNHQkKDxeaXMoI2FZZ15tKElja3JxTlYpSFQkWD9LdCFlSXFVMVw3ZTs7WkYzMW4uWzReKzFxSjltMlJRWlA3b1UsOz40SHVrXEFvI05lOV80NkVVIzpGKGdHZjc5VzB1TF01V1xBJUNnOStTXSQpWjgoJjxjRy9GclEwNSdLMEt1SUtGSFNGVm9XPjAiY1NxWWlMY3JdR3RLbTltWkQya1xLMEoybW5IdClTLF4rYlZSKDtFc2E9Z3FgSlo5RUssNS9SLDM3TEIpOy9rWio7cTtyVVA2ZlIoLjtpRWYoT29PXnRlPmtnW1QoNWUvLnVDMCtnYis3bjpzYjk/YHQvSUYsa2JUJFFDImxEMz1vYWNIV3VhR2FpVzluaTBJIj4oWy5VTidtPStoYkhaWEJMQG5SaDtnJCMuLzkrbzNIcio9JktQRkg9S3JoYWJGOzVrX3FNX21wIi0hTVMvb0xCJitWYF5BazU9bFJCVlFoYHMlXCVRKGpxTFhebFRKZEJNLSsjWjcvQ0hJQ1ZNUWdUTzNkYSIyTzYnbm1VNCJNR2IkJlkvVkZBXGRYcTh0cXNHSUBCaXQwYjohciJqO19LcT0kTV1caWgmXjJZViNZW0lfXkdHaClyWiwiajRGKF1KdFYlT1QlPEE2bTRuYCw2QD1TZ2trTkFIImg3TzctPWRoISRwQ3FiRDc7b1dvPGsrKixNJWNYamdQNWBnKDk9WjpULWhYcFM9Ukg7ayIjUUpwN15vOmZ1a0c7X3JvYTp1QyQoTDlDJmtndV47cFk2JWtRZHRgYSFrUSxGR0lHRFg3PWplRjJAXmw3clY4OyNsK2JSViRfSk9tXitOLDJvcXFXaDEqYlUlOl5WImtGSygnR2hMTWtBQEcrMkVcU0pZYlNrbWlkcl9aU0VDRi5vTjxVLDpxOjdxLWo9USQmNCIpJCJOajRlVlx1anFrOT9uPyomOi9hcypaZyEyZC0oW0VQSWAkKyZPZF49M3VwOCsuSiM6RjZ1akxGRktBYCRBW0AiamY/KXNRRi5uOXQ+XCEwQXJmLC8sXHJhIl40Qj1WTiR1LmUoXVxNWz9KJm4lZXEyb0QwZ19jJFBdNlhlJzVPQ1gmKlluYVdwVzM4SUAzLURBSGdYQj8iPmxNRC5gZ1E8MVQ4ZCYjTUUzdVQ6Sz5dZGM6JTVEPlc4I29lXWRdST5gNl9pVyFnZUBpUigvJzsrXiNwcicwTkI5cFBqYCsrTmc/LmtyZExOR1VZZXA5Oj5EOVI3ak1xbVZNSFltYkhvNi9kNGdCLWcqbUJFNGxgUy9Ta1RwdGQuS3FcXClCSzUiNFhmWCNYP2RZPEtkajc/YzJtUCFGSlRFXjttUm82IVE3Z0UwbTtkXUslKzlzRk5NPm1SS2pHbkhtOSNxPmtlcWciUDsmTT9HQVhsM2dpb0ExJi8xRlszPERUSCwlSGdkJjd0Nz1vQiQiRmQjW0lTUnRBSTZzLyQ2KkkzaDo0WjlRNC1lQ286NTxvYC0oNDg5PUUsV0snOT4sPG1VbF5rbz1fLFcuRGE8a2dyNCs8NyIiLUFMcldOWzJnaD8nVV1VXDdNdWdzUmFgIWorTFhpRWRZYWA0WlNWLiIkUyk/U21ULFgjOTljQ1pMVCthMmw1J1VJPVZRRkFIYDMxTElgTEZAU1hSW01EJignLEJnPzteTHQuaEglRUJEO1glO0tzcnJacmlNVHIoMV1ZTj86Zm5MMF5YLy1GdUpDZGhKKidcckRkc1xwVklaYylFKUhSYE1BIVljdChSR1hCZFNrVT5CZ1EpRmRyVGdbbWJCYEtpRzoyYTwscEAoX0ooXFElSChrcXI+RmRANHVqP15MQjRfcU5uam1PSnVjSV0xb3BvXldiOFBxJHNkYzU4PiorSDsjJSlCVTx0JE4kYGlULD1bTF1OUXAoXSReMjdfP0Alc2NfJSc1KmVWbUs1RnBWRTtSayZLSztCKEFZcnFYXFB0VFkuYT80UD9KbTVXL2hkWyUjZS4xSzEycGpmbiVbREBsJztZTnViRCVQL1taKF1sXCwtQms1JHFLMjAodVI6YWFXWmllJmxwLVElcXVGJzIqNUFqKmtcXSxcYkREXldXKl5xUXNFPj5PRXRsJGctUjQkK0FrP0VFJU0mRDtWNy4jbEZlajZhRyViNmAiLEJeZzRPdXAicD04OlpWME1nXDo8P15gTTU/TWRYLUJZXyw9UjxsbnFTam1aUWZeWmcscjBCNXVEbyZgSTJUQiJnaClgW0VTYFwwKDlvaTo7bEh1bGNsJ1xzXWkqbzojVWQoUV5FclhKL1ZWSyd1Lz1bTSVZbTtWIlM2aiNKJjpXJVk8W1gnbE5MVnArVWxIalc0MUNeR15wZk04IWtXS3BhKydHcylYb34+ZW5kc3RyZWFtCmVuZG9iagozMyAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMDc0Cj4+CnN0cmVhbQpHYiEjXGdOKSUsJjpPOlNtJV4lQjBeZl5SZScnZERnaTpBL0lGNUZKMEY6PUw4Vi10Li8rMyZpXSpocWVZdTxMbjVAaWNwK3BlPS9GM15AX2ZFVnJlcTxnJkIhOF08Y20ocnVsSkFpMCFMZGVQWEplKmQnOkZCcm9gXihAQFJqQz89YFY+cTpgLFBVczhJXFA2QXJ0Il1NXiMpQjoxPXRJUVIxRlhvV3RER1ZKM0FjOik6amsvLiRsXT1sUTg2P3I/OSUxWElXam4rVkJVMUZNaCpXOFI7Y0lMLWZxPSlfSTkpVyVPLVhbSSRiPnE9KWJCX1ZmSiwlJnFXazleJjpRPChkWURxdDp1Z1tZWFBEaEEiQWo5SmZiImNHO1JgNk04I1InSWhAQEwsakktPnBBMF4oVEIkMDk6PU5EOSROcTApRGZeUSldUzhkWkNOYEMvcFJvISVmN2dmWUEyOUFIRFBAZ0hvJ2xLR0QoXVs8bEl0XEptcWNOJVo7JSFoVTdQLyMndSo0P2xKaCJocFRVODRmMTpXTCJTSWtXcVcsU1F1QlYtXFIhLSZIU2ZOL3REKi45XzEtRkVMVnE7QWM7aC8+MDIuRkpuSGVgQnUmLj8jIV44QyExO1liKHNuVTomajpncWxfPGxXYF9yXzshKEI1KjMnUTQtYkBQRCdacVs9JjI9T0hEYTY5MVNEVzRiN0g3RV1FLSs9LiowK14qMmxcLmk0PDlmVTQnPyVBMS8sQ1paMGQlTyInRiZWWUdBZVsqWj5OaV1MQChRaj1yPHFUNzVwSDVUcUVgT1lNLVNHcT9ibFFeX1AoKDd0ZUYhJ1Voc1ZVNkkwUjAyJCNPYz9kSlg3J2ssJSVBI2Y2QzRkLiRPWileS1NrTEpAJHFAV2NRaDpccmVhVkA7UyNFbUszIkAxLk04YSxOTl9nRTslJE1NV0hOKHRyPVZDQW5UcSgqZiIvTS1kKTNZdDFOJ14tT2JnanJFYjtyKHMvLkxTRWEoNyVbYlE9TkpMP1hZR2laTExRTGNsYD1DcVkyVSg+Uyg6QDRqb3BUQ1chaDIlWT4mX1wwXGJAKkNiY2spT2QkV0leW01oSi8kaC9YNUAuR09KJjMtKU8sWT51J0BrLi9GO1ZPMko7bmpCQ2M7Lilmb1VGb1RUJSolXltjSSpeUV1IbjIhSVhnaUxGSFZzQGFpPDQoNTRUJ1g5cW9jWGsvR2pAP2lbZERRP1h0UVsrcjhNPS5fa25LUDNWMCxxWD5BNkteTT9dRVlnUG5QMz9mZypxUSZoVUZtNkUsW1tpXFkjYWJVRnRINz5WJyk9PEBQJi9tInEvKSVCdHNjQnEmbiYnYXBpaFVRcU1fWCgsdUVSXSNwdTowcFQ9SVVpL0cvITciaU1fMiVTKTRjYCxyJVsvSjpocl1TSEs6QTAqaD8kM1kyNlYpW2RMSnU+KD0sLz5HcT5RLXI3PkhGazU9UlglTUZtbDFeSk9cQzRRU1RZPThGZThuMDdHZU8uaDo9VVBHI1tNcltgOGJPRDtgIms5aGZqXWkpLVUnSiY+QWRBMUxDcSh0Oz9oIToyNFtOV18wOzdrKi4lWEtfdC9HW0kxJC1wZDJSayFIYDc/Ly84XFZwVjtTcFNlZ0t0V0coKUE5TCUzbVg9dUkuNV9jISJCIWFLTXRGXSooUkQkKkVbYi8sLVw2J1B1MCpxYGZuQGxFXzlVYjlQVDZoO1BmL25WRWlKI0NxMEdnUU82ZGZeOzBMJWtySlZEcDBgcU0tamswQC0jbV1AJE9wK2JccDYwQy5PNC9PVSY1NWM+Nmo6VGAtMksrOFhTPCNeMSghNCU3MVxzb1wxL1Z1JEZiXEtyZFlzYjQyYzBBPmsjRktcRlBlIVRhR1FkJWRBKk5gP25KS01kQCFuUE05UlpdZyZqRV5HJmxlKEEpQTE7XDdcayk+NU1lP08rWjQtJClAVT9rNVY9SmYmVG1BQGtbKU8mV1BQb1VbNDI+ckdcPGw6W29PWWpgdWtrdWhUYGJCTHJYMTgiNi1vdGZlZU1EQzNnOVE5a1AwSiInbmlaNVkmXkZnYDFKOmFObXVgclNUUCZvLDtqWkNVTS9HJmsrW3MrdFhuOS9mQExyVE1aJShLKk1pNTc2NGFzQjhScGlLcGZdOG5fPD4/X0tQZTVsaDs0UnFXPkwjKi9QbTNeL2VBS2YlKUs/N0JPWFstcy8+dUI5aUNBIkdbZVhSMC0mOGY7Xy4qWCIlMnRMOjFaaz40clxNWjwtYExYSTFVJVhxT29ZNDxuNUsqYyEkYU9VcCNuOCEwJlIpTWhzL1E7X3VvXmlfPyJXXDlBWVo8RkgvPituOnRmSz5eMWgtTmpmVUJKay5HSy1cXzs2aDBGMWxNYio1SWNDVEQ2JWcuaSVgT0UoUz9Wc1E/NDg6UlAyLDxFZ1BDbW0/TkFGRUxFdTpDKzM0dUo2QW9eWz1BbCNZbCtidEpGM1BPQV9qQjteaCkmME4wQTU2U21ZJGk6OjpCRGw1Wzc7ZDk+XDYucU4jPihIYyYnNiokZig4LEJBM0VJbWNrKk9GKjhTJVdESUcoa0AxIVVQWW5INiUyUFgsSExJOkVfcS5kQGAsYSIjYDBocXFxc1Nyclg6Z0AiVT1pOj1bP1RnaTdQaFZFWkcpUU5fUS1PSGonT1M3aiZccFkrXlJNWCkkKDJdXkZBZ0FULE5qUl11SmJpImUvPnElUUw8UUZnayYxVFs4KEsjLEdSZn4+ZW5kc3RyZWFtCmVuZG9iagozNCAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMTI5Cj4+CnN0cmVhbQpHYXRVNGxWbE90JkhDJF9Zb2dMZDB0LS0qb1tCJ2xMTCkmT1YhWkJTZDBOciUuXkdWZkcoPyhaaik4IylTSGlqV1xSQGdwPyJvcWJUNkJVUU1ncT5vVCtxP0VWSnBrP0pganJDKDsuRWhALzlvTFZhaXQ0UzdFVzlCYExtQHEvSHUqMmEpaDVwJFNjMytFQSpOX3E1N3MtbTRJOGE3IkwtXDNCMlJgX0snNmRuWmJyJVxrOWZLLzY3STJicS1wNjhxVihjWTEjRCkuazBib1JDJltuYihRXT5dPHVhNy5Db0g8YHJYX1pAT3M6PDRVQkYwMitlbTA0aS08SSVTU09eaz0/THJJKF5mXzA4XUVqJSJVN29FUyZzT1YpQi9fSyJyO09XVC9zNDYrRFxTKylpXUAtaDM8OU8iVylDIUpmSEdVJzclRENaMCE8QXFFZDkmdVlhO01vZjw2ITYncTU0Q0lzJUhPNXFccmBjQVpEUiR0N1hoU2ZWYm0uMC5FaSxrTTQ7KF8pTS1wcT82IUJHYF9kO1pkOGdCVSNmc2EvJFFtJDtpcFhMREo3QzZVaTleOlpnNXM1MFFQNj1PQiRpTmY8MVlyZDdRYENNTUhoT3FjMSQ+N290ZzEwMiM/aktTT14nKEZaYUdxI0RqK2AiNlNXKCteOmdiWig+IlFFKGpNWy1RNko0UkRgWj5BKmF0ckRYJW42NzpwInVqMnRPOktrITVmXzNPcCdBKSoyZCpGSWdQS3MjI2tlP2w2TyJIWTtfZjJcay1kSko0RS9sXWddZzQ5WDI3KixnNksuSmgvam9RR1huITswQlo0WEItNCVpYCVpKStIUUVSYE9VZk8hUUcsUTdxWSxqblpkOFxRYHNuR3FSYmZLUkIoYjkoTnA9dUs3Zig3WjEtY1U9MVgnNm5rSUZvbG9TWjwkSyJEJiMzbEhrUkkjZ0soOk4+dEhvcldbNFtTJF48QVJVcmUtLDxUK19RUmMpT0csOzdxIiVZZigpLDhJRzMxLUVjPUdXL2xjJUMzPj9TLTNRbVVzQy43UCcyTTAnMShnZDBfL1xzJyY6MmY9bkw8IV8ibyNkaTUpWmtTPFJGJyImcmQrM0dJaTg1cnJpUT5tLkciOXEtMVowZiEmYDJnSy9bTDxxPjdtcEBKIW9RTCM9K2EiZGtFOT1cOmAma1ZROXAwPUwpU2dRNjRVdUVxQS5gX1wxPFgzSVlbc1Q2NFhdVXQtRGhGRSZIO0kyIUwtcl8mJ0JpXFxGZCsuQ1AlITojUTRTbzBnbkdFMjU9WDptP0okbkxGJWZnLkhqVEJXK3Mya2tQWSpeOGRgS14hXEd0LyUkQmZYRFE6LmhcWCgqXzxuWks3VThyWT0wYF0laFdJJWs/WkddI1tWRWgtV0U+X2ZUNV8tXmdbbzAwO0s+KydbZm1IVDdpXDtTQSVlL0ksaFlmcGIlVFJcZGAuWDI5PTovWDxbQFhrXWduJEJURidKQT1bdVEqSkMrWDA7a1owUzZeM0hJQStuZVgsO1VkWmcrK2hEazpbITduR1NmI0ZqLlcscl5oZT1CS2VRPGMkKlFMTyhBJkNhTDVKcC8mQmlTSF9gbGtxKldyXDUhNHRHJiVBJFskb1hzND5XcV1jP2p0bWxjL1hvOSZxZSVGRz5gaFhrajc+MUhEXmxfOGFmIU5zb04tTjZANDVxZE4yWEJfOyIhTTMmZ0w8cGNyOkhVSGQ9dHBwKXMjYEYiXG1fSWo1ZWM4dFQ0WDpETFhcOSc/bkczRj08T3A3XD8hOi1gI0tURytaLSc4KWlQRE5gTVkmOWFJKTJLWmhJYUttTkJqNV9vJHF0LVtVSFI6WSsuUGZnaiYkKl0pai5YRHRkbiEwRTJWay9fKj5DRHBKbk9cS1gkaWM+azwha0YjSm8hYVRBUnJJalFjP0tYN1BaQ0JBPltRTFg8PmJtbkdfU2VNcjxpMVBIQ3UnYTMiW1ErbCM5aUJcJ2psTUtrTE9hYjxmSzYyTGxFZVpyRUsiakt1ME0yNExCcmtbZGI8IiptZDlwKzgnJ2JjNDVpZk9eSSNqbUE3byNTYWl0US1sYDFuMWFeVGhoZTtdOTdmLllbYy1MOXJZSlBDOTwyW1BVSFdXazFROjJjYSlcWTItT0ltNVg2UmkwXCxhai1dIlxAc1pYYkEiSiRCZFlnXnVFX1EoPVdUTElgUmcuP2ljIXNPLkQ1Rih1YSRGTFI7QXAnLDRjZFUwbyQnQSNdX2YhVSJHa21hI2lJI0ZmRilCQjpEK2JhQSI8PGtxS0RrWW9WUzpOPVp1WjVeXktQY0RvTzNEMHRRcCpyT0BAVChvT01NXk1IVCdKbVMzIzEiQ0NhTklgWFlVUS45JjxcSWVeJyg2MUhlbzdyQ28qMW8/Xicubmg1TCY7TDcoP1kwTUlqLS5aRylOXCJnVS9sQFRyNz5ARzEuKldKaSteb3U0M3MwNSJiOyNgZlMzWiVcYDc0LzEnYD5WRkovVlEqY2gpYCk7ZU9Bb2U4Q1hkbWY3WXQhO2AkQkpFPktWUjtMOl50Xkxyajw9QTJGSyNnRGVvPWk3PnApYzVlOUNBXy5bJEpzWCEhP0FvXlddKi9lMU1kaTRnMVZCPnBUYSdnYDJDKHQyNmlcMVJRMTY8OE9dQEVKQmk4ZCxNZ1hsOzg2NlRNY1hoMmFiLUovJ1JPT2NcQm1mQW9oRSJGSlImZCg6XTtbdGdnJDBSW2xgTWxrIUVnQipjN0IxKlZJQmFPS2pGRUVjJz5XVkRnMFghTFpcOVxXc09HW0tZPnRrciomKDkyVV1GaElvPSdQRD9+PmVuZHN0cmVhbQplbmRvYmoKMzUgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggMjMwMQo+PgpzdHJlYW0KR2F0PS5nTVliKiY6TWwrYmZeJyUySEU2Mk5XS0M0VWFhYC1SXyU3P11KKSpYLyJlMmwwJC9GRSsyOjIuQF82ZCxHW01lbzNSU2Y5JSM2VmBNTGdbLUIpXFw5SkBCI0pdNC9ROE4yT0k9YStzMTRHVy5oX3FvRlctSjEhTj9FUUJAaF5pLyQ3aTpkK0glWSFXWyYtXDNWcWxrU24kbG4uKDw6S2piNl1JVSRfXjZEJGlycmoySEpqJD5rWEk5ZEljKVAtUFZbX05sTllvYUxcaCRxIVFYKE5ZMk4hOyRiMCVYTFdebFkoLEUpUEQzTHJVL0UmZjFiQjA9Z1dETikqVCUrSGtgNyI6LUJbZEMhSF0hOzhIai9POChuXiJYQ29AXVJhUGU5UUo0R1Y5KUtkdUotQHBIU1k7XGdRP2I9bE9sJVVNTFhONGdSUGBRWis+byQmUyQnYiE4UD48bGFdVmtrbytJWWwmX2FOKF0+XChDVUFPRzk0QTo+QDtmMlFeZCdyREBVJmlYZjUmcVwiPU1hQjdXKF0nNzVya2I8OV4pbDFiJ2FHTGhyamYnPUU2TWJyWSk3OEkuIlIjPkFKTDU1OUNtKTU0bSJiXT8kRDxRR1kqRiQtWkZKTlltQjtzSEBmOHFkcEVbKmxPLls+WyROYi8/PU9DP05CcVdLTF4vQWFnXztOVm9bZlNARVcqZFBcTWlNdDwmXGc2NlpJQ2dHPil1YShFSTIwS1BcL0xBW0w2Okc+LSk0Yi5TZm9ncj1LU19lbUVRYCtDZUAqUiJObEklL0B0XSg8YHJBKStLRk40SWcoMk4nMDpMQE80PCReZjFIU2tsUmxadCI5XmZgcC9ZYFBgIzVgIThJb0xMSGVUMEBtMlxsay4tO1tXV25YLGxOMCszR1xzLGE0SFsobWxqRzY1I2dIaFA8NEUmOz1bajk/R3BpdEExXy9YSEotZm86QjxDLW1IWHQlUEtsJEBEZktvaTF1Vk81Tj5fYztBSlQlM2QoXmZLMEg3Z0BINDZdTGFnQidkRkMtbSM3JEsyNUJka1FXUmBjXS1KR1U3Qkg3bUM9WEhLZSFIJVdyWD5bU2U9M245Lm89QltPKE9hXiEiT111THAhVDAtXDZkJnByMDtLNVtLXi8icVRdW2tKPDNMOSJxNiFJLkskYF05W3JGbldgNWcycm0pNDAxMCRwUWcvQ1tPamYrcyxUPUNrQik1VVVCWmEkcGJDamVdJUlWR2piMS1tKiMjNlhBMi5tR2oyamNxKjNhSCNwSS07NSYuMz5BKmE/LTNDTy81TixNQS5lblIjJEptQEYzS25gJy0nNS1SOmdmT1YrY1twWV5SNi06PmQwaFsxQSFwMkYqRVJjXmRjJXRhZ2ddOEZTRXFwKUhqPUprcGgkSlVRKkN0UFEoclhDYGRxIjZCMmtVS2ZnaldPJ0wta0MhKWFOQGJNRFFCa05bbGFRZk5zSEhYMkNKMClzP2Y+XTFcLz4kZ2BvaUAyYVRzXXMjT05NIUJpSys4Vm01cyRBMC5xJkwmWjx1KDIraWNzZ2VEWCdsTUtZUCY2aTgyNkxUKkhsMVVZNmM6VilUU0NLJSkzKzZsLSpnKz8tQFxKaGljJmYkWDFVZ3VEcVcwLzY1JFZfblEwSE0yb2ImWEtOb01eZzYpMUhxVzpVLW1BTSxpRFlpZENcbmpuSksnZGgibiE3bE9ENUZdYCo0aV90J1NYWTpkNCtYU15aYDdvY0hYcTIkTVVcYFgnM0wtbFo9Xzg/Slw/RVtjYjNyTmxlPVJdWkdgTW0mOCFAT2FPJypdPG1OS1RjO0lvP19TaFBDPT1mYGUkKyhbYSJXMF1JLnQtSlUpI3ElTChEND9MPW0/RD5FN0hOLU5taUk4XEFDcW5JLm11PWcxN0VALmE9b1VkYSkwakEyXW9tMVlJUWxAVlMjNlE5J1gsWG1XN0E4NWpFPWVvZTcnU0kpLkhoXDJEWj1oVCtqO1soLlQ4MTNIZl0lXVwmRltUPWk6N0FOb0Zha2FkSTtKYj0pSUFmLXFCLy5ETj8sIkBTJT9oTmxpKlUyWlxCLiFoQ2tkR0VzYj5CKzc2RlRULF5RVlswSVRHOTJBTDQ+QUFaRWQ0bipqcS9damozTFpEUl0hcCpPZiVjJyQwZT5gdSk+XF9YMWpSbWlWUEVJUEktRURdQzpxOlZnaFhkak8zKlN0RD8iV0w+VSFzTDE0dD0uXjE2WiRdaSMxSzk5XS1SXD4vOi9HQilnX208YSk5MyZzcj84ZTNDLEw9bkk2YWYhZ25kQCdVUyxeITRwaURlMFRDcWBNQUkjNjNKPWVBLmUhQkQtJVdYVUhLSFpZU2YjW1AtXFloJTA2VlhwTjJYLFokJC5US08vVzs8XkAxN1BadEBNZFBnNGo4aGBAPV9YPyRuQ2lGL2VQcVJOIUZAbEksYHRTOnNkXl5BIWUtLlY7LEYwOzBSTS1XPkYuLExSaDdIYlhKXDhmXyxwSSlua1JUZjM6ZD8yb15ELVlmQTtDTkNCPmRYaiFmRk9vOi44PC9LOUxsRFRXYDtDZGk6NUR0OXViSClGMDxEdTJHYkU5WmE5JlVKQVU9QExnLlw0T2NzK1BlLz5bLGpVYnRGQjJiPWo/XmlZWShUbFFSNVZmVmkpVm1mV1BQKickbV9IM2pnKEIpOTFQcjpWP284RyE5Ok5ZZkxbYGQ3anNGJFNFZXAlcCZHKSxUKVJEWTpNRD0xLlUpR0lPYiNGOyElRCxqKFlNOjFEcTBgI25GOjJtLClYJzZPMk00XDNkaSJKKks8SFYrKzM1ViRSJ0s+YkRGY3Etb1hPOUU2NGgmOlVhZD05YmRnNFI+Nm1yb0RuKltLbE1eUVklLjA1OGMjPj1tUWosZ2pzXEQ9ajhxcTYmVl4jRGtJIm1qK2JuOEJjcDstU2IhU0BMaCpSTS51XklcOyxzbjM5Q0BXbTU8LyZoamZrPXJNSS02aFYtb2VWVWZGXzFgQ0opR0NCLDMwb2FHY2orWz1aL1NcTCpmZi9NUlVdMUEkaSolXX4+ZW5kc3RyZWFtCmVuZG9iagozNiAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAxNzM2Cj4+CnN0cmVhbQpHYiEjXGdOKSUsJjpPOlNtJWA8dCh1QGhZaEshVyRlc1MibUIoP0BtT0chZkAoXV1mJjlMJDgnKz1ZRVUzX0g7cmQhMlcyOGA5Kylmc0E7TCtOMiU5XksoZlpSZyRJOU0nLlthWiU9QTU7SFZfanFvLipwWC5XLmxHYTpabWsmSE1xcGVEbmRxIycpQzYoLyQpJ05sJEQuNVsuSj1WLVgkLS87aTpXdG11amJLYmkiSy1cWGA0Rm5XQ2peRCJRT0NtSVEiTEZ1c1VCK0szRV9gZnIjLVJGUGhTS15YJUVwK3NuNG0lal9qLGo1U1dHXWZuMkRuQ1s4RVotJyMmMThqIlAsSnM4RFtlbU47dWVwYEpcNl51QCJMcig4KWxbYFhhV00iPFRZXC1TOFFEYDs8RU5ccFwvSGs1VWBtVT46KUpBbiYqJDxHa0dWM05pPzhtWy8vPkpWQ2gkOypDcUhYTCwyKjdXYmBkZzUlZzNTTm03MTtDakcnLD5MVCljZEUlLGIwUzkvO0dALlUqQFg+LF5FUkhxKGk0QjguIjFTUmklbGlwbEBjTF5pX0lBaS5LbSxVUjgmQDZFL3FFZExRXFxCTElwOzUhZWBAOTBPa1hhQz8oaG0kQzNUYHJKVkBSUkFTLltPYnA5MC8xK0txQCk3PExSXXQ/THJraSxZLDElVXE4dEBZYWpWVk5PSTdNZktlV19YVFdGTUU0STkoUyNtbXAtKWpFWUkscCpZJXM3LFVoPUNqR3U1WmYsLFtQZG5ZMV5tQmw2NCRDPWBnWGY2bGE6MGc3VD1vcVglbiEnLUBMLCluaGdja0clU3BBXyROI1g0SUJDYVJzUiFUQCRAbHIkKzVMZzhCRDlCWXVYUCViUzhCZWlONlhkNihcT04yNkZmXC1cLzBvRXRXLFgxX1pOXWlsNmkqJVphRFBdJiYhKF49Q3IvK3VkXHRpYzwsclVIJl5tJCNHdHQsIWhwaShfZS90OjRrbFwlSitbJjA7LFlhOk1SOC84Z0NsWzJNdF4jPnIlPSZbOj0wMVcxOVM7OidWJSNUMlw5a09JaCRINGUvLywxPFBFaCstViFFcTo4ZC9PcjZIaz4wLGEqW1twKHEvK0pHLi0kX0ROZmFdTCxnRjdFIVdfcUpcJyJcLFopbmxGUj1OUl1tcS0kWD5ddUxWRyhUUVVMP0BjWlNtUkcnc2EiaS9UZG4nbDtRbXI+MDtuLyViJloxbipgZDlRKjsjIS1DPmheaiRARlwxUVY6NiJrZ2tNIkc5LlteU3BSNGluRk5yb19BOWM6blc2JGlLKUorc09PbD5caXBcPC9mUUNbJWAjZ1VUUkspR0ZwanI9TyhNL0BjUi9fMnE3cixLJjRIIUIsXDFmb11jJz1CTWxDcm1vXGYkOFJiSFxNLzI2PSVNWXBAQDlyJS8+QTgqOjNYRFllNDEhSl9VIkBNPEBAJzBGYCtyXD1WK2EqPDlaK1g/UFBDOi5MQyRiRDg1S1QxSFczcDxHb3FWPXAmJ1ZgN0JfZUUoWVw3cm8vOG4mMltGUD8ybW9TQ0hMXkVGSGNUVFZrZkE+dCpTVVpLUkJWVl1RYVpLQmFiLyxBQFZjcj1rPDRFaDgvMypaayZoY0dBUD1cKTopUHAuPTYzXTJOPydbbEozL14zL1krRERySCU8ZSNbbmZ0ZD5mYT5OXCUlPCpjSUBPXkMmTU5paDoiXV8/I1JXSGklWT8xLkMxN09aWT1GW09hZkonX3EjQjpnMEhzS0MhJC1TVF87NmBaaERCZlldNiYyLERbQUNHLCJNbmVMKm81OGpPRWtxRDMiOEBVNDxBKTVRPlQ0TWwlL1hzTTgmKFhOaGU9WixqQmVRSUBRZD5zJGVYNzoxRlpJJlAoMC4tTmw2XTxgbEs3azdLZChXSFpHUEVaImhDSSlFQW82XDxxU1BzOiZhNm5yaWg2V1pgY1VWIkcrWC86dDhsbW5aXzAiZig6JTJzOk5oWCotLl8/LCk2I0luKEgvbm9TIS9PcUAzbmxsdWtsMSE+PzZdSktNRDxHXjg/VCktdWohJkI6SSJTXUBFJyQwXj9tOEE+X090cEFjU0dlKG9MZSc/UzRUUU9UOClpLktkZEI+OzMmLlElZ2RrZUVNJ2hHcklvRkUsU2xrRWlaLEFSKkZeQSRFL2w2JzguLUBZNWlCNEpsVjhsWyoxby4lMzBdWlxfNTtcRDhQVE9dYjRHL0suRz5CIk5NcVhoXHU/VU5oYycyUSZQIVVOV0JHKCxKJE8qWil1Q0k4PyF0L1FcRz9HUCwxYCh+PmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDM3CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDA2MSAwMDAwMCBuIAowMDAwMDAwMTIyIDAwMDAwIG4gCjAwMDAwMDAyMjkgMDAwMDAgbiAKMDAwMDAwMDM0MSAwMDAwMCBuIAowMDAwMDAwNTM2IDAwMDAwIG4gCjAwMDAwMDA3MzEgMDAwMDAgbiAKMDAwMDAwMDgxNCAwMDAwMCBuIAowMDAwMDAxMDA5IDAwMDAwIG4gCjAwMDAwMDExMTkgMDAwMDAgbiAKMDAwMDAwMTMxNCAwMDAwMCBuIAowMDAwMDAxNTEwIDAwMDAwIG4gCjAwMDAwMDE3MDYgMDAwMDAgbiAKMDAwMDAwMTkwMiAwMDAwMCBuIAowMDAwMDAyMDk4IDAwMDAwIG4gCjAwMDAwMDIyOTQgMDAwMDAgbiAKMDAwMDAwMjQ5MCAwMDAwMCBuIAowMDAwMDAyNjg2IDAwMDAwIG4gCjAwMDAwMDI4ODIgMDAwMDAgbiAKMDAwMDAwMzA3OCAwMDAwMCBuIAowMDAwMDAzMjc0IDAwMDAwIG4gCjAwMDAwMDMzNDQgMDAwMDAgbiAKMDAwMDAwMzY3NiAwMDAwMCBuIAowMDAwMDAzODI4IDAwMDAwIG4gCjAwMDAwMDQ5MTAgMDAwMDAgbiAKMDAwMDAwNjMyNiAwMDAwMCBuIAowMDAwMDA4NzQyIDAwMDAwIG4gCjAwMDAwMTEyODUgMDAwMDAgbiAKMDAwMDAxMzUzOSAwMDAwMCBuIAowMDAwMDE1OTMwIDAwMDAwIG4gCjAwMDAwMTgwNzkgMDAwMDAgbiAKMDAwMDAxOTg4MiAwMDAwMCBuIAowMDAwMDIwOTI0IDAwMDAwIG4gCjAwMDAwMjM3ODAgMDAwMDAgbiAKMDAwMDAyNTk0NiAwMDAwMCBuIAowMDAwMDI4MTY3IDAwMDAwIG4gCjAwMDAwMzA1NjAgMDAwMDAgbiAKdHJhaWxlcgo8PAovSUQgCls8MDI2NWNlYjMyYTI2NzY0NmRmM2Q2NzExZjE3YWQxYTE+PDAyNjVjZWIzMmEyNjc2NDZkZjNkNjcxMWYxN2FkMWExPl0KJSBSZXBvcnRMYWIgZ2VuZXJhdGVkIFBERiBkb2N1bWVudCAtLSBkaWdlc3QgKG9wZW5zb3VyY2UpCgovSW5mbyAyMSAwIFIKL1Jvb3QgMjAgMCBSCi9TaXplIDM3Cj4+CnN0YXJ0eHJlZgozMjM4OAolJUVPRgo=";
       function downloadWhitePaper() {
         try {
           const raw = atob(SCI_WHITE_PAPER_PDF_BASE64);
@@ -5471,7 +5580,9 @@ ${acreChangePanel()}
         let out = [];
         if (String(c.noTill) === "true" || c.noTill === true) {
           out.push("No Till / Direct Seed");
-          out.push(`No-Till Drill Used: ${c.noTillDrillUsed || "Not answered"}`);
+          out.push(
+            `No-Till Drill Used: ${c.noTillDrillUsed || "Not answered"}`,
+          );
         }
         let tills = (c.tillageRows || [])
           .map((r) => r.tillageType || r.implement)
@@ -5542,15 +5653,19 @@ ${acreChangePanel()}
         if (!e || !e.plantingDate) return "";
         const planted = new Date(`${e.plantingDate}T00:00:00Z`);
         if (isNaN(planted)) return "";
-        return new Date(planted.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000)
-          .toISOString().slice(0, 10);
+        return new Date(
+          planted.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000,
+        )
+          .toISOString()
+          .slice(0, 10);
       }
       function cropFullCoverDate(e) {
         const emergence = cropEmergenceDate(e);
         if (!emergence) return "";
         const emerged = new Date(`${emergence}T00:00:00Z`);
         return new Date(emerged.getTime() + Math.max(0, num(e.dcc)) * 86400000)
-          .toISOString().slice(0, 10);
+          .toISOString()
+          .slice(0, 10);
       }
       function cropLivingRootDays(e) {
         const emergence = cropEmergenceDate(e);
@@ -5558,7 +5673,10 @@ ${acreChangePanel()}
         const a = new Date(`${emergence}T00:00:00Z`);
         let b = new Date(`${e.harvestDate}T00:00:00Z`);
         if (isNaN(b)) return 0;
-        if (b < a) b = new Date(Date.UTC(b.getUTCFullYear() + 1, b.getUTCMonth(), b.getUTCDate()));
+        if (b < a)
+          b = new Date(
+            Date.UTC(b.getUTCFullYear() + 1, b.getUTCMonth(), b.getUTCDate()),
+          );
         return Math.max(0, (b - a) / 86400000);
       }
       function cropCoveredDays(e) {
@@ -5567,7 +5685,10 @@ ${acreChangePanel()}
         const a = new Date(`${fullCover}T00:00:00Z`);
         let b = new Date(`${e.harvestDate}T00:00:00Z`);
         if (isNaN(b)) return 0;
-        if (b < a) b = new Date(Date.UTC(b.getUTCFullYear() + 1, b.getUTCMonth(), b.getUTCDate()));
+        if (b < a)
+          b = new Date(
+            Date.UTC(b.getUTCFullYear() + 1, b.getUTCMonth(), b.getUTCDate()),
+          );
         return Math.max(0, (b - a) / 86400000);
       }
       function lri(e) {
@@ -5633,7 +5754,8 @@ ${acreChangePanel()}
               .rating || 0,
           depthCm = num(r.depthIn) * 2.54,
           acres = cropAcres(crop()) * (num(r.disturbed) / 100),
-          gtir = rating * 3.25 * depthCm * (num(r.disturbed) / 100) * num(r.passes);
+          gtir =
+            rating * 3.25 * depthCm * (num(r.disturbed) / 100) * num(r.passes);
         return `<div class="event-card event-row"><div class="event-header"><span class="event-title e-title">Tillage Event</span><span class="event-status">${gtir ? "Complete" : "Incomplete"}</span><button type="button" class="btn danger" onclick="removeRow('tillageRows',${i})">✕</button></div><div class="event-body"><div class="field"><label>Tillage Date</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.date" type="date" value="${esc(r.date)}"></div><div class="field"><label>Depth (in)</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.depthIn" type="number" min="0" step="0.01" value="${esc(r.depthIn)}" placeholder="0" inputmode="decimal"></div><div class="field span-3"><label>Tillage Implement</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.implement" value="${esc(r.implement)}" placeholder="Disk, ripper, chisel plow..."></div><div class="field span-3"><label>Tillage Type</label><select data-bind="crops.${state.activeCrop}.tillageRows.${i}.tillageType"><option value="">Select tillage type / rating...</option>${TILLAGE_RATINGS.map((x) => `<option value="${x.label}" ${r.tillageType === x.label ? "selected" : ""}>${x.label}</option>`).join("")}</select></div><div class="field"><label>% Disturbed</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.disturbed" type="number" min="0" max="100" step="0.01" value="${esc(r.disturbed)}" placeholder="100" inputmode="decimal"></div><div class="field"><label># Passes</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.passes" type="number" min="0" step="0.01" value="${esc(r.passes)}" placeholder="1" inputmode="decimal"></div><div class="field"><label>Rating</label><div class="readout rating">${fmt(rating)}</div></div><div class="field"><label>Depth (cm)</label><div class="readout depth-cm">${fmt(depthCm)}</div></div><div class="field"><label>Acres Tilled</label><div class="readout acres-tilled">${fmt(acres)}</div></div><div class="field"><label>gTIR</label><div class="readout gtir" style="color:var(--leaf);font-size:18px;">${fmt(gtir)}</div></div><div class="field full"><label>Notes</label><input data-bind="crops.${state.activeCrop}.tillageRows.${i}.notes" value="${esc(r.notes)}" placeholder="Optional notes..."></div></div></div>`;
       }
       function nutrientPlan() {
@@ -5863,15 +5985,22 @@ ${acreChangePanel()}
       }
       function tillageValue(c) {
         if (!state.tillageEnabled) return 0;
-        if ((String(c.noTill) === "true" || c.noTill === true) && String(c.noTillDrillUsed || "") !== "Yes") return 0;
+        if (
+          (String(c.noTill) === "true" || c.noTill === true) &&
+          String(c.noTillDrillUsed || "") !== "Yes"
+        )
+          return 0;
         if (String(c.noTillDrillUsed || "") === "Yes") syncNoTillDrillEvent(c);
-        const completedEvents = (Array.isArray(c.tillageRows) ? c.tillageRows : [])
+        const completedEvents = (
+          Array.isArray(c.tillageRows) ? c.tillageRows : []
+        )
           .map((r) => {
             const rating =
               num(r.gtirRating) ||
               num(r.tillageRating) ||
-              ((TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
-                .rating || 0);
+              (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
+                .rating ||
+              0;
             const depthCm = num(r.depthIn) * 2.54;
             const disturbedFraction = num(r.disturbed) / 100;
             const passes = num(r.passes);
@@ -5891,16 +6020,21 @@ ${acreChangePanel()}
         // Crop gTIR is the arithmetic average of all completed tillage-event
         // gTIR values documented for this crop in the one-year rotation.
         // No-till crops return zero above.
-        return completedEvents.reduce((sum, value) => sum + value, 0) / completedEvents.length;
+        return (
+          completedEvents.reduce((sum, value) => sum + value, 0) /
+          completedEvents.length
+        );
       }
       function farmWeightedGTIR(crops = state.crops || []) {
         const validCrops = crops.filter((c) => cropAcres(c) > 0);
         const totalAcres = validCrops.reduce((sum, c) => sum + cropAcres(c), 0);
         if (!totalAcres) return 0;
-        return validCrops.reduce(
-          (sum, c) => sum + tillageValue(c) * cropAcres(c),
-          0,
-        ) / totalAcres;
+        return (
+          validCrops.reduce(
+            (sum, c) => sum + tillageValue(c) * cropAcres(c),
+            0,
+          ) / totalAcres
+        );
       }
       function highestCropGTIR(crops = state.crops || []) {
         if (!crops.length) return 0;
@@ -5910,7 +6044,9 @@ ${acreChangePanel()}
         const highest = highestCropGTIR(crops);
         return crops
           .filter((c) => Math.abs(tillageValue(c) - highest) < 0.000001)
-          .map((c) => c.name || c.cropTypeOther || c.cropType || "Unnamed crop");
+          .map(
+            (c) => c.name || c.cropTypeOther || c.cropType || "Unnamed crop",
+          );
       }
       function parseFarmDate(value, year) {
         let v = String(value || "").trim();
@@ -5929,7 +6065,9 @@ ${acreChangePanel()}
         return null;
       }
       function coveredSoilMetrics(c) {
-        const year = Number(state.farm && state.farm.planningYear) || new Date().getFullYear();
+        const year =
+          Number(state.farm && state.farm.planningYear) ||
+          new Date().getFullYear();
         const totalDays = 365;
         const intervals = cropPlannerEntries(c)
           .map(({ entry: e }) => {
@@ -5937,7 +6075,8 @@ ${acreChangePanel()}
             let a = fullCover ? parseFarmDate(fullCover, year) : null;
             let b = parseFarmDate(e.harvestDate, year);
             if (!a || !b) return null;
-            if (b < a) b = new Date(b.getFullYear() + 1, b.getMonth(), b.getDate());
+            if (b < a)
+              b = new Date(b.getFullYear() + 1, b.getMonth(), b.getDate());
             return b > a ? [a, b] : null;
           })
           .filter(Boolean)
@@ -5945,12 +6084,28 @@ ${acreChangePanel()}
         const merged = [];
         intervals.forEach((interval) => {
           const last = merged[merged.length - 1];
-          if (!last || interval[0] > last[1]) merged.push([new Date(interval[0]), new Date(interval[1])]);
+          if (!last || interval[0] > last[1])
+            merged.push([new Date(interval[0]), new Date(interval[1])]);
           else if (interval[1] > last[1]) last[1] = new Date(interval[1]);
         });
-        const coveredDays = Math.min(totalDays, Math.round(merged.reduce((sum, interval) => sum + (interval[1] - interval[0]) / 86400000, 0)));
+        const coveredDays = Math.min(
+          totalDays,
+          Math.round(
+            merged.reduce(
+              (sum, interval) => sum + (interval[1] - interval[0]) / 86400000,
+              0,
+            ),
+          ),
+        );
         const coveredPct = Math.min(100, (coveredDays / totalDays) * 100);
-        return { year, totalDays, coveredDays, coveredPct, bareSoilPct: Math.max(0, 100 - coveredPct), merged };
+        return {
+          year,
+          totalDays,
+          coveredDays,
+          coveredPct,
+          bareSoilPct: Math.max(0, 100 - coveredPct),
+          merged,
+        };
       }
       function farmEstimatedBareSoilPct(crops = state.crops || []) {
         const values = crops.map((c) => ({
@@ -5959,7 +6114,10 @@ ${acreChangePanel()}
         }));
         const totalAcres = values.reduce((sum, item) => sum + item.acres, 0);
         if (totalAcres > 0)
-          return values.reduce((sum, item) => sum + item.pct * item.acres, 0) / totalAcres;
+          return (
+            values.reduce((sum, item) => sum + item.pct * item.acres, 0) /
+            totalAcres
+          );
         return values.length
           ? values.reduce((sum, item) => sum + item.pct, 0) / values.length
           : 100;
@@ -5972,7 +6130,8 @@ ${acreChangePanel()}
             section: "estimated_bare_soil",
             cropNumber: index + 1,
             cropName: c.name || `Crop ${index + 1}`,
-            cropType: c.cropType === "Other" ? c.cropTypeOther || "Other" : c.cropType,
+            cropType:
+              c.cropType === "Other" ? c.cropTypeOther || "Other" : c.cropType,
             acres: cropAcres(c),
             fieldBoundaries: selectedBoundaryNames(c).join("; "),
             planningYear: cover.year,
@@ -5981,10 +6140,15 @@ ${acreChangePanel()}
             estimatedCoveredSoilPct: cover.coveredPct,
             estimatedBareSoilPct: cover.bareSoilPct,
             cropResidueIncluded: "No",
-            finalConclusionRequirement: "Onsite assessment required to evaluate crop residue and make the final soil-cover conclusion",
-            formula: "Estimated Bare Soil % = (1 - merged covered days / 365) * 100",
-            coveredIntervalRule: "Full Soil Cover Date (Emergence Date + DCC) through Harvest / Termination or Maturity Date; overlaps merged",
-            status: cropPlannerEntries(c).some(({ entry: e }) => e.plantingDate && e.harvestDate)
+            finalConclusionRequirement:
+              "Onsite assessment required to evaluate crop residue and make the final soil-cover conclusion",
+            formula:
+              "Estimated Bare Soil % = (1 - merged covered days / 365) * 100",
+            coveredIntervalRule:
+              "Full Soil Cover Date (Emergence Date + DCC) through Harvest / Termination or Maturity Date; overlaps merged",
+            status: cropPlannerEntries(c).some(
+              ({ entry: e }) => e.plantingDate && e.harvestDate,
+            )
               ? "Calculated"
               : "Needs complete crop dates",
           };
@@ -6000,7 +6164,9 @@ ${acreChangePanel()}
             let a = parseFarmDate(e.plantingDate, year),
               b = parseFarmDate(e.harvestDate, year);
             if (!a || !b) return null;
-            a = new Date(a.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000);
+            a = new Date(
+              a.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000,
+            );
             if (b < a)
               b = new Date(b.getFullYear() + 1, b.getMonth(), b.getDate());
             return b > a ? [a, b] : null;
@@ -6113,7 +6279,10 @@ ${acreChangePanel()}
               let a = parseFarmDate(e.plantingDate, m.year),
                 b = parseFarmDate(e.harvestDate, m.year);
               if (a) {
-                a = new Date(a.getTime() + Math.max(0, num(e.daysUntilEmergence)) * 86400000);
+                a = new Date(
+                  a.getTime() +
+                    Math.max(0, num(e.daysUntilEmergence)) * 86400000,
+                );
               }
               if (a && b && b < a)
                 b = new Date(b.getFullYear() + 1, b.getMonth(), b.getDate());
@@ -6727,7 +6896,6 @@ ${acreChangePanel()}
         const index = selections.indexOf(choice);
         if (checked && index < 0) selections.push(choice);
         if (!checked && index >= 0) selections.splice(index, 1);
-        if (choice === "No reduction planned") render();
       }
 
       function continuousImprovementChoices(section, choices) {
@@ -6743,33 +6911,43 @@ ${acreChangePanel()}
       function continuousImprovementValue(section) {
         ensureStateDefaults();
         const value = state.continuousImprovement[section];
-        value.cropSelections = (Array.isArray(value.cropSelections)
-          ? value.cropSelections
-          : [])
+        value.cropSelections = (
+          Array.isArray(value.cropSelections) ? value.cropSelections : []
+        )
           .map(String)
-          .filter((id) => Number.isInteger(Number(id)) && Number(id) >= 0 && Number(id) < (state.crops || []).length);
-        value.boundaryIds = (Array.isArray(value.boundaryIds)
-          ? value.boundaryIds
-          : [])
+          .filter(
+            (id) =>
+              Number.isInteger(Number(id)) &&
+              Number(id) >= 0 &&
+              Number(id) < (state.crops || []).length,
+          );
+        value.boundaryIds = (
+          Array.isArray(value.boundaryIds) ? value.boundaryIds : []
+        )
           .map(String)
-          .filter((id) => (state.kmlBoundaries || []).some((b) => String(b.id) === id));
+          .filter((id) =>
+            (state.kmlBoundaries || []).some((b) => String(b.id) === id),
+          );
         return value;
       }
 
       function continuousImprovementCropNames(section) {
-        return continuousImprovementValue(section).cropSelections
-          .map((id) => {
+        return continuousImprovementValue(section)
+          .cropSelections.map((id) => {
             const c = (state.crops || [])[Number(id)];
             return c
-              ? c.name || c.cropTypeOther || c.cropType || `Crop ${Number(id) + 1}`
+              ? c.name ||
+                  c.cropTypeOther ||
+                  c.cropType ||
+                  `Crop ${Number(id) + 1}`
               : "";
           })
           .filter(Boolean);
       }
 
       function continuousImprovementBoundaryNames(section) {
-        return continuousImprovementValue(section).boundaryIds
-          .map(boundaryName)
+        return continuousImprovementValue(section)
+          .boundaryIds.map(boundaryName)
           .filter(Boolean);
       }
 
@@ -6793,14 +6971,20 @@ ${acreChangePanel()}
         const cropSummary = document.getElementById(`ciCropSummary${did}`);
         const cropCount = document.getElementById(`ciCropCount${did}`);
         const cropDetails = document.getElementById(`ciCropDetails${did}`);
-        const boundarySummary = document.getElementById(`ciBoundarySummary${did}`);
+        const boundarySummary = document.getElementById(
+          `ciBoundarySummary${did}`,
+        );
         const boundaryCount = document.getElementById(`ciBoundaryCount${did}`);
-        const boundaryDetails = document.getElementById(`ciBoundaryDetails${did}`);
-        if (cropSummary) cropSummary.textContent = continuousImprovementCropSummary(section);
+        const boundaryDetails = document.getElementById(
+          `ciBoundaryDetails${did}`,
+        );
+        if (cropSummary)
+          cropSummary.textContent = continuousImprovementCropSummary(section);
         if (cropCount)
           cropCount.textContent = `${value.cropSelections.length} of ${(state.crops || []).length} selected`;
         if (boundarySummary)
-          boundarySummary.textContent = continuousImprovementBoundarySummary(section);
+          boundarySummary.textContent =
+            continuousImprovementBoundarySummary(section);
         if (boundaryCount)
           boundaryCount.textContent = `${value.boundaryIds.length} of ${(state.kmlBoundaries || []).length} selected`;
         if (cropDetails) cropDetails.open = true;
@@ -6811,8 +6995,10 @@ ${acreChangePanel()}
         saveInputs();
         const value = continuousImprovementValue(section);
         const id = String(cropIndex);
-        if (on && !value.cropSelections.includes(id)) value.cropSelections.push(id);
-        if (!on) value.cropSelections = value.cropSelections.filter((x) => x !== id);
+        if (on && !value.cropSelections.includes(id))
+          value.cropSelections.push(id);
+        if (!on)
+          value.cropSelections = value.cropSelections.filter((x) => x !== id);
         refreshContinuousImprovementApplicabilityUI(section);
       }
 
@@ -6861,38 +7047,97 @@ ${acreChangePanel()}
         return `<div class="field full"><h3 style="margin:0">Which crop(s) or field(s) will this apply to?</h3><div class="help">Choose from the crops in Crop Planner and the boundaries imported from the farm KML.</div></div>${cropPicker}${boundaryPicker}`;
       }
 
-      function continuousImprovementSection(section, title, question, choices, result, detailHTML) {
-        const noReductionSelected = (state.continuousImprovement[section].selections || []).includes("No reduction planned");
-        return `<div class="card"><div class="section-title"><div><h2>${esc(title)}</h2><div class="help">${esc(result)}</div></div></div>${detailHTML}<h3 style="margin-top:18px">${esc(question)}</h3><div class="checks" style="margin-top:10px">${continuousImprovementChoices(section, choices)}</div><div class="input-grid" style="margin-top:14px"><div class="field full"><label>Other</label><input data-bind="continuousImprovement.${section}.other" value="${esc(state.continuousImprovement[section].other)}" placeholder="Describe another planned action"></div><div class="field full"><label>Briefly describe the planned change</label><textarea data-bind="continuousImprovement.${section}.plannedChange" placeholder="Describe the planned change">${esc(state.continuousImprovement[section].plannedChange)}</textarea></div>${noReductionSelected ? `<div class="field full"><label>Why is no reduction planned?</label><div class="help" style="margin-bottom:6px">Since "No reduction planned" is selected, briefly explain why (e.g. already at minimum, not applicable this year, cost/equipment constraints).</div><textarea data-bind="continuousImprovement.${section}.noReductionReason" placeholder="Explain why no reduction is planned">${esc(state.continuousImprovement[section].noReductionReason || "")}</textarea></div>` : ""}${continuousImprovementApplicabilityPicker(section)}<div class="field full"><label class="check" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--soft)"><input type="checkbox" data-bind="continuousImprovement.${section}.committed" ${state.continuousImprovement[section].committed ? "checked" : ""}><span><strong>I commit to changes</strong></span></label></div></div></div>`;
+      function continuousImprovementSection(
+        section,
+        title,
+        question,
+        choices,
+        result,
+        detailHTML,
+      ) {
+        return `<div class="card"><div class="section-title"><div><h2>${esc(title)}</h2><div class="help">${esc(result)}</div></div></div>${detailHTML}<h3 style="margin-top:18px">${esc(question)}</h3><div class="checks" style="margin-top:10px">${continuousImprovementChoices(section, choices)}</div><div class="input-grid" style="margin-top:14px"><div class="field full"><label>Other</label><input data-bind="continuousImprovement.${section}.other" value="${esc(state.continuousImprovement[section].other)}" placeholder="Describe another planned action"></div><div class="field full"><label>Briefly describe the planned change</label><textarea data-bind="continuousImprovement.${section}.plannedChange" placeholder="Describe the planned change">${esc(state.continuousImprovement[section].plannedChange)}</textarea></div>${continuousImprovementApplicabilityPicker(section)}<div class="field full"><label class="check" style="padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--soft)"><input type="checkbox" data-bind="continuousImprovement.${section}.committed" ${state.continuousImprovement[section].committed ? "checked" : ""}><span><strong>I commit to changes</strong></span></label></div></div></div>`;
       }
 
       function continuousImprovementIPMDetail() {
         const rows = [];
-        state.crops.forEach((c) => (c.ipmRows || []).forEach((r) => {
-          if (!(r.productName || r.pest || num(r.amountAcre) || num(r.activePct))) return;
-          const area = num(r.areaApplied) || cropAcres(c);
-          const aiPerAcre = num(r.amountAcre) * num(r.activePct) / 100;
-          const totalAI = aiPerAcre * area;
-          rows.push(`<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>${esc(r.pest || "—")}</td><td>${esc(r.productName || "—")}</td><td>${esc(r.applicationDate || "—")}</td><td>${fmt(r.amountAcre, 3)} ${esc(r.unit || "")}</td><td>${fmt(r.activePct, 2)}%</td><td>${fmt(area, 2)}</td><td>${fmt(aiPerAcre, 3)}</td><td>${fmt(totalAI, 3)}</td><td>${esc(r.applicationMethod || "—")}</td><td>${esc(r.labelCategory || "—")}</td><td>${esc(r.restrictedUsePesticide || "—")}</td></tr>`);
-        }));
-        const total = state.crops.reduce((sum, c) => sum + (c.ipmRows || []).reduce((s, r) => s + (num(r.amountAcre) * num(r.activePct) / 100) * (num(r.areaApplied) || cropAcres(c)), 0), 0);
+        state.crops.forEach((c) =>
+          (c.ipmRows || []).forEach((r) => {
+            if (
+              !(
+                r.productName ||
+                r.pest ||
+                num(r.amountAcre) ||
+                num(r.activePct)
+              )
+            )
+              return;
+            const area = num(r.areaApplied) || cropAcres(c);
+            const aiPerAcre = (num(r.amountAcre) * num(r.activePct)) / 100;
+            const totalAI = aiPerAcre * area;
+            rows.push(
+              `<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>${esc(r.pest || "—")}</td><td>${esc(r.productName || "—")}</td><td>${esc(r.applicationDate || "—")}</td><td>${fmt(r.amountAcre, 3)} ${esc(r.unit || "")}</td><td>${fmt(r.activePct, 2)}%</td><td>${fmt(area, 2)}</td><td>${fmt(aiPerAcre, 3)}</td><td>${fmt(totalAI, 3)}</td><td>${esc(r.applicationMethod || "—")}</td><td>${esc(r.labelCategory || "—")}</td><td>${esc(r.restrictedUsePesticide || "—")}</td></tr>`,
+            );
+          }),
+        );
+        const total = state.crops.reduce(
+          (sum, c) =>
+            sum +
+            (c.ipmRows || []).reduce(
+              (s, r) =>
+                s +
+                ((num(r.amountAcre) * num(r.activePct)) / 100) *
+                  (num(r.areaApplied) || cropAcres(c)),
+              0,
+            ),
+          0,
+        );
         return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Active ingredient per acre = Amount per acre × (Active ingredient % ÷ 100). Total active ingredient = Active ingredient per acre × Area applied.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(total, 3)}</div><div class="label">Total active ingredient, entered units</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Pest</th><th>Product</th><th>Date</th><th>Rate/ac</th><th>Active %</th><th>Acres</th><th>Active/ac</th><th>Total active</th><th>Method</th><th>Label</th><th>RUP?</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="12">No completed IPM practice records entered.</td></tr>`}</tbody></table></div>`;
       }
 
       function continuousImprovementNutrientDetail() {
         const rows = [];
         const supporting = [];
-        let totalN = 0, totalP = 0, totalK = 0;
+        let totalN = 0,
+          totalP = 0,
+          totalK = 0;
         state.crops.forEach((c) => {
-          const cropName = c.name || c.cropTypeOther || c.cropType || "Unnamed crop", acres = cropAcres(c);
+          const cropName =
+              c.name || c.cropTypeOther || c.cropType || "Unnamed crop",
+            acres = cropAcres(c);
           (c.fertilizerRows || []).forEach((r) => {
-            if (!(r.productName || num(r.rateAcre) || num(r.nPct) || num(r.pPct) || num(r.kPct))) return;
-            const lbs = fertilizerProductLbsPerAcre(r), n = fertilizerNutrientLbsPerAcre(r, "nPct"), p = fertilizerNutrientLbsPerAcre(r, "pPct"), k = fertilizerNutrientLbsPerAcre(r, "kPct");
-            totalN += n * acres; totalP += p * acres; totalK += k * acres;
-            rows.push(`<tr><td>${esc(cropName)}</td><td>${esc(r.productName || "—")}</td><td>${esc(r.applicationDate || "—")}</td><td>${fmt(r.rateAcre, 2)} ${esc(r.unit || "")}</td><td>${fmt(r.productLbsPerGallon, 2)}</td><td>${fmt(lbs, 2)}</td><td>${fmt(r.nPct, 2)}-${fmt(r.pPct, 2)}-${fmt(r.kPct, 2)}</td><td>${fmt(n, 2)}</td><td>${fmt(p, 2)}</td><td>${fmt(k, 2)}</td><td>${fmt(acres, 2)}</td></tr>`);
+            if (
+              !(
+                r.productName ||
+                num(r.rateAcre) ||
+                num(r.nPct) ||
+                num(r.pPct) ||
+                num(r.kPct)
+              )
+            )
+              return;
+            const lbs = fertilizerProductLbsPerAcre(r),
+              n = fertilizerNutrientLbsPerAcre(r, "nPct"),
+              p = fertilizerNutrientLbsPerAcre(r, "pPct"),
+              k = fertilizerNutrientLbsPerAcre(r, "kPct");
+            totalN += n * acres;
+            totalP += p * acres;
+            totalK += k * acres;
+            rows.push(
+              `<tr><td>${esc(cropName)}</td><td>${esc(r.productName || "—")}</td><td>${esc(r.applicationDate || "—")}</td><td>${fmt(r.rateAcre, 2)} ${esc(r.unit || "")}</td><td>${fmt(r.productLbsPerGallon, 2)}</td><td>${fmt(lbs, 2)}</td><td>${fmt(r.nPct, 2)}-${fmt(r.pPct, 2)}-${fmt(r.kPct, 2)}</td><td>${fmt(n, 2)}</td><td>${fmt(p, 2)}</td><td>${fmt(k, 2)}</td><td>${fmt(acres, 2)}</td></tr>`,
+            );
           });
-          (c.microRows || []).forEach((r) => { if (r.name || num(r.rate)) supporting.push(`<tr><td>${esc(cropName)}</td><td>Micronutrient / fertility pack</td><td>${esc(r.name || "—")}</td><td>${esc(r.contains || "—")}</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`); });
-          (c.amendmentRows || []).forEach((r) => { if (r.name || num(r.rate)) supporting.push(`<tr><td>${esc(cropName)}</td><td>${esc(r.type || "Organic input")}</td><td>${esc(r.name || "—")}</td><td>Organic nutrient source</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`); });
+          (c.microRows || []).forEach((r) => {
+            if (r.name || num(r.rate))
+              supporting.push(
+                `<tr><td>${esc(cropName)}</td><td>Micronutrient / fertility pack</td><td>${esc(r.name || "—")}</td><td>${esc(r.contains || "—")}</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`,
+              );
+          });
+          (c.amendmentRows || []).forEach((r) => {
+            if (r.name || num(r.rate))
+              supporting.push(
+                `<tr><td>${esc(cropName)}</td><td>${esc(r.type || "Organic input")}</td><td>${esc(r.name || "—")}</td><td>Organic nutrient source</td><td>${fmt(r.rate, 2)} ${esc(r.unit || "")}</td><td>${fmt(num(r.rate) * acres, 2)} ${esc(r.unit || "")}</td></tr>`,
+              );
+          });
         });
         return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Equivalent product lb/ac = entered rate (tons × 2,000; gallons × density; fluid oz ÷ 128 × density; pounds unchanged). Nutrient lb/ac = Equivalent product lb/ac × (nutrient % ÷ 100). Total nutrient = Nutrient lb/ac × crop acres.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(totalN, 2)}</div><div class="label">Total N lb</div></div><div class="metric"><div class="value">${fmt(totalP, 2)}</div><div class="label">Total P lb</div></div><div class="metric"><div class="value">${fmt(totalK, 2)}</div><div class="label">Total K lb</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Product</th><th>Date</th><th>Rate/ac</th><th>Density</th><th>Eq. lb/ac</th><th>N-P-K %</th><th>N lb/ac</th><th>P lb/ac</th><th>K lb/ac</th><th>Acres</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="11">No completed fertilizer practice records entered.</td></tr>`}</tbody></table></div><div class="zone-frost-box" style="margin-top:14px"><div class="zone-frost-head"><div><h4>Nutrient Baseline Extension Benchmark</h4><div class="help">Copy a simple Perplexity prompt that compares the complete table above with fertilizer recommendations for the Farm Details state.</div><div class="lookup-prompt">Perplexity is instructed to return one clean, plain-language paragraph that is ready to paste below.</div></div><div class="lookup-actions"><a class="btn ghost" href="https://www.perplexity.ai/" target="_blank" rel="noopener">Open Perplexity</a><button type="button" class="btn secondary" onclick="copyNutrientExtensionBenchmarkPrompt()">Copy Perplexity Prompt</button></div></div><div class="field full" style="margin-top:14px"><label>Extension Benchmarking Results</label><div class="help" style="margin-bottom:6px">Paste the completed Perplexity paragraph here. It will be included in the PDF and Continuous Improvement CSV.</div><textarea data-bind="continuousImprovement.nutrient.benchmarkResults" placeholder="Paste the plain-language Extension benchmark paragraph here.">${esc((state.continuousImprovement.nutrient || {}).benchmarkResults || "")}</textarea></div></div><h3 style="margin-top:14px">Supporting nutrient practices</h3><div class="table-wrap" style="margin-top:8px"><table><thead><tr><th>Crop</th><th>Practice type</th><th>Product/source</th><th>Contents/purpose</th><th>Rate/ac</th><th>Total product</th></tr></thead><tbody>${supporting.join("") || `<tr><td colspan="6">No micronutrient or organic-input practices entered.</td></tr>`}</tbody></table></div>`;
       }
@@ -6900,13 +7145,30 @@ ${acreChangePanel()}
       function continuousImprovementTillageDetail() {
         const rows = [];
         state.crops.forEach((c) => {
-          if ((String(c.noTill) === "true" || c.noTill === true) && String(c.noTillDrillUsed || "") !== "Yes") rows.push(`<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>No Till / Direct Seed</td><td colspan="7">No no-till drill pass recorded; crop gTIR = 0.00</td></tr>`);
+          if (
+            (String(c.noTill) === "true" || c.noTill === true) &&
+            String(c.noTillDrillUsed || "") !== "Yes"
+          )
+            rows.push(
+              `<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>No Till / Direct Seed</td><td colspan="7">No no-till drill pass recorded; crop gTIR = 0.00</td></tr>`,
+            );
           else {
-            if (String(c.noTillDrillUsed || "") === "Yes") syncNoTillDrillEvent(c);
+            if (String(c.noTillDrillUsed || "") === "Yes")
+              syncNoTillDrillEvent(c);
             (c.tillageRows || []).forEach((r) => {
-            if (!(r.implement || r.tillageType || num(r.depthIn))) return;
-            const rating = num(r.gtirRating) || num(r.tillageRating) || ((TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {}).rating || 0), depthCm = num(r.depthIn) * 2.54, fraction = num(r.disturbed) / 100, event = rating * 3.25 * depthCm * fraction * num(r.passes);
-            rows.push(`<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>${esc(r.implement || "—")}</td><td>${esc(r.tillageType || "—")}</td><td>${fmt(rating, 2)}</td><td>${fmt(r.depthIn, 2)} in / ${fmt(depthCm, 2)} cm</td><td>${fmt(r.disturbed, 2)}%</td><td>${fmt(r.passes, 2)}</td><td>${fmt(event, 2)}</td><td>${fmt(tillageValue(c), 2)}</td></tr>`);
+              if (!(r.implement || r.tillageType || num(r.depthIn))) return;
+              const rating =
+                  num(r.gtirRating) ||
+                  num(r.tillageRating) ||
+                  (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
+                    .rating ||
+                  0,
+                depthCm = num(r.depthIn) * 2.54,
+                fraction = num(r.disturbed) / 100,
+                event = rating * 3.25 * depthCm * fraction * num(r.passes);
+              rows.push(
+                `<tr><td>${esc(c.name || c.cropTypeOther || c.cropType || "Unnamed crop")}</td><td>${esc(r.implement || "—")}</td><td>${esc(r.tillageType || "—")}</td><td>${fmt(rating, 2)}</td><td>${fmt(r.depthIn, 2)} in / ${fmt(depthCm, 2)} cm</td><td>${fmt(r.disturbed, 2)}%</td><td>${fmt(r.passes, 2)}</td><td>${fmt(event, 2)}</td><td>${fmt(tillageValue(c), 2)}</td></tr>`,
+              );
             });
           }
         });
@@ -6916,8 +7178,14 @@ ${acreChangePanel()}
       function continuousImprovementPage() {
         const acres = state.crops.reduce((sum, c) => sum + cropAcres(c), 0);
         const avgTillage = highestCropGTIR(state.crops);
-        const ipmEntries = state.crops.reduce((sum, c) => sum + (c.ipmRows || []).length, 0);
-        const nutrientEntries = state.crops.reduce((sum, c) => sum + (c.fertilizerRows || []).length, 0);
+        const ipmEntries = state.crops.reduce(
+          (sum, c) => sum + (c.ipmRows || []).length,
+          0,
+        );
+        const nutrientEntries = state.crops.reduce(
+          (sum, c) => sum + (c.fertilizerRows || []).length,
+          0,
+        );
         return `${stepBar()}<main class="page"><div class="card ok-note"><h2>Continuous Improvement</h2><div class="help">Review the detailed IPM, Nutrient Management, and Tillage practices and calculations below, then select all planned changes that apply for next year.</div></div>${continuousImprovementSection("ipm", "IPM", "Based on your IPM results, how do you plan to reduce pesticide intensity next year?", ["Reduce application rates", "Eliminate one or more applications", "Replace higher-toxicity products with lower-toxicity products", "Increase scouting or monitoring", "Use more cultural, mechanical, physical, or biological controls", "No reduction planned", "Other"], `${ipmEntries} IPM entr${ipmEntries === 1 ? "y" : "ies"} recorded in the IPM Plan.`, continuousImprovementIPMDetail())}${continuousImprovementSection("nutrient", "Nutrient Management", "Based on your nutrient management results, how do you plan to reduce synthetic fertilizer application rates next year?", ["Adjust rates using soil or tissue test results", "Improve application timing", "Improve fertilizer placement", "Use a more efficient fertilizer source", "Increase organic nutrient sources", "Add legumes or cover crops", "No reduction planned", "Other"], `${nutrientEntries} fertilizer entr${nutrientEntries === 1 ? "y" : "ies"} recorded in the Nutrient Management Plan.`, continuousImprovementNutrientDetail())}${continuousImprovementSection("tillage", "Tillage", "Based on your tillage intensity results, how do you plan to reduce tillage intensity next year?", ["Eliminate one or more tillage passes", "Use a lower-intensity tillage method", "Reduce tillage depth", "Combine field operations", "Transition acres to reduced tillage", "Transition acres to no-till", "No reduction planned", "Other"], `Highest crop tillage result: ${fmt(avgTillage, 1)} gTIR across ${fmt(acres, 1)} acres.`, continuousImprovementTillageDetail())}${nav(13, 15)}</main>`;
       }
 
@@ -6926,35 +7194,67 @@ ${acreChangePanel()}
         const config = {
           ipm: {
             category: "IPM",
-            question: "Based on your IPM results, how do you plan to reduce pesticide intensity next year?",
+            question:
+              "Based on your IPM results, how do you plan to reduce pesticide intensity next year?",
             resultSummary: () => {
               const details = [];
-              (state.crops || []).forEach((c) => (c.ipmRows || []).forEach((r) => {
-                if (!(r.productName || r.pest || num(r.amountAcre) || num(r.activePct))) return;
-                const area = num(r.areaApplied) || cropAcres(c);
-                const aiPerAcre = num(r.amountAcre) * num(r.activePct) / 100;
-                details.push(`${c.name || "Unnamed crop"}: ${r.productName || r.pest || "IPM entry"}; active ingredient/ac ${fmt(aiPerAcre, 3)}; total active ingredient ${fmt(aiPerAcre * area, 3)}`);
-              }));
+              (state.crops || []).forEach((c) =>
+                (c.ipmRows || []).forEach((r) => {
+                  if (
+                    !(
+                      r.productName ||
+                      r.pest ||
+                      num(r.amountAcre) ||
+                      num(r.activePct)
+                    )
+                  )
+                    return;
+                  const area = num(r.areaApplied) || cropAcres(c);
+                  const aiPerAcre =
+                    (num(r.amountAcre) * num(r.activePct)) / 100;
+                  details.push(
+                    `${c.name || "Unnamed crop"}: ${r.productName || r.pest || "IPM entry"}; active ingredient/ac ${fmt(aiPerAcre, 3)}; total active ingredient ${fmt(aiPerAcre * area, 3)}`,
+                  );
+                }),
+              );
               return details.join(" | ") || "No completed IPM practice records";
             },
           },
           nutrient: {
             category: "Nutrient Management",
-            question: "Based on your nutrient management results, how do you plan to reduce synthetic fertilizer application rates next year?",
+            question:
+              "Based on your nutrient management results, how do you plan to reduce synthetic fertilizer application rates next year?",
             resultSummary: () => {
               const details = [];
-              (state.crops || []).forEach((c) => (c.fertilizerRows || []).forEach((r) => {
-                if (!(r.productName || num(r.rateAcre) || num(r.nPct) || num(r.pPct) || num(r.kPct))) return;
-                const lbs = fertilizerProductLbsPerAcre(r);
-                details.push(`${c.name || "Unnamed crop"}: ${r.productName || "Fertilizer"}; product ${fmt(lbs, 2)} lb/ac; N ${fmt(lbs * num(r.nPct) / 100, 2)}, P ${fmt(lbs * num(r.pPct) / 100, 2)}, K ${fmt(lbs * num(r.kPct) / 100, 2)} lb/ac`);
-              }));
-              return details.join(" | ") || "No completed nutrient practice records";
+              (state.crops || []).forEach((c) =>
+                (c.fertilizerRows || []).forEach((r) => {
+                  if (
+                    !(
+                      r.productName ||
+                      num(r.rateAcre) ||
+                      num(r.nPct) ||
+                      num(r.pPct) ||
+                      num(r.kPct)
+                    )
+                  )
+                    return;
+                  const lbs = fertilizerProductLbsPerAcre(r);
+                  details.push(
+                    `${c.name || "Unnamed crop"}: ${r.productName || "Fertilizer"}; product ${fmt(lbs, 2)} lb/ac; N ${fmt((lbs * num(r.nPct)) / 100, 2)}, P ${fmt((lbs * num(r.pPct)) / 100, 2)}, K ${fmt((lbs * num(r.kPct)) / 100, 2)} lb/ac`,
+                  );
+                }),
+              );
+              return (
+                details.join(" | ") || "No completed nutrient practice records"
+              );
             },
           },
           tillage: {
             category: "Tillage",
-            question: "Based on your tillage intensity results, how do you plan to reduce tillage intensity next year?",
-            resultSummary: () => `Farm acreage-weighted gTIR ${fmt(farmWeightedGTIR(state.crops || []), 2)}; highest crop gTIR ${fmt(highestCropGTIR(state.crops || []), 2)}; crop results: ${(state.crops || []).map((c) => `${c.name || "Unnamed crop"} ${fmt(tillageValue(c), 2)}`).join(" | ") || "none"}`,
+            question:
+              "Based on your tillage intensity results, how do you plan to reduce tillage intensity next year?",
+            resultSummary: () =>
+              `Farm acreage-weighted gTIR ${fmt(farmWeightedGTIR(state.crops || []), 2)}; highest crop gTIR ${fmt(highestCropGTIR(state.crops || []), 2)}; crop results: ${(state.crops || []).map((c) => `${c.name || "Unnamed crop"} ${fmt(tillageValue(c), 2)}`).join(" | ") || "none"}`,
           },
         };
         return ["ipm", "nutrient", "tillage"].map((key) => {
@@ -6968,7 +7268,8 @@ ${acreChangePanel()}
             ...(legacyCropsFields ? [legacyCropsFields] : []),
           ].join("; ");
           const committed =
-            value.committed === true || String(value.committed).toLowerCase() === "true";
+            value.committed === true ||
+            String(value.committed).toLowerCase() === "true";
           const hasEnteredData = !!(
             (value.selections || []).length ||
             value.cropSelections.length ||
@@ -7005,7 +7306,8 @@ ${acreChangePanel()}
         let avg = highestCropGTIR(state.crops);
         let estimatedBareSoilPct = farmEstimatedBareSoilPct(state.crops);
         let bareSoilByCrop = state.crops.map(
-          (c) => `${c.name || c.cropTypeOther || c.cropType || "Unnamed crop"}: ${fmt(coveredSoilMetrics(c).bareSoilPct, 2)}%`,
+          (c) =>
+            `${c.name || c.cropTypeOther || c.cropType || "Unnamed crop"}: ${fmt(coveredSoilMetrics(c).bareSoilPct, 2)}%`,
         );
         let plannerEntries = state.crops.reduce(
           (s, c) =>
@@ -7145,7 +7447,9 @@ ${acreChangePanel()}
             status: pelCalc.P3.level,
             evidence: [
               `Farm acreage-weighted Estimated Bare Soil: ${fmt(estimatedBareSoilPct, 2)}%`,
-              ...bareSoilByCrop.map((value) => `Estimated Bare Soil % — ${value}`),
+              ...bareSoilByCrop.map(
+                (value) => `Estimated Bare Soil % — ${value}`,
+              ),
               "Crop residue is not included in Estimated Bare Soil %. An onsite assessment is required to evaluate residue and make the final soil-cover conclusion.",
             ],
           },
@@ -7235,8 +7539,16 @@ ${acreChangePanel()}
             fmt(acres, 1),
             "KML-selected crop acres when boundaries are assigned",
           ],
-          ["Highest Crop TI", fmt(avg, 1), "P1 is determined by the crop with the highest one-year TI"],
-          ["Estimated Bare Soil", `${fmt(estimatedBareSoilPct, 2)}%`, "Acreage-weighted estimate; residue excluded and onsite assessment required"],
+          [
+            "Highest Crop TI",
+            fmt(avg, 1),
+            "P1 is determined by the crop with the highest one-year TI",
+          ],
+          [
+            "Estimated Bare Soil",
+            `${fmt(estimatedBareSoilPct, 2)}%`,
+            "Acreage-weighted estimate; residue excluded and onsite assessment required",
+          ],
         ]
           .map(
             (m) =>
@@ -7988,7 +8300,10 @@ ${acreChangePanel()}
               status: "Not Applicable",
               notes: (state.skippedReasons || {}).tillage || "",
             });
-          else if ((String(c.noTill) === "true" || c.noTill === true) && String(c.noTillDrillUsed || "") !== "Yes")
+          else if (
+            (String(c.noTill) === "true" || c.noTill === true) &&
+            String(c.noTillDrillUsed || "") !== "Yes"
+          )
             rows.push({
               ...base,
               section: "tillage_intensity",
@@ -7996,15 +8311,15 @@ ${acreChangePanel()}
               gTIR: 0,
             });
           else {
-            if (String(c.noTillDrillUsed || "") === "Yes") syncNoTillDrillEvent(c);
+            if (String(c.noTillDrillUsed || "") === "Yes")
+              syncNoTillDrillEvent(c);
             const cropTotalGTIR = tillageValue(c);
             c.tillageRows.forEach((r) => {
               const tillageRating =
                 (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
                   .rating || 0;
               const depthCm = num(r.depthIn) * 2.54;
-              const acresTilled =
-                cropAcres(c) * (num(r.disturbed) / 100);
+              const acresTilled = cropAcres(c) * (num(r.disturbed) / 100);
               const eventGTIR =
                 tillageRating *
                 3.25 *
@@ -8054,16 +8369,14 @@ ${acreChangePanel()}
               });
             });
           if (dieselActive())
-            (c.dieselRows || [])
-              .filter(dieselRowHasData)
-              .forEach((r) =>
-                rows.push({
-                  ...base,
-                  section: "diesel_log",
-                  ...r,
-                  totalDiesel: dieselTotal(r),
-                }),
-              );
+            (c.dieselRows || []).filter(dieselRowHasData).forEach((r) =>
+              rows.push({
+                ...base,
+                section: "diesel_log",
+                ...r,
+                totalDiesel: dieselTotal(r),
+              }),
+            );
           if (state.irrigationEnabled)
             c.irrigationRows.forEach((r) =>
               rows.push({
@@ -8574,11 +8887,18 @@ ${acreChangePanel()}
 
         section(7, "Crop Calendar and Estimated Bare Soil");
         (state.crops || []).forEach((c) => {
-          const root = livingRootMetrics(c), cover = coveredSoilMetrics(c);
-          bullet(`${c.name || c.cropTypeOther || c.cropType || "Unnamed crop"}: LRI ${fmt(root.pct, 2)}% (${root.activityDays} merged living-root days); Estimated Covered Soil ${fmt(cover.coveredPct, 2)}% (${cover.coveredDays} merged covered days); Estimated Bare Soil % = ${fmt(cover.bareSoilPct, 2)}%.`);
+          const root = livingRootMetrics(c),
+            cover = coveredSoilMetrics(c);
+          bullet(
+            `${c.name || c.cropTypeOther || c.cropType || "Unnamed crop"}: LRI ${fmt(root.pct, 2)}% (${root.activityDays} merged living-root days); Estimated Covered Soil ${fmt(cover.coveredPct, 2)}% (${cover.coveredDays} merged covered days); Estimated Bare Soil % = ${fmt(cover.bareSoilPct, 2)}%.`,
+          );
         });
-        bullet(`Farm acreage-weighted Estimated Bare Soil %: ${fmt(farmEstimatedBareSoilPct(state.crops || []), 2)}%.`);
-        bullet("Important limitation: Crop residue is not included in Estimated Bare Soil %. An onsite assessment is required to evaluate residue and make the final soil-cover conclusion.");
+        bullet(
+          `Farm acreage-weighted Estimated Bare Soil %: ${fmt(farmEstimatedBareSoilPct(state.crops || []), 2)}%.`,
+        );
+        bullet(
+          "Important limitation: Crop residue is not included in Estimated Bare Soil %. An onsite assessment is required to evaluate residue and make the final soil-cover conclusion.",
+        );
         if (!cropPlannerRows.length)
           bullet("No crop calendar records entered.");
         else
@@ -9331,7 +9651,10 @@ Have ready:
                 name: name.split("/").pop() || "CALL_TRANSCRIPT.docx",
                 bytes: new Uint8Array(entryBytes),
               };
-              if (/CALL[_ -]?TRANSCRIPT/i.test(name) || /transcript/i.test(name)) {
+              if (
+                /CALL[_ -]?TRANSCRIPT/i.test(name) ||
+                /transcript/i.test(name)
+              ) {
                 if (!transcript) transcript = candidate;
               } else if (!fallbackTranscript) {
                 fallbackTranscript = candidate;
@@ -9365,7 +9688,9 @@ Have ready:
             const encoded = r.state_json_b64 || r.saved_state_b64 || "";
             const raw = r.state_json || "";
             if (!encoded && !raw)
-              throw new Error("No saved progress data was found inside the ZIP.");
+              throw new Error(
+                "No saved progress data was found inside the ZIP.",
+              );
             const payload = JSON.parse(encoded ? b64ToUtf8(encoded) : raw);
             const saved = payload.state || payload;
 
@@ -9472,59 +9797,130 @@ Have ready:
       function tillageRowsForExport() {
         const rows = [];
         if (!state.tillageEnabled) {
-          return [{
-            cropName: "", acres: "", fieldBoundaries: "", date: "",
-            depthIn: "", depthCm: "", implement: "", tillageType: "",
-            gtirRating: "", disturbed: "", passes: "", acresTilled: "",
-            eventGTIR: "", cropTotalGTIR: "", notes: "",
-            status: "Skipped", reason: (state.skippedReasons || {}).tillage || ""
-          }];
+          return [
+            {
+              cropName: "",
+              acres: "",
+              fieldBoundaries: "",
+              date: "",
+              depthIn: "",
+              depthCm: "",
+              implement: "",
+              tillageType: "",
+              gtirRating: "",
+              disturbed: "",
+              passes: "",
+              acresTilled: "",
+              eventGTIR: "",
+              cropTotalGTIR: "",
+              notes: "",
+              status: "Skipped",
+              reason: (state.skippedReasons || {}).tillage || "",
+            },
+          ];
         }
         (state.crops || []).forEach((c, ci) => {
           const cropName = c.name || `Crop ${ci + 1}`;
           const acres = cropAcres(c);
           const fieldBoundaries = selectedBoundaryNames(c).join(", ");
-          if ((String(c.noTill) === "true" || c.noTill === true) && String(c.noTillDrillUsed || "") !== "Yes") {
+          if (
+            (String(c.noTill) === "true" || c.noTill === true) &&
+            String(c.noTillDrillUsed || "") !== "Yes"
+          ) {
             rows.push({
-              cropName, acres, fieldBoundaries, noTill: "Yes", noTillDrillUsed: c.noTillDrillUsed || "", date: "", depthIn: "", depthCm: "",
-              implement: "", tillageType: "No Till", gtirRating: 0, disturbed: 0,
-              passes: 0, acresTilled: 0, eventGTIR: 0, cropTotalGTIR: 0,
-              notes: "", status: "No Till skipped", reason: ""
+              cropName,
+              acres,
+              fieldBoundaries,
+              noTill: "Yes",
+              noTillDrillUsed: c.noTillDrillUsed || "",
+              date: "",
+              depthIn: "",
+              depthCm: "",
+              implement: "",
+              tillageType: "No Till",
+              gtirRating: 0,
+              disturbed: 0,
+              passes: 0,
+              acresTilled: 0,
+              eventGTIR: 0,
+              cropTotalGTIR: 0,
+              notes: "",
+              status: "No Till skipped",
+              reason: "",
             });
             return;
           }
-          if (String(c.noTillDrillUsed || "") === "Yes") syncNoTillDrillEvent(c);
+          if (String(c.noTillDrillUsed || "") === "Yes")
+            syncNoTillDrillEvent(c);
           const cropTotalGTIR = tillageValue(c);
           const eventRows = Array.isArray(c.tillageRows) ? c.tillageRows : [];
           eventRows.forEach((r) => {
             const gtirRating =
-              num(r.gtirRating) || num(r.tillageRating) ||
-              ((TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {}).rating || 0);
+              num(r.gtirRating) ||
+              num(r.tillageRating) ||
+              (TILLAGE_RATINGS.find((x) => x.label === r.tillageType) || {})
+                .rating ||
+              0;
             const depthIn = num(r.depthIn);
             const depthCm = depthIn * 2.54;
             const disturbed = num(r.disturbed);
             const passes = num(r.passes);
             const acresTilled = acres * (disturbed / 100);
-            const eventGTIR = gtirRating * 3.25 * depthCm * (disturbed / 100) * passes;
+            const eventGTIR =
+              gtirRating * 3.25 * depthCm * (disturbed / 100) * passes;
             rows.push({
-              cropName, acres, fieldBoundaries,
-              noTill: String(c.noTill) === "true" || c.noTill === true ? "Yes" : "No",
-              noTillDrillUsed: String(c.noTill) === "true" || c.noTill === true ? c.noTillDrillUsed || "" : "N/A",
-              date: r.date || "", depthIn: r.depthIn ?? "", depthCm,
-              implement: r.implement || "", tillageType: r.tillageType || "",
-              gtirRating, disturbed: r.disturbed ?? "", passes: r.passes ?? "",
-              acresTilled, eventGTIR, cropTotalGTIR, notes: r.notes || "",
-              status: eventGTIR || r.date || r.implement || r.tillageType ? "Complete" : "Incomplete",
-              reason: ""
+              cropName,
+              acres,
+              fieldBoundaries,
+              noTill:
+                String(c.noTill) === "true" || c.noTill === true ? "Yes" : "No",
+              noTillDrillUsed:
+                String(c.noTill) === "true" || c.noTill === true
+                  ? c.noTillDrillUsed || ""
+                  : "N/A",
+              date: r.date || "",
+              depthIn: r.depthIn ?? "",
+              depthCm,
+              implement: r.implement || "",
+              tillageType: r.tillageType || "",
+              gtirRating,
+              disturbed: r.disturbed ?? "",
+              passes: r.passes ?? "",
+              acresTilled,
+              eventGTIR,
+              cropTotalGTIR,
+              notes: r.notes || "",
+              status:
+                eventGTIR || r.date || r.implement || r.tillageType
+                  ? "Complete"
+                  : "Incomplete",
+              reason: "",
             });
           });
         });
-        return rows.length ? rows : [{
-          cropName: "", acres: "", fieldBoundaries: "", date: "", depthIn: "",
-          depthCm: "", implement: "", tillageType: "", gtirRating: "",
-          disturbed: "", passes: "", acresTilled: "", eventGTIR: "",
-          cropTotalGTIR: "", notes: "", status: "Enabled", reason: ""
-        }];
+        return rows.length
+          ? rows
+          : [
+              {
+                cropName: "",
+                acres: "",
+                fieldBoundaries: "",
+                date: "",
+                depthIn: "",
+                depthCm: "",
+                implement: "",
+                tillageType: "",
+                gtirRating: "",
+                disturbed: "",
+                passes: "",
+                acresTilled: "",
+                eventGTIR: "",
+                cropTotalGTIR: "",
+                notes: "",
+                status: "Enabled",
+                reason: "",
+              },
+            ];
       }
 
       function acreChangeRows() {
@@ -10055,90 +10451,260 @@ endstream`)
       // complete combined record; these lists keep only fields owned by each section.
       const SECTION_DATASET_COLUMNS = {
         crop_planner: [
-          "cropName", "cropType", "acres", "fieldBoundaries", "fieldBoundaryCount",
-          "designatedTrafficZones", "designatedTrafficZonesWhyNo",
-          "noTill", "noTillDrillUsed", "nonGmo", "perennialOrOrchard", "perennialSystemType",
-          "perennialEstablishmentYear", "perennialMiddleRowVegetation",
-          "perennialFunctionalMix", "perennialMulchUsed", "perennialBareSoilPct",
-          "perennialBareSoilReductionPlan", "perennialTillageReductionPlan",
-          "perennialDesignatedTrafficAreas", "perennialNotes",
-          "plantingDate", "daysUntilEmergence", "dcc", "emergenceDate",
-          "fullSoilCoverDate", "livingRootDays", "coveredDays", "harvestDate",
-          "practice", "practiceType", "notes",
-          "status"
+          "cropName",
+          "cropType",
+          "acres",
+          "fieldBoundaries",
+          "fieldBoundaryCount",
+          "designatedTrafficZones",
+          "designatedTrafficZonesWhyNo",
+          "noTill",
+          "noTillDrillUsed",
+          "nonGmo",
+          "perennialOrOrchard",
+          "perennialSystemType",
+          "perennialEstablishmentYear",
+          "perennialMiddleRowVegetation",
+          "perennialFunctionalMix",
+          "perennialMulchUsed",
+          "perennialBareSoilPct",
+          "perennialBareSoilReductionPlan",
+          "perennialTillageReductionPlan",
+          "perennialDesignatedTrafficAreas",
+          "perennialNotes",
+          "plantingDate",
+          "daysUntilEmergence",
+          "dcc",
+          "emergenceDate",
+          "fullSoilCoverDate",
+          "livingRootDays",
+          "coveredDays",
+          "harvestDate",
+          "practice",
+          "practiceType",
+          "notes",
+          "status",
         ],
         harvest_log: [
-          "cropName", "harvestEntryMode", "harvestPeriod", "yieldAcre", "unit",
-          "totalHarvest", "harvestDate", "storageLocation", "buyer", "notes", "status"
+          "cropName",
+          "harvestEntryMode",
+          "harvestPeriod",
+          "yieldAcre",
+          "unit",
+          "totalHarvest",
+          "harvestDate",
+          "storageLocation",
+          "buyer",
+          "notes",
+          "status",
         ],
         tillage_intensity: [
-          "cropName", "acres", "fieldBoundaries", "noTill", "noTillDrillUsed", "date", "depthIn", "depthCm",
-          "implement", "tillageType", "gtirRating", "disturbed", "passes",
-          "acresTilled", "eventGTIR", "cropTotalGTIR", "notes", "status", "reason"
+          "cropName",
+          "acres",
+          "fieldBoundaries",
+          "noTill",
+          "noTillDrillUsed",
+          "date",
+          "depthIn",
+          "depthCm",
+          "implement",
+          "tillageType",
+          "gtirRating",
+          "disturbed",
+          "passes",
+          "acresTilled",
+          "eventGTIR",
+          "cropTotalGTIR",
+          "notes",
+          "status",
+          "reason",
         ],
         nutrient_management_plan: [
-          "cropName", "productName", "applicationDate", "rateAcre", "unit",
-          "equivalentProductLbsPerAcre", "nPct", "pPct", "kPct",
-          "nutrientNPerAcre", "nutrientPPerAcre", "nutrientKPerAcre",
-          "totalProduct", "totalN", "totalP", "totalK", "notes", "status", "reason"
+          "cropName",
+          "productName",
+          "applicationDate",
+          "rateAcre",
+          "unit",
+          "equivalentProductLbsPerAcre",
+          "nPct",
+          "pPct",
+          "kPct",
+          "nutrientNPerAcre",
+          "nutrientPPerAcre",
+          "nutrientKPerAcre",
+          "totalProduct",
+          "totalN",
+          "totalP",
+          "totalK",
+          "notes",
+          "status",
+          "reason",
         ],
         ipm_plan: [
-          "cropName", "applicationDate", "pest", "productName", "epaRegNo",
-          "labelCategory", "restrictedUsePesticide", "unit", "amountAcre",
-          "activePct", "applicationMethod", "areaApplied",
-          "activeIngredientPerAcre", "totalActiveIngredient", "notes", "status", "reason"
+          "cropName",
+          "applicationDate",
+          "pest",
+          "productName",
+          "epaRegNo",
+          "labelCategory",
+          "restrictedUsePesticide",
+          "unit",
+          "amountAcre",
+          "activePct",
+          "applicationMethod",
+          "areaApplied",
+          "activeIngredientPerAcre",
+          "totalActiveIngredient",
+          "notes",
+          "status",
+          "reason",
         ],
         diesel_log: [
-          "cropName", "planting", "tillage", "fertilizerApplication", "spraying",
-          "irrigation", "harvest", "transport", "other", "totalDiesel", "notes",
-          "status", "reason"
+          "cropName",
+          "planting",
+          "tillage",
+          "fertilizerApplication",
+          "spraying",
+          "irrigation",
+          "harvest",
+          "transport",
+          "other",
+          "totalDiesel",
+          "notes",
+          "status",
+          "reason",
         ],
         irrigation_log: [
-          "cropName", "cropPracticeType", "method", "drainageType", "irrigatedAcres",
-          "pumpName", "waterSource", "pumpGpm", "emitterGpm", "emitterSpacingFt",
-          "dripRowSpacingFt", "sprinklerGpm", "sprinklerSpacingFt",
-          "lateralTowerSpacingFt", "minHoursCycle", "maxHoursCycle",
-          "minCyclesYear", "maxCyclesYear", "awdEvents", "gallons", "acreFeet",
-          "notes", "status", "reason"
+          "cropName",
+          "cropPracticeType",
+          "method",
+          "drainageType",
+          "irrigatedAcres",
+          "pumpName",
+          "waterSource",
+          "pumpGpm",
+          "emitterGpm",
+          "emitterSpacingFt",
+          "dripRowSpacingFt",
+          "sprinklerGpm",
+          "sprinklerSpacingFt",
+          "lateralTowerSpacingFt",
+          "minHoursCycle",
+          "maxHoursCycle",
+          "minCyclesYear",
+          "maxCyclesYear",
+          "awdEvents",
+          "gallons",
+          "acreFeet",
+          "notes",
+          "status",
+          "reason",
         ],
         living_root_index: [
-          "cropName", "cropType", "acres", "plantingDate", "daysUntilEmergence",
-          "emergenceDate", "dcc", "fullSoilCoverDate", "coveredDays", "harvestDate",
-          "growingSeasonDays", "photosyntheticDays", "livingRootPct",
-          "mergedCoveredDays", "coveredSoilPct", "bareSoilPct",
-          "nonGrowingSeasonCover", "documentationStatus", "notes", "status"
+          "cropName",
+          "cropType",
+          "acres",
+          "plantingDate",
+          "daysUntilEmergence",
+          "emergenceDate",
+          "dcc",
+          "fullSoilCoverDate",
+          "coveredDays",
+          "harvestDate",
+          "growingSeasonDays",
+          "photosyntheticDays",
+          "livingRootPct",
+          "mergedCoveredDays",
+          "coveredSoilPct",
+          "bareSoilPct",
+          "nonGrowingSeasonCover",
+          "documentationStatus",
+          "notes",
+          "status",
         ],
         estimated_bare_soil: [
-          "cropNumber", "cropName", "cropType", "acres", "fieldBoundaries",
-          "planningYear", "totalPlanningDays", "mergedCoveredDays",
-          "estimatedCoveredSoilPct", "estimatedBareSoilPct", "cropResidueIncluded",
-          "finalConclusionRequirement", "formula",
-          "coveredIntervalRule", "status"
+          "cropNumber",
+          "cropName",
+          "cropType",
+          "acres",
+          "fieldBoundaries",
+          "planningYear",
+          "totalPlanningDays",
+          "mergedCoveredDays",
+          "estimatedCoveredSoilPct",
+          "estimatedBareSoilPct",
+          "cropResidueIncluded",
+          "finalConclusionRequirement",
+          "formula",
+          "coveredIntervalRule",
+          "status",
         ],
         livestock_log: [
-          "species", "animalCount", "animalUnit", "fieldsOrPaddocks", "grazingSystem",
-          "rotationFrequency", "feed", "water", "shelter", "manureManagement",
-          "notes", "status"
+          "species",
+          "animalCount",
+          "animalUnit",
+          "fieldsOrPaddocks",
+          "grazingSystem",
+          "rotationFrequency",
+          "feed",
+          "water",
+          "shelter",
+          "manureManagement",
+          "notes",
+          "status",
         ],
         biodiversity_action_elements: [
-          "actionElement", "actionType", "measurementCriterion", "quantity", "unit",
-          "fieldBoundaries", "implementationStatus", "implementationDate", "notes", "status"
+          "actionElement",
+          "actionType",
+          "measurementCriterion",
+          "quantity",
+          "unit",
+          "fieldBoundaries",
+          "implementationStatus",
+          "implementationDate",
+          "notes",
+          "status",
         ],
         continuous_learning: [
-          "personName", "role", "eventType", "topicTitle", "provider", "eventDate",
-          "hours", "deliveryMethod", "certificateOrEvidence", "notes", "status"
+          "personName",
+          "role",
+          "eventType",
+          "topicTitle",
+          "provider",
+          "eventDate",
+          "hours",
+          "deliveryMethod",
+          "certificateOrEvidence",
+          "notes",
+          "status",
         ],
         continuous_improvement: [
-          "improvementArea", "question", "selectedActions", "otherPlannedAction",
-          "plannedChange", "selectedCrops", "selectedBoundaries",
-          "applicableCropsOrFields", "committedToChanges",
-          "benchmarkResults", "calculatedPracticeSummary", "status"
+          "improvementArea",
+          "question",
+          "selectedActions",
+          "otherPlannedAction",
+          "plannedChange",
+          "selectedCrops",
+          "selectedBoundaries",
+          "applicableCropsOrFields",
+          "committedToChanges",
+          "benchmarkResults",
+          "calculatedPracticeSummary",
+          "status",
         ],
         nrcs_programs: [
-          "programName", "practiceCode", "practiceName", "contractNumber",
-          "fieldBoundaries", "plannedOrApplied", "plannedDate", "appliedDate",
-          "acres", "notes", "status"
-        ]
+          "programName",
+          "practiceCode",
+          "practiceName",
+          "contractNumber",
+          "fieldBoundaries",
+          "plannedOrApplied",
+          "plannedDate",
+          "appliedDate",
+          "acres",
+          "notes",
+          "status",
+        ],
       };
 
       function sectionOnlyRows(rows, sectionName = "") {
@@ -10150,17 +10716,27 @@ endstream`)
             if (
               !SECTION_EXPORT_OMIT_COLUMNS.has(key) &&
               Object.prototype.hasOwnProperty.call(row || {}, key)
-            ) clean[key] = row[key];
+            )
+              clean[key] = row[key];
           });
           return clean;
         });
       }
-      function sectionCsv(rows, fallbackColumns = ["status", "note"], sectionName = "") {
+      function sectionCsv(
+        rows,
+        fallbackColumns = ["status", "note"],
+        sectionName = "",
+      ) {
         const cleanRows = sectionOnlyRows(rows, sectionName);
         const preferred = SECTION_DATASET_COLUMNS[sectionName] || [];
         const heads = [];
         preferred.forEach((key) => {
-          if (cleanRows.some((row) => Object.prototype.hasOwnProperty.call(row, key))) heads.push(key);
+          if (
+            cleanRows.some((row) =>
+              Object.prototype.hasOwnProperty.call(row, key),
+            )
+          )
+            heads.push(key);
         });
         cleanRows.forEach((row) => {
           Object.keys(row || {}).forEach((key) => {
@@ -10175,7 +10751,10 @@ endstream`)
                   .map(
                     (head) =>
                       '"' +
-                      String(exportValue(head, row[head]) ?? "").replace(/"/g, '""') +
+                      String(exportValue(head, row[head]) ?? "").replace(
+                        /"/g,
+                        '""',
+                      ) +
                       '"',
                   )
                   .join(","),
@@ -10223,7 +10802,8 @@ endstream`)
         if (num(r.amountAcre) <= 0) issues.push("Missing Application Rate");
         if (!has(r.unit)) issues.push("Missing Unit");
         if (!has(r.applicationDate)) issues.push("Missing Date");
-        if (!has(r.applicationMethod)) issues.push("Missing Application Method");
+        if (!has(r.applicationMethod))
+          issues.push("Missing Application Method");
         if (num(areaApplied) <= 0)
           issues.push("Area Applied must be greater than 0");
         return issues;
@@ -10232,9 +10812,13 @@ endstream`)
         const quote = (value) =>
           '"' + String(value ?? "").replace(/"/g, '""') + '"';
         const body = (rows || [])
-          .map((row) => IPM_PRT_HEADERS.map((head) => quote(row[head])).join(","))
+          .map((row) =>
+            IPM_PRT_HEADERS.map((head) => quote(row[head])).join(","),
+          )
           .join("\r\n");
-        return "\ufeff" + IPM_PRT_HEADERS.join(",") + (body ? "\r\n" + body : "\r\n");
+        return (
+          "\ufeff" + IPM_PRT_HEADERS.join(",") + (body ? "\r\n" + body : "\r\n")
+        );
       }
       function ipmPrtRows() {
         if (!state.ipmEnabled) return [];
@@ -10300,8 +10884,19 @@ endstream`)
         const sectionFallbacks = {
           "00_farm_details.csv": ["farmName", "planningYear"],
           "00_acre_change_details.csv": ["acreChangeScenario", "acresChanged"],
-          "00_kml_boundaries.csv": ["boundaryId", "boundaryName", "acres", "linkedCropsAndPractices"],
-          "00_attestation_prohibited_activities.csv": ["status", "category", "activity", "why", "fieldBoundaries"],
+          "00_kml_boundaries.csv": [
+            "boundaryId",
+            "boundaryName",
+            "acres",
+            "linkedCropsAndPractices",
+          ],
+          "00_attestation_prohibited_activities.csv": [
+            "status",
+            "category",
+            "activity",
+            "why",
+            "fieldBoundaries",
+          ],
           "01_crop_planner.csv": ["status", "note"],
           "02_harvest_log.csv": ["status", "note"],
           "03_livestock_log.csv": ["status", "note"],
@@ -10318,8 +10913,11 @@ endstream`)
           "11_continuous_improvement.csv": ["status", "note"],
         };
         let d = {
-          [farmDatasetFileName("00_normalized_farm_plan_dataset.csv")]: csv(rowsNormalized()),
-          ["_system/" + farmDatasetFileName("99_SAVE_PROGRESS_upload_to_resume.csv")]: progressCsvContent(),
+          [farmDatasetFileName("00_normalized_farm_plan_dataset.csv")]:
+            csv(rowsNormalized()),
+          ["_system/" +
+          farmDatasetFileName("99_SAVE_PROGRESS_upload_to_resume.csv")]:
+            progressCsvContent(),
           [farmDatasetFileName("Farm Plan Document.txt")]: reportText(),
           [farmDatasetFileName("Farm Plan Document.pdf")]: makePdfReport(),
         };
@@ -10329,14 +10927,27 @@ endstream`)
             if (datasetName === "06b_ipm_prt_spray_records.csv")
               exportRows = [];
             else if (datasetName === "05_nutrient_management_plan.csv")
-              exportRows = sectionStatusRows(state.nutrientEnabled, (state.skippedReasons || {}).nutrient || "");
+              exportRows = sectionStatusRows(
+                state.nutrientEnabled,
+                (state.skippedReasons || {}).nutrient || "",
+              );
             else if (datasetName === "06_ipm_plan.csv")
-              exportRows = sectionStatusRows(state.ipmEnabled, (state.skippedReasons || {}).ipm || "");
+              exportRows = sectionStatusRows(
+                state.ipmEnabled,
+                (state.skippedReasons || {}).ipm || "",
+              );
             else if (datasetName === "07_diesel_log.csv")
-              exportRows = sectionStatusRows(dieselActive(), (state.skippedReasons || {}).diesel || "");
+              exportRows = sectionStatusRows(
+                dieselActive(),
+                (state.skippedReasons || {}).diesel || "",
+              );
             else if (datasetName === "08_irrigation_log.csv")
-              exportRows = sectionStatusRows(state.irrigationEnabled, (state.skippedReasons || {}).irrigation || "");
-            else exportRows = [{ status: "Enabled", note: "No entries recorded" }];
+              exportRows = sectionStatusRows(
+                state.irrigationEnabled,
+                (state.skippedReasons || {}).irrigation || "",
+              );
+            else
+              exportRows = [{ status: "Enabled", note: "No entries recorded" }];
           }
           const sectionNameByFile = {
             "01_crop_planner.csv": "crop_planner",
@@ -10349,7 +10960,8 @@ endstream`)
             "06_ipm_plan.csv": "ipm_plan",
             "07_diesel_log.csv": "diesel_log",
             "08_irrigation_log.csv": "irrigation_log",
-            "09_biodiversity_action_elements.csv": "biodiversity_action_elements",
+            "09_biodiversity_action_elements.csv":
+              "biodiversity_action_elements",
             "10_continuous_learning.csv": "continuous_learning",
             "11_continuous_improvement.csv": "continuous_improvement",
           };
@@ -10398,7 +11010,8 @@ endstream`)
           "status,note\r\nRecovery export,Normalized dataset could not be generated",
         );
         addText(
-          "_system/" + farmDatasetFileName("99_SAVE_PROGRESS_upload_to_resume.csv"),
+          "_system/" +
+            farmDatasetFileName("99_SAVE_PROGRESS_upload_to_resume.csv"),
           () => progressCsvContent(),
           "file_type,app,version,saved_at,farm_name,planning_year,state_json_b64\r\nSCI_FARM_PLAN_SAVE_PROGRESS,SCI Farm Plan Document Builder,recovery,,,,",
         );
@@ -10408,7 +11021,8 @@ endstream`)
           "SCI Farm Plan Document\r\nRecovery export created because a CSV-imported value prevented the standard report from generating.",
         );
         try {
-          files[farmDatasetFileName("Farm Plan Document.pdf")] = makePdfReport();
+          files[farmDatasetFileName("Farm Plan Document.pdf")] =
+            makePdfReport();
         } catch (error) {
           console.error("ZIP recovery skipped PDF", error);
         }
@@ -10420,17 +11034,23 @@ endstream`)
           ["06_ipm_plan.csv", "ipm_plan"],
           ["07_diesel_log.csv", "diesel_log"],
           ["08_irrigation_log.csv", "irrigation_log"],
-          ["09_biodiversity_action_elements.csv", "biodiversity_action_elements"],
+          [
+            "09_biodiversity_action_elements.csv",
+            "biodiversity_action_elements",
+          ],
           ["10_continuous_learning.csv", "continuous_learning"],
         ];
         sectionSpecs.forEach(([fileName, sectionName]) => {
           addText(
             farmDatasetFileName(fileName),
-            () => sectionCsv(
-              sectionName === "tillage_intensity" ? tillageRowsForExport() : rowsForSection(sectionName),
-              ["status", "note"],
-              sectionName
-            ),
+            () =>
+              sectionCsv(
+                sectionName === "tillage_intensity"
+                  ? tillageRowsForExport()
+                  : rowsForSection(sectionName),
+                ["status", "note"],
+                sectionName,
+              ),
             "status,note\r\nRecovery export,Section could not be converted",
           );
         });
@@ -10508,7 +11128,9 @@ endstream`)
           document.activeElement && document.activeElement.tagName === "BUTTON"
             ? document.activeElement
             : null;
-        const originalButtonText = clickedButton ? clickedButton.textContent : "";
+        const originalButtonText = clickedButton
+          ? clickedButton.textContent
+          : "";
         if (clickedButton) {
           clickedButton.disabled = true;
           clickedButton.textContent = "Preparing ZIP…";
@@ -10557,9 +11179,10 @@ endstream`)
         }
         if (
           transcriptWasSelected &&
-          !Object.keys(files).some((n) =>
-            /(^|\/)CALL_TRANSCRIPT\.(doc|docx)$/i.test(n) ||
-            /\.(doc|docx)$/i.test(n),
+          !Object.keys(files).some(
+            (n) =>
+              /(^|\/)CALL_TRANSCRIPT\.(doc|docx)$/i.test(n) ||
+              /\.(doc|docx)$/i.test(n),
           )
         ) {
           alert(
@@ -10721,7 +11344,8 @@ endstream`)
 
       function buildNutrientExtensionBenchmarkPrompt() {
         const farm = state.farm || {};
-        const farmState = String(farm.state || "").trim() ||
+        const farmState =
+          String(farm.state || "").trim() ||
           "[STATE NOT ENTERED IN FARM DETAILS]";
         const table = nutrientExtensionPromptTable();
         return `Compare the fertilizer data below with current Cooperative Extension fertilizer recommendations for ${farmState}. Add all applications together for each crop to calculate its crop-year N, P, and K pounds per acre.
