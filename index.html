@@ -2715,6 +2715,8 @@
           fields: "",
           boundaryIds: [],
           year: new Date().getFullYear(),
+          designatedTrafficZones: "",
+          designatedTrafficZonesWhyNo: "",
           noTill: false,
           noTillDrillUsed: "",
           nonGmo: false,
@@ -3041,6 +3043,9 @@
           c.harvestEntryMode = "detailed";
         c.isPerennial =
           String(c.isPerennial) === "true" || c.isPerennial === true;
+        c.designatedTrafficZones = c.designatedTrafficZones || "";
+        c.designatedTrafficZonesWhyNo =
+          c.designatedTrafficZonesWhyNo || "";
         c.perennialData = fillMissing(c.perennialData, {
           systemType: "",
           systemTypeOther: "",
@@ -5491,7 +5496,7 @@ ${acreChangePanel()}
         let c = crop();
         if (!state.cropPlanEnabled)
           return `${stepBar()}<main class="page"><div class="card"><div class="section-title"><div><h2>Crop Planner <span class="small">not applicable</span></h2><div class="help">This section was selected as not applicable for this animal-only operation.</div></div><button type="button" class="btn ghost" onclick="saveInputs();state.cropPlanEnabled=true;state.skippedReasons.cropPlan='';render()">Enable Crop Planner</button></div></div>${skippedReasonBox("cropPlan", "Crop Planner")}${nav(2, 4)}</main>`;
-        return `${stepBar()}<main class="page"><div class="crop-card"><div class="crop-head"><div class="field"><label>Crop Page Name</label><input data-bind="crops.${state.activeCrop}.name" value="${esc(c.name)}" placeholder="Corn, soybeans, wheat..."></div><div class="field"><label>Crop Acres</label><input data-bind="crops.${state.activeCrop}.acres" type="number" min="0" step="0.01" value="${esc(cropAcreValue(c))}" placeholder="0"></div><div class="field"><label>Crop Fields</label><input data-bind="crops.${state.activeCrop}.fields" type="number" min="0" step="1" value="${esc(c.fields)}" placeholder="0" inputmode="numeric"></div><div class="field"><label>Crop Year</label><input data-bind="crops.${state.activeCrop}.year" type="number" min="1900" max="2200" step="1" value="${esc(c.year)}" placeholder="2026"></div></div>${cropTabs()}${csvUploadBox("crop_planner", "Crop Planner")}${cropPlannerLRISummary(c)}<div class="help">For annual crops, the cash crop is included. When a crop is marked Perennial / Orchard in Crop Setup, the Cash Crop entry is removed for that crop, while Mulch Used remains available in the Perennial Cropping / Orchard Data section. Pre-season and post-harvest cover crops are optional in QA/QC and only counted when entered. Opening one section collapses the previous entry to save space.</div>${c.isPerennial ? `<div class="card" style="margin-top:12px"><div class="section-title"><div><h3>Perennial Cropping / Orchard Data</h3><div class="help">Additional questions appear because this crop was marked Perennial / Orchard in Crop Setup. These fields document the perennial-specific P1, P2, and P3 requirements.</div></div></div><div class="input-grid"><div class="field"><label>Perennial System Type</label><select data-bind="crops.${state.activeCrop}.perennialData.systemType" onchange="saveInputs();render()">${options(["", "Perennial field crop", "Orchard", "Vineyard", "Agroforestry / silvopasture", "Other"], c.perennialData.systemType)}</select></div>${c.perennialData.systemType === "Other" ? `<div class="field"><label>Other System Type</label><input data-bind="crops.${state.activeCrop}.perennialData.systemTypeOther" value="${esc(c.perennialData.systemTypeOther)}" placeholder="Describe system"></div>` : ""}<div class="field"><label>Establishment Year</label><input data-bind="crops.${state.activeCrop}.perennialData.establishmentYear" type="number" min="1800" max="2200" step="1" value="${esc(c.perennialData.establishmentYear)}" placeholder="Year planted"></div><div class="field"><label>Middle-Row / Inter-Row Vegetation</label><select data-bind="crops.${state.activeCrop}.perennialData.middleRowVegetation">${options(["", "Growing season only", "Maintained year-round", "Not maintained", "N/A — no middle rows"], c.perennialData.middleRowVegetation)}</select></div><div class="field"><label>Grasses, Forbs, and Legumes Included</label><select data-bind="crops.${state.activeCrop}.perennialData.functionalMix">${options(["", "Yes", "No", "Planned", "N/A"], c.perennialData.functionalMix)}</select></div><div class="field"><label>Mulch Used?</label><select data-bind="crops.${state.activeCrop}.perennialData.mulchUsed">${options(["", "Yes", "No"], c.perennialData.mulchUsed)}</select></div><div class="field"><label>Current Bare Soil in Middle Rows (%)</label><input data-bind="crops.${state.activeCrop}.perennialData.bareSoilPct" type="number" min="0" max="100" step="0.1" value="${esc(c.perennialData.bareSoilPct)}" placeholder="0–100"></div><div class="field"><label>Designated Traffic Areas</label><select data-bind="crops.${state.activeCrop}.perennialData.designatedTrafficAreas">${options(["", "Yes", "No", "Planned", "N/A"], c.perennialData.designatedTrafficAreas)}</select></div><div class="field full"><label>Bare Soil Reduction / Soil Cover Plan</label><textarea data-bind="crops.${state.activeCrop}.perennialData.bareSoilReductionPlan" placeholder="Describe living vegetation, mulch, hay, wood chips, crop residue, or other actions used to reduce bare soil.">${esc(c.perennialData.bareSoilReductionPlan)}</textarea></div><div class="field full"><label>Tillage Reduction Plan</label><textarea data-bind="crops.${state.activeCrop}.perennialData.tillageReductionPlan" placeholder="Describe how tillage intensity will be reduced or avoided in this perennial system.">${esc(c.perennialData.tillageReductionPlan)}</textarea></div><div class="field full"><label>Perennial System Notes</label><textarea data-bind="crops.${state.activeCrop}.perennialData.notes" placeholder="Optional context, climate constraints, or special considerations.">${esc(c.perennialData.notes)}</textarea></div></div></div>` : ""}${cropPlannerEntries(
+        return `${stepBar()}<main class="page"><div class="crop-card"><div class="crop-head"><div class="field"><label>Crop Page Name</label><input data-bind="crops.${state.activeCrop}.name" value="${esc(c.name)}" placeholder="Corn, soybeans, wheat..."></div><div class="field"><label>Crop Acres</label><input data-bind="crops.${state.activeCrop}.acres" type="number" min="0" step="0.01" value="${esc(cropAcreValue(c))}" placeholder="0"></div><div class="field"><label>Crop Fields</label><input data-bind="crops.${state.activeCrop}.fields" type="number" min="0" step="1" value="${esc(c.fields)}" placeholder="0" inputmode="numeric"></div><div class="field"><label>Crop Year</label><input data-bind="crops.${state.activeCrop}.year" type="number" min="1900" max="2200" step="1" value="${esc(c.year)}" placeholder="2026"></div></div>${cropTabs()}${csvUploadBox("crop_planner", "Crop Planner")}${cropPlannerLRISummary(c)}<div class="card" style="margin-top:12px"><div class="section-title"><div><h3>Designated Traffic Zones</h3><div class="help">Document whether field traffic is limited to designated lanes or zones for this crop.</div></div></div><div class="input-grid"><div class="field"><label>Designated Traffic Zones?</label><select data-bind="crops.${state.activeCrop}.designatedTrafficZones" onchange="saveInputs();render()">${options(["", "Yes", "No"], c.designatedTrafficZones || "")}</select></div>${c.designatedTrafficZones === "No" ? `<div class="field full"><label>Why are designated traffic zones not used?</label><textarea data-bind="crops.${state.activeCrop}.designatedTrafficZonesWhyNo" placeholder="Explain why designated traffic zones are not used for this crop or field.">${esc(c.designatedTrafficZonesWhyNo || "")}</textarea></div>` : ""}</div></div><div class="help">For annual crops, the cash crop is included. When a crop is marked Perennial / Orchard in Crop Setup, the Cash Crop entry is removed for that crop, while Mulch Used remains available in the Perennial Cropping / Orchard Data section. Pre-season and post-harvest cover crops are optional in QA/QC and only counted when entered. Opening one section collapses the previous entry to save space.</div>${c.isPerennial ? `<div class="card" style="margin-top:12px"><div class="section-title"><div><h3>Perennial Cropping / Orchard Data</h3><div class="help">Additional questions appear because this crop was marked Perennial / Orchard in Crop Setup. These fields document the perennial-specific P1, P2, and P3 requirements.</div></div></div><div class="input-grid"><div class="field"><label>Perennial System Type</label><select data-bind="crops.${state.activeCrop}.perennialData.systemType" onchange="saveInputs();render()">${options(["", "Perennial field crop", "Orchard", "Vineyard", "Agroforestry / silvopasture", "Other"], c.perennialData.systemType)}</select></div>${c.perennialData.systemType === "Other" ? `<div class="field"><label>Other System Type</label><input data-bind="crops.${state.activeCrop}.perennialData.systemTypeOther" value="${esc(c.perennialData.systemTypeOther)}" placeholder="Describe system"></div>` : ""}<div class="field"><label>Establishment Year</label><input data-bind="crops.${state.activeCrop}.perennialData.establishmentYear" type="number" min="1800" max="2200" step="1" value="${esc(c.perennialData.establishmentYear)}" placeholder="Year planted"></div><div class="field"><label>Middle-Row / Inter-Row Vegetation</label><select data-bind="crops.${state.activeCrop}.perennialData.middleRowVegetation">${options(["", "Growing season only", "Maintained year-round", "Not maintained", "N/A — no middle rows"], c.perennialData.middleRowVegetation)}</select></div><div class="field"><label>Grasses, Forbs, and Legumes Included</label><select data-bind="crops.${state.activeCrop}.perennialData.functionalMix">${options(["", "Yes", "No", "Planned", "N/A"], c.perennialData.functionalMix)}</select></div><div class="field"><label>Mulch Used?</label><select data-bind="crops.${state.activeCrop}.perennialData.mulchUsed">${options(["", "Yes", "No"], c.perennialData.mulchUsed)}</select></div><div class="field"><label>Current Bare Soil in Middle Rows (%)</label><input data-bind="crops.${state.activeCrop}.perennialData.bareSoilPct" type="number" min="0" max="100" step="0.1" value="${esc(c.perennialData.bareSoilPct)}" placeholder="0–100"></div><div class="field"><label>Designated Traffic Areas</label><select data-bind="crops.${state.activeCrop}.perennialData.designatedTrafficAreas">${options(["", "Yes", "No", "Planned", "N/A"], c.perennialData.designatedTrafficAreas)}</select></div><div class="field full"><label>Bare Soil Reduction / Soil Cover Plan</label><textarea data-bind="crops.${state.activeCrop}.perennialData.bareSoilReductionPlan" placeholder="Describe living vegetation, mulch, hay, wood chips, crop residue, or other actions used to reduce bare soil.">${esc(c.perennialData.bareSoilReductionPlan)}</textarea></div><div class="field full"><label>Tillage Reduction Plan</label><textarea data-bind="crops.${state.activeCrop}.perennialData.tillageReductionPlan" placeholder="Describe how tillage intensity will be reduced or avoided in this perennial system.">${esc(c.perennialData.tillageReductionPlan)}</textarea></div><div class="field full"><label>Perennial System Notes</label><textarea data-bind="crops.${state.activeCrop}.perennialData.notes" placeholder="Optional context, climate constraints, or special considerations.">${esc(c.perennialData.notes)}</textarea></div></div></div>` : ""}${cropPlannerEntries(
           c,
         )
           .map(
@@ -7396,6 +7401,17 @@ ${acreChangePanel()}
               ),
               msg: `${c.name || "Crop"}: crop planner has at least one complete entry`,
             });
+          if (state.cropPlanEnabled) {
+            out.push({
+              ok: has(c.designatedTrafficZones),
+              msg: `${c.name || "Crop"}: designated traffic zones Yes/No selected`,
+            });
+            if (c.designatedTrafficZones === "No")
+              out.push({
+                ok: has(c.designatedTrafficZonesWhyNo),
+                msg: `${c.name || "Crop"}: reason entered when designated traffic zones are No`,
+              });
+          }
           if (c.isPerennial) {
             let pd = c.perennialData || {};
             out.push({
@@ -7581,7 +7597,7 @@ ${acreChangePanel()}
           ensureHarvestSections(c);
           let p = pillar(c);
           lines.push(
-            `${c.name || "Crop"} (${c.cropType === "Other" ? c.cropTypeOther : c.cropType || "crop type not entered"}): ${fmt(cropAcres(c), 2)} acres; Boundaries: ${selectedBoundaryNames(c).join(", ") || "Not assigned"}; Practices: ${cropPractices(c)}; P1 ${p.P1}, P2 ${p.P2}, P5 Nutrients ${p.P5}, P5 IPM ${p.P5_IPM}, P7 ${p.P7}; gTIR ${fmt(p.TI)}; Living Root Index photosynthetic component ${p.rootPct}%; full P2 requires non-growing-season cover documentation and reviewer confirmation.`,
+            `${c.name || "Crop"} (${c.cropType === "Other" ? c.cropTypeOther : c.cropType || "crop type not entered"}): ${fmt(cropAcres(c), 2)} acres; Boundaries: ${selectedBoundaryNames(c).join(", ") || "Not assigned"}; Designated Traffic Zones: ${c.designatedTrafficZones || "Not entered"}${c.designatedTrafficZones === "No" ? " — Why: " + (c.designatedTrafficZonesWhyNo || "Not entered") : ""}; Practices: ${cropPractices(c)}; P1 ${p.P1}, P2 ${p.P2}, P5 Nutrients ${p.P5}, P5 IPM ${p.P5_IPM}, P7 ${p.P7}; gTIR ${fmt(p.TI)}; Living Root Index photosynthetic component ${p.rootPct}%; full P2 requires non-growing-season cover documentation and reviewer confirmation.`,
           );
           if (c.isPerennial) {
             let pd = c.perennialData || {};
@@ -7645,6 +7661,11 @@ ${acreChangePanel()}
               cropName: c.name,
               cropType: c.cropType === "Other" ? c.cropTypeOther : c.cropType,
               acres: cropAcres(c),
+              designatedTrafficZones: c.designatedTrafficZones || "",
+              designatedTrafficZonesWhyNo:
+                c.designatedTrafficZones === "No"
+                  ? c.designatedTrafficZonesWhyNo || ""
+                  : "",
               nonGmo:
                 String(c.nonGmo) === "true" || c.nonGmo === true ? "Yes" : "No",
               noTill:
@@ -8314,6 +8335,13 @@ ${acreChangePanel()}
                 : val(c.cropType),
             ],
             ["Production year", val(c.year)],
+            ["Designated Traffic Zones", c.designatedTrafficZones],
+            [
+              "Why designated traffic zones are not used",
+              c.designatedTrafficZones === "No"
+                ? c.designatedTrafficZonesWhyNo
+                : "N/A",
+            ],
             ["Perennial / Orchard", c.isPerennial ? "Yes" : "No"],
             ["No Till", c.noTill ? "Yes" : "No"],
             [
@@ -9855,6 +9883,7 @@ endstream`)
       const SECTION_DATASET_COLUMNS = {
         crop_planner: [
           "cropName", "cropType", "acres", "fieldBoundaries", "fieldBoundaryCount",
+          "designatedTrafficZones", "designatedTrafficZonesWhyNo",
           "noTill", "noTillDrillUsed", "nonGmo", "perennialOrOrchard", "perennialSystemType",
           "perennialEstablishmentYear", "perennialMiddleRowVegetation",
           "perennialFunctionalMix", "perennialMulchUsed", "perennialBareSoilPct",
