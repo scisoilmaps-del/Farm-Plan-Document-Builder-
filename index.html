@@ -10381,21 +10381,24 @@ endstream`)
         "Area applied (in acres)*",
       ];
       const IPM_PRT_EPA_REG_RE = /^\d{2,7}-\d{1,6}(-\d{1,6})?$/;
+      function ipmPrtHas(value) {
+        return value !== undefined && value !== null && String(value).trim() !== "";
+      }
       function ipmPrtRowHasData(r) {
         return !!(
-          has(r.productName) ||
-          has(r.epaRegNo) ||
-          has(r.amountAcre) ||
-          has(r.unit) ||
-          has(r.applicationDate) ||
-          has(r.applicationMethod) ||
-          has(r.areaApplied) ||
-          has(r.pest)
+          ipmPrtHas(r.productName) ||
+          ipmPrtHas(r.epaRegNo) ||
+          ipmPrtHas(r.amountAcre) ||
+          ipmPrtHas(r.unit) ||
+          ipmPrtHas(r.applicationDate) ||
+          ipmPrtHas(r.applicationMethod) ||
+          ipmPrtHas(r.areaApplied) ||
+          ipmPrtHas(r.pest)
         );
       }
       function ipmPrtIssues(r, areaApplied) {
         const issues = [];
-        if (!has(r.productName)) issues.push("Missing Product Name");
+        if (!ipmPrtHas(r.productName)) issues.push("Missing Product Name");
         const epa = String(r.epaRegNo || "").trim();
         if (!epa) issues.push("Missing EPA Reg No");
         else if (!IPM_PRT_EPA_REG_RE.test(epa))
@@ -10417,21 +10420,22 @@ endstream`)
         return "\ufeff" + IPM_PRT_HEADERS.join(",") + (body ? "\r\n" + body : "\r\n");
       }
       function ipmPrtRows() {
-        if (!state.ipmEnabled) return [];
         const rows = [];
         (state.crops || []).forEach((c, ci) => {
           (c.ipmRows || []).forEach((r) => {
+            // Preserve every entered IPM spray record in the PRT export. Previously,
+            // any missing required value or unusual EPA number caused the whole row
+            // to be silently discarded, which could leave the PRT file completely blank.
             if (!ipmPrtRowHasData(r)) return;
-            const areaApplied = num(r.areaApplied) || cropAcres(c);
-            if (ipmPrtIssues(r, areaApplied).length) return;
+            const areaApplied = num(r.areaApplied) || cropAcres(c) || "";
             rows.push({
-              "Block Name": c.name || `Crop ${ci + 1}`,
+              "Block Name": c.name || c.cropTypeOther || c.cropType || `Crop ${ci + 1}`,
               "Product Name*": String(r.productName || "").trim(),
               "EPA Reg No*": String(r.epaRegNo || "").trim(),
-              "Application Rate*": r.amountAcre,
-              "Unit (e.g. gal/ac)*": r.unit,
-              "Date*": r.applicationDate,
-              "Application method*": r.applicationMethod,
+              "Application Rate*": ipmPrtHas(r.amountAcre) ? r.amountAcre : "",
+              "Unit (e.g. gal/ac)*": r.unit || "",
+              "Date*": r.applicationDate || "",
+              "Application method*": r.applicationMethod || "",
               "Area applied (in acres)*": areaApplied,
             });
           });
