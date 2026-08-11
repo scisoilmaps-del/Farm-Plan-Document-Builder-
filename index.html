@@ -9957,8 +9957,23 @@ endstream`)
         function wrapByType(text, type) {
           return wrapPdfLine(text, wrapWidths[type] || 86);
         }
-        let raw = pdfItemsFromText(title, body),
+        const isWhitePaper = /TECHNICAL WHITE PAPER/i.test(String(title || ""));
+        let bodyForLayout = String(body || "");
+        if (isWhitePaper) {
+          // The white paper gets a dedicated legacy SCI cover. Remove the duplicated
+          // cover title/edition lines from the body so page 2 begins with Section 1.
+          let wpLines = bodyForLayout.split(/\r?\n/);
+          if (wpLines.length && /TECHNICAL WHITE PAPER/i.test(wpLines[0] || "")) wpLines.shift();
+          if (wpLines.length && /Consolidated edition/i.test(wpLines[0] || "")) wpLines.shift();
+          while (wpLines.length && !String(wpLines[0] || "").trim()) wpLines.shift();
+          bodyForLayout = wpLines.join("\n");
+        }
+        let raw = pdfItemsFromText(title, bodyForLayout),
           laid = [];
+        if (isWhitePaper) {
+          // Remove the normal report title/generated-from banner. The legacy cover supplies both identity and edition.
+          raw = raw.filter((it, idx) => !(idx < 3 && (it.type === "title" || it.type === "small" || it.type === "space")));
+        }
         let groupCounter = 0;
         raw.forEach((it) => {
           if (it.type === "space") {
@@ -10057,16 +10072,43 @@ ${logoHex}
 endstream`)
           : null;
         let pageIds = [];
+        const totalRenderedPages = pages.length + (isWhitePaper ? 1 : 0);
+
+        if (isWhitePaper) {
+          // Legacy SCI white-paper cover used by the prior Builder edition.
+          let cover = "";
+          cover += `0.03 0.45 0.20 rg 48 738 516 1.5 re f\n`;
+          cover += `0.03 0.45 0.20 rg BT /F1 8 Tf 332 754 Td (${pdfEscape("SCI Farm Plan Document Builder | Technical White Paper | August 2026")}) Tj ET\n`;
+          if (logoId) cover += `q 390 0 0 159 111 492 cm /Logo Do Q\n`;
+          cover += `0.03 0.45 0.20 rg BT /F2 22 Tf 129 446 Td (${pdfEscape("SCI Farm Plan Document Builder")}) Tj ET\n`;
+          cover += `0.03 0.45 0.20 rg BT /F2 20 Tf 92 404 Td (${pdfEscape("Technical White Paper - Consolidated")}) Tj ET\n`;
+          cover += `0.03 0.45 0.20 rg BT /F2 20 Tf 213 378 Td (${pdfEscape("Current Edition")}) Tj ET\n`;
+          cover += `0.10 0.24 0.16 rg BT /F1 10 Tf 58 338 Td (${pdfEscape("Detailed inputs, workflow rules, calculations, quality controls, reports, datasets, and source traceability")}) Tj ET\n`;
+          cover += `0.10 0.24 0.16 rg BT /F1 11 Tf 270 305 Td (${pdfEscape("August 2026")}) Tj ET\n`;
+          cover += `0.35 0.38 0.36 rg BT /F1 7.5 Tf 48 28 Td (${pdfEscape("Technical documentation for controlled review - not an audit determination")}) Tj ET\n`;
+          cover += `0.35 0.38 0.36 rg BT /F1 7.5 Tf 526 28 Td (${pdfEscape("Page 1")}) Tj ET\n`;
+          const coverContentId = add(`<< /Length ${cover.length} >>\nstream\n${cover}\nendstream`);
+          const coverXobj = logoId ? ` /XObject << /Logo ${logoId} 0 R >>` : "";
+          const coverPageId = add(
+            `<< /Type /Page /Parent 0 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /Font << /F1 ${fontId} 0 R /F2 ${boldId} 0 R >>${coverXobj} >> /Contents ${coverContentId} 0 R >>`,
+          );
+          pageIds.push(coverPageId);
+        }
+
         pages.forEach((pageItems, pi) => {
           let stream = "";
+          const renderedPageNumber = pi + 1 + (isWhitePaper ? 1 : 0);
           // header, footer, and page frame
           stream += `0.12 0.35 0.20 rg 48 765 516 2 re f\n`;
-          if (pi === 0 && logoId) {
+          if (!isWhitePaper && pi === 0 && logoId) {
             stream += `q 113 0 0 46 48 705 cm /Logo Do Q\n`;
             stream += `0.88 0.93 0.89 rg 48 694 516 1 re f\n`;
           }
-          stream += `0.24 0.18 0.13 rg BT /F2 9 Tf 48 775 Td (${pdfEscape(headerLabel || (state.farm && state.farm.farmName) || "SCI Farm Plan Document")}) Tj ET\n`;
-          stream += `0.45 0.42 0.36 rg BT /F1 8 Tf 502 28 Td (${pdfEscape("Page " + (pi + 1) + " of " + pages.length)}) Tj ET\n`;
+          const bodyHeader = isWhitePaper
+            ? "SCI Farm Plan Document Builder | Technical White Paper | August 2026"
+            : (headerLabel || (state.farm && state.farm.farmName) || "SCI Farm Plan Document");
+          stream += `0.24 0.18 0.13 rg BT /F2 9 Tf 48 775 Td (${pdfEscape(bodyHeader)}) Tj ET\n`;
+          stream += `0.45 0.42 0.36 rg BT /F1 8 Tf 502 28 Td (${pdfEscape("Page " + renderedPageNumber + " of " + totalRenderedPages)}) Tj ET\n`;
           pageItems.forEach((it) => {
             let x = marginL,
               size = 9.8,
@@ -10076,12 +10118,12 @@ endstream`)
               size = 18;
               font = "/F2";
               color = "0.12 0.35 0.20";
-              x = pi === 0 && logoId ? 220 : 48;
+              x = !isWhitePaper && pi === 0 && logoId ? 220 : 48;
             } else if (it.type === "subtitle") {
               size = 12.5;
               font = "/F2";
               color = "0.12 0.35 0.20";
-              x = pi === 0 && logoId ? 220 : 48;
+              x = !isWhitePaper && pi === 0 && logoId ? 220 : 48;
             } else if (it.type === "section") {
               size = 11.5;
               font = "/F2";
@@ -10106,7 +10148,7 @@ endstream`)
             } else if (it.type === "small") {
               size = 8.5;
               color = "0.35 0.32 0.28";
-              x = pi === 0 && logoId ? 220 : 48;
+              x = !isWhitePaper && pi === 0 && logoId ? 220 : 48;
             } else if (it.type === "space") {
               return;
             }
