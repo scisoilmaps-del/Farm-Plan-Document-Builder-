@@ -10153,7 +10153,7 @@ endstream`)
       function technicalWhitePaperText() {
         return [
           "SCI FARM PLAN DOCUMENT BUILDER — TECHNICAL WHITE PAPER",
-          "Consolidated edition | July 2026",
+          "Consolidated edition | August 2026",
           "",
           "1. EXECUTIVE SUMMARY",
           "The SCI Farm Plan Document Builder is a client-side single-file application that collects farm, boundary, crop, practice, evidence, and follow-up records. It performs deterministic planning calculations, checks record completeness, generates a Farm Plan PDF, and packages machine-readable records in a Farm Plan Data Packet ZIP.",
@@ -10178,8 +10178,17 @@ endstream`)
           "6. HARVEST LOG",
           "Detailed harvest records calculate total harvest as crop acres × yield per acre. Simple total-harvest records retain the entered total. Last-year, projected, and actual harvest records are retained with crop context and status.",
           "",
-          "7. TILLAGE INTENSITY MATHEMATICS",
-          "Event gTIR = tillage rating × 3.25 × depth in inches × 2.54 × disturbed fraction × passes. Annual Field TI is the sum of all completed event gTIR values for the field/crop/year. Crop gTIR is the average of annual Field TI values across fields growing the crop; because this interface applies one crop-level tillage sequence to each represented field, Crop gTIR equals that summed Field TI. Farm weighted gTIR = sum(crop gTIR × crop acres) / acres of crops with completed tillage events.",
+          "7. TILLAGE INTENSITY MATHEMATICS AND FIELD ROLL-UP LOGIC",
+          "The tillage section uses the same corrected gTIR method as the standalone SCI Tillage Intensity Calculator. Each completed tillage event is calculated independently, then completed events are rolled up to the annual field, crop, and farm levels.",
+          "Event gTIR = Tillage Rating × 3.25 × Depth (cm) × Disturbed Fraction × Passes. Depth (cm) = Depth (inches) × 2.54. Disturbed Fraction = Disturbed Percent / 100. Acres Tilled = Crop Acres × Disturbed Fraction for a completed event.",
+          "A tillage event is complete only when crop name, implement, tillage type/rating, depth greater than zero, disturbed percent greater than zero, and passes greater than zero are present. Incomplete events return 0 event gTIR and are excluded from roll-ups.",
+          "Annual Field TI = sum of Event gTIR for all completed tillage events in the crop/field/year sequence. Events are summed; they are not averaged.",
+          "Effective Field Count follows this hierarchy: (1) entered Crop Fields when greater than zero; otherwise (2) number of selected KML field boundaries when one or more are assigned; otherwise (3) one representative field when a completed tillage sequence exists. If no completed tillage sequence exists, the effective field count is zero.",
+          "Crop Field TI Total = Annual Field TI × Effective Field Count. Crop Avg gTIR = Crop Field TI Total / Effective Field Count. When one crop-level tillage sequence represents all selected fields, each represented field carries the same Annual Field TI, so Crop Avg gTIR equals Annual Field TI regardless of whether the crop represents one field or multiple fields.",
+          "If fields growing the same crop have materially different tillage sequences, they should be represented as separate crop/practice records so each management system retains its own Annual Field TI rather than combining unlike field management under one sequence.",
+          "Farm Average gTIR is acreage weighted only across crops with at least one completed tillage event: Farm Average gTIR = sum(Crop Avg gTIR × Crop Acres) / sum(Crop Acres for crops with completed tillage events). Blank or incomplete tillage records are not treated as zero-intensity acreage in the farm denominator.",
+          "No-Till / Direct Seed logic: when No Till is selected and No-Till Drill Used is not Yes, the tillage roll-up remains 0. When No-Till Drill Used is Yes, the builder creates/synchronizes the defined No-Till Drill event and calculates it using the same event formula and crop roll-up rules.",
+          "Tillage export fields include eventGTIR at the event level and cropAvgGTIR, cropFieldTITotal, and cropTotalGTIR at the crop roll-up level. cropTotalGTIR is retained as a compatibility field and carries the same value as cropFieldTITotal. Farm-level outputs use the corrected acreage-weighted Farm Average gTIR.",
           "",
           "8. NUTRIENT MANAGEMENT MATHEMATICS",
           "Equivalent product lb/ac is the entered rate adjusted for tons, gallons with density, or fluid ounces with density. Nutrient lb/ac = equivalent product lb/ac × nutrient percentage / 100. Whole-field nutrient = nutrient lb/ac × crop acres.",
@@ -10214,6 +10223,7 @@ endstream`)
           "",
           "18. FORMULA REGISTER",
           "Key formulas include KML acreage, detailed harvest total, emergence date, living-root days, LRI, full-cover date, covered-soil percent, estimated bare-soil percent, event/crop/farm gTIR, equivalent product pounds, nutrient pounds per acre, whole-field nutrients, and IPM active ingredient totals.",
+          "Tillage register: eventGTIR = Rating × 3.25 × Depth(cm) × Disturbed Fraction × Passes; fieldTI = sum(completed eventGTIR); effectiveFieldCount = entered Crop Fields, else selected KML boundary count, else 1 when completed tillage exists; cropFieldTITotal = fieldTI × effectiveFieldCount; cropAvgGTIR = cropFieldTITotal / effectiveFieldCount; cropTotalGTIR = cropFieldTITotal; farmAverageGTIR = acreage-weighted cropAvgGTIR using only crops with completed tillage events.",
           "",
           "19. GOVERNANCE AND LIMITATIONS",
           "The builder is a planning, documentation, and QA/QC tool. Generalized Extension nutrient recommendations do not replace field-specific soil tests, yield goals, professional agronomic review, regulations, or audit determinations. SCI standards, policies, audit procedures, and certifying-body decisions remain controlling.",
@@ -10222,12 +10232,13 @@ endstream`)
 
       function downloadWhitePaper() {
         try {
-          const raw = atob(SCI_WHITE_PAPER_PDF_BASE64);
-          const bytes = new Uint8Array(raw.length);
-          for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+          const pdf = makeProfessionalPdf(
+            "SCI FARM PLAN DOCUMENT BUILDER — TECHNICAL WHITE PAPER",
+            technicalWhitePaperText(),
+          );
           blobDownload(
             "SCI Farm Plan Document Builder Technical White Paper.pdf",
-            bytes,
+            pdf,
             "application/pdf",
           );
         } catch (err) {
