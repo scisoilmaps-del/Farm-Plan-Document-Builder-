@@ -4080,6 +4080,12 @@
                 return;
               }
               c.noTill = false;
+              const importedNotes = rowVal(r, ["notes", "Notes"]) || "";
+              const importedField = rowVal(r, [
+                "fieldKey", "fieldId", "fieldID", "Field ID", "Field Id", "field",
+                "Field", "fieldBoundary", "fieldBoundaries", "Field Boundaries", "boundaries"
+              ]) || "";
+              const noteFieldMatch = String(importedNotes).match(/(?:^|[;\s])field[_\s-]*id\s*=\s*([^;]+)/i);
               c.tillageRows.push({
                 date: rowVal(r, ["date", "tillageDate", "Tillage Date"]),
                 depthIn: rowVal(r, ["depthIn", "Depth (in)", "depth"]),
@@ -4093,7 +4099,8 @@
                     "Percent Disturbed",
                   ]) || "100",
                 passes: rowVal(r, ["passes", "Passes"]) || "1",
-                notes: rowVal(r, ["notes"]) || "",
+                notes: importedNotes,
+                fieldKey: String(importedField || (noteFieldMatch && noteFieldMatch[1]) || "").trim(),
               });
               count++;
             });
@@ -6300,30 +6307,90 @@ ${acreChangePanel()}
         const eventGTIR = isComplete ? rating * 3.25 * depthCm * disturbedFraction * passes : 0;
         return { rating, depthIn, depthCm, disturbedPct, disturbedFraction, passes, acresTilled, eventGTIR, isComplete };
       }
+      function tillageFieldKey(r, index = 0) {
+        const explicit = String(r.fieldKey || r.fieldId || r.fieldID || r.field || r.fieldBoundary || r.fieldBoundaries || "").trim();
+        if (explicit) return explicit;
+        const notes = String(r.notes || "");
+        const noteMatch = notes.match(/(?:^|[;\s])field[_\s-]*id\s*=\s*([^;]+)/i);
+        if (noteMatch && noteMatch[1]) return noteMatch[1].trim();
+        return "";
+      }
+      function tillageEventYear(r) {
+        const date = String(r.date || "").trim();
+        const m = date.match(/^(\d{4})/);
+        return m ? m[1] : String(effectivePlanningYear() || "").trim();
+      }
       function tillageRollup(c) {
-        if (!state.tillageEnabled) return { eventCount: 0, fieldTI: 0, cropFieldTITotal: 0, cropAvg: 0, acresTilled: 0 };
+        if (!state.tillageEnabled) return { eventCount: 0, fieldTI: 0, cropFieldTITotal: 0, cropAvg: 0, acresTilled: 0, effectiveFieldCount: 0, fieldTIs: [] };
         if ((String(c.noTill) === "true" || c.noTill === true) && String(c.noTillDrillUsed || "") !== "Yes")
-          return { eventCount: 0, fieldTI: 0, cropFieldTITotal: 0, cropAvg: 0, acresTilled: 0 };
+          return { eventCount: 0, fieldTI: 0, cropFieldTITotal: 0, cropAvg: 0, acresTilled: 0, effectiveFieldCount: 0, fieldTIs: [] };
         if (String(c.noTillDrillUsed || "") === "Yes") syncNoTillDrillEvent(c);
+
         const completed = (Array.isArray(c.tillageRows) ? c.tillageRows : [])
-          .map((r) => tillageEventData(c, r))
-          .filter((e) => e.isComplete);
-        const fieldTI = completed.reduce((sum, e) => sum + e.eventGTIR, 0);
-        // Use entered Crop Fields first, then selected KML boundaries, then one representative field
-        // whenever there is a completed tillage sequence. Crop average gTIR is the completed
-        // event gTIR total divided by the represented field count.
+          .map((r, index) => ({ row: r, index, event: tillageEventData(c, r) }))
+          .filter((x) => x.event.isComplete);
+        const acresTilled = completed.reduce((sum, x) => sum + x.event.acresTilled, 0);
+        if (!completed.length)
+          return { eventCount: 0, fieldTI: 0, cropFieldTITotal: 0, cropAvg: 0, acresTilled: 0, effectiveFieldCount: 0, fieldTIs: [] };
+
+        // Correct SCI roll-up:
+        // 1) Annual Field TI = sum of all completed gTIR events for that unique field + crop + year.
+        // 2) Crop TI = sum of annual Field TI values / number of unique fields growing that crop.
+        // Imported rows retain a field key. When no event-level field identity exists (manual crop-level entry),
+        // the entered/selected crop field count is treated as the same representative tillage sequence on each field.
+        const keyed = completed.filter((x) => tillageFieldKey(x.row, x.index));
+        if (keyed.length) {
+          const planningYear = String(effectivePlanningYear() || "").trim();
+          const availableYears = Array.from(new Set(keyed.map((x) => tillageEventYear(x.row)).filter(Boolean)));
+          const targetYear = planningYear && availableYears.includes(planningYear)
+            ? planningYear
+            : (availableYears.length === 1 ? availableYears[0] : "");
+          const relevant = targetYear
+            ? keyed.filter((x) => tillageEventYear(x.row) === targetYear)
+            : keyed;
+          const byFieldYear = new Map();
+          relevant.forEach((x) => {
+            const fieldKey = tillageFieldKey(x.row, x.index);
+            const year = tillageEventYear(x.row) || targetYear || "unknown";
+            const key = fieldKey + "||" + year;
+            byFieldYear.set(key, (byFieldYear.get(key) || 0) + x.event.eventGTIR);
+          });
+          const fieldTIs = Array.from(byFieldYear.values());
+          const cropFieldTITotal = fieldTIs.reduce((sum, v) => sum + v, 0);
+          const effectiveFieldCount = fieldTIs.length;
+          const cropAvg = effectiveFieldCount ? cropFieldTITotal / effectiveFieldCount : 0;
+          return {
+            eventCount: relevant.length,
+            // A single fieldTI only exists when this crop/year has one unique field.
+            // For multi-field crops, use fieldTIs[] for the individual annual Field TI values.
+            fieldTI: effectiveFieldCount === 1 ? fieldTIs[0] : null,
+            cropFieldTITotal,
+            cropAvg,
+            acresTilled,
+            effectiveFieldCount,
+            fieldTIs,
+            targetYear,
+          };
+        }
+
+        const representativeFieldTI = completed.reduce((sum, x) => sum + x.event.eventGTIR, 0);
         const selectedFieldCount = selectedBoundaryNames(c).length;
         const enteredFieldCount = num(c.fields);
         const effectiveFieldCount = enteredFieldCount > 0
           ? enteredFieldCount
-          : (selectedFieldCount > 0 ? selectedFieldCount : (completed.length ? 1 : 0));
-        // Exact crop roll-up: sum all completed event gTIR values represented by the crop,
-        // then divide that total by the number of fields growing the crop. Do not multiply
-        // by field count before averaging; that cancels the average and inflates crop gTIR.
-        const cropFieldTITotal = effectiveFieldCount > 0 ? fieldTI : 0;
-        const cropAvg = effectiveFieldCount > 0 ? cropFieldTITotal / effectiveFieldCount : 0;
-        const acresTilled = completed.reduce((sum, e) => sum + e.acresTilled, 0);
-        return { eventCount: completed.length, fieldTI, cropFieldTITotal, cropAvg, acresTilled, effectiveFieldCount };
+          : (selectedFieldCount > 0 ? selectedFieldCount : 1);
+        const cropFieldTITotal = representativeFieldTI * effectiveFieldCount;
+        const cropAvg = effectiveFieldCount ? cropFieldTITotal / effectiveFieldCount : 0;
+        return {
+          eventCount: completed.length,
+          fieldTI: representativeFieldTI,
+          cropFieldTITotal,
+          cropAvg,
+          acresTilled,
+          effectiveFieldCount,
+          fieldTIs: Array(effectiveFieldCount).fill(representativeFieldTI),
+          targetYear: String(effectivePlanningYear() || "").trim(),
+        };
       }
       function tillageValue(c) {
         return tillageRollup(c).cropAvg;
@@ -7371,7 +7438,7 @@ ${acreChangePanel()}
             });
           }
         });
-        return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Event gTIR = Tillage rating × 3.25 × Depth (inches × 2.54 cm/in) × (% disturbed ÷ 100) × Passes. Annual Field TI = sum of completed event gTIR values. Crop gTIR = total completed event gTIR across the crop ÷ number of fields growing the crop. Farm acreage-weighted gTIR = Σ(Crop gTIR × Crop acres) ÷ acres of crops with completed tillage events.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(farmWeightedGTIR(state.crops), 2)}</div><div class="label">Farm acreage-weighted gTIR</div></div><div class="metric"><div class="value">${fmt(highestCropGTIR(state.crops), 2)}</div><div class="label">Highest crop gTIR</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Implement/practice</th><th>Tillage type</th><th>Rating</th><th>Depth</th><th>Disturbed</th><th>Passes</th><th>Event gTIR</th><th>Crop gTIR</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="9">No completed tillage practice records entered.</td></tr>`}</tbody></table></div>`;
+        return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Event gTIR = Tillage rating × 3.25 × Depth (inches × 2.54 cm/in) × (% disturbed ÷ 100) × Passes. Annual Field TI = sum of completed event gTIR values. Crop gTIR = average of annual Field TI values across fields growing the crop; this crop-level sequence applies to each represented field, so Crop gTIR equals the summed Field TI. Farm acreage-weighted gTIR = Σ(Crop gTIR × Crop acres) ÷ acres of crops with completed tillage events.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(farmWeightedGTIR(state.crops), 2)}</div><div class="label">Farm acreage-weighted gTIR</div></div><div class="metric"><div class="value">${fmt(highestCropGTIR(state.crops), 2)}</div><div class="label">Highest crop gTIR</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Implement/practice</th><th>Tillage type</th><th>Rating</th><th>Depth</th><th>Disturbed</th><th>Passes</th><th>Event gTIR</th><th>Crop gTIR</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="9">No completed tillage practice records entered.</td></tr>`}</tbody></table></div>`;
       }
 
       function continuousImprovementPage() {
@@ -10023,6 +10090,7 @@ Have ready:
             const eventGTIR = event.eventGTIR;
             rows.push({
               cropName, acres, fieldBoundaries,
+              fieldId: tillageFieldKey(r),
               noTill: String(c.noTill) === "true" || c.noTill === true ? "Yes" : "No",
               noTillDrillUsed: String(c.noTill) === "true" || c.noTill === true ? c.noTillDrillUsed || "" : "N/A",
               date: r.date || "", depthIn: r.depthIn ?? "", depthCm,
@@ -10670,7 +10738,7 @@ endstream`)
           "",
           "18. FORMULA REGISTER",
           "Key formulas include KML acreage, detailed harvest total, emergence date, living-root days, LRI, full-cover date, covered-soil percent, estimated bare-soil percent, event/crop/farm gTIR, equivalent product pounds, nutrient pounds per acre, whole-field nutrients, and IPM active ingredient totals.",
-          "Tillage register: eventGTIR = Rating × 3.25 × Depth(cm) × Disturbed Fraction × Passes; fieldTI = sum(completed eventGTIR); effectiveFieldCount = entered Crop Fields, else selected KML boundary count, else 1 when completed tillage exists; cropFieldTITotal = fieldTI; cropAvgGTIR = cropFieldTITotal / effectiveFieldCount; cropTotalGTIR = cropFieldTITotal; farmAverageGTIR = acreage-weighted cropAvgGTIR using only crops with completed tillage events.",
+          "Tillage register: eventGTIR = Rating × 3.25 × Depth(cm) × Disturbed Fraction × Passes; Step 1 annual Field TI = sum(completed eventGTIR) for each unique field + crop + year; Step 2 Crop TI (cropAvgGTIR) = sum of those annual Field TI values (cropFieldTITotal) / number of unique fields growing that crop. Individual Field TI values are retained separately in the roll-up and are never replaced by their crop-level sum. Imported field identity is retained from fieldId/fieldBoundaries or field_id in notes. If event-level field identity is unavailable, the manually entered crop-level tillage sequence is treated as the representative sequence for each entered/selected crop field. cropTotalGTIR = cropFieldTITotal; farmAverageGTIR = acreage-weighted cropAvgGTIR using only crops with completed tillage events.",
           "",
           "19. GOVERNANCE AND LIMITATIONS",
           "The builder is a planning, documentation, and QA/QC tool. Generalized Extension nutrient recommendations do not replace field-specific soil tests, yield goals, professional agronomic review, regulations, or audit determinations. SCI standards, policies, audit procedures, and certifying-body decisions remain controlling.",
@@ -10725,7 +10793,7 @@ endstream`)
           "totalHarvest", "harvestDate", "storageLocation", "buyer", "notes", "status"
         ],
         tillage_intensity: [
-          "cropName", "acres", "fieldBoundaries", "noTill", "noTillDrillUsed", "date", "depthIn", "depthCm",
+          "cropName", "acres", "fieldBoundaries", "fieldId", "noTill", "noTillDrillUsed", "date", "depthIn", "depthCm",
           "implement", "tillageType", "gtirRating", "disturbed", "passes",
           "acresTilled", "eventGTIR", "cropAvgGTIR", "cropFieldTITotal", "cropTotalGTIR", "notes", "status", "reason"
         ],
