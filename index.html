@@ -6309,16 +6309,18 @@ ${acreChangePanel()}
           .map((r) => tillageEventData(c, r))
           .filter((e) => e.isComplete);
         const fieldTI = completed.reduce((sum, e) => sum + e.eventGTIR, 0);
-        // Farm Plan Builder may not have an explicit Crop Fields value populated.
-        // Use entered crop fields first, then selected KML boundaries, then one representative field
-        // whenever there is a completed tillage sequence. This preserves the source calculator logic:
-        // Crop Avg gTIR = Annual Field TI when the same crop-level sequence represents each field.
+        // Use entered Crop Fields first, then selected KML boundaries, then one representative field
+        // whenever there is a completed tillage sequence. Crop average gTIR is the completed
+        // event gTIR total divided by the represented field count.
         const selectedFieldCount = selectedBoundaryNames(c).length;
         const enteredFieldCount = num(c.fields);
         const effectiveFieldCount = enteredFieldCount > 0
           ? enteredFieldCount
           : (selectedFieldCount > 0 ? selectedFieldCount : (completed.length ? 1 : 0));
-        const cropFieldTITotal = effectiveFieldCount > 0 ? fieldTI * effectiveFieldCount : 0;
+        // Exact crop roll-up: sum all completed event gTIR values represented by the crop,
+        // then divide that total by the number of fields growing the crop. Do not multiply
+        // by field count before averaging; that cancels the average and inflates crop gTIR.
+        const cropFieldTITotal = effectiveFieldCount > 0 ? fieldTI : 0;
         const cropAvg = effectiveFieldCount > 0 ? cropFieldTITotal / effectiveFieldCount : 0;
         const acresTilled = completed.reduce((sum, e) => sum + e.acresTilled, 0);
         return { eventCount: completed.length, fieldTI, cropFieldTITotal, cropAvg, acresTilled, effectiveFieldCount };
@@ -7369,7 +7371,7 @@ ${acreChangePanel()}
             });
           }
         });
-        return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Event gTIR = Tillage rating × 3.25 × Depth (inches × 2.54 cm/in) × (% disturbed ÷ 100) × Passes. Annual Field TI = sum of completed event gTIR values. Crop gTIR = average of annual Field TI values across fields growing the crop; this crop-level sequence applies to each represented field, so Crop gTIR equals the summed Field TI. Farm acreage-weighted gTIR = Σ(Crop gTIR × Crop acres) ÷ acres of crops with completed tillage events.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(farmWeightedGTIR(state.crops), 2)}</div><div class="label">Farm acreage-weighted gTIR</div></div><div class="metric"><div class="value">${fmt(highestCropGTIR(state.crops), 2)}</div><div class="label">Highest crop gTIR</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Implement/practice</th><th>Tillage type</th><th>Rating</th><th>Depth</th><th>Disturbed</th><th>Passes</th><th>Event gTIR</th><th>Crop gTIR</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="9">No completed tillage practice records entered.</td></tr>`}</tbody></table></div>`;
+        return `<div class="note" style="margin-top:12px"><strong>Math used:</strong> Event gTIR = Tillage rating × 3.25 × Depth (inches × 2.54 cm/in) × (% disturbed ÷ 100) × Passes. Annual Field TI = sum of completed event gTIR values. Crop gTIR = total completed event gTIR across the crop ÷ number of fields growing the crop. Farm acreage-weighted gTIR = Σ(Crop gTIR × Crop acres) ÷ acres of crops with completed tillage events.</div><div class="summary-grid" style="margin-top:10px"><div class="metric"><div class="value">${fmt(farmWeightedGTIR(state.crops), 2)}</div><div class="label">Farm acreage-weighted gTIR</div></div><div class="metric"><div class="value">${fmt(highestCropGTIR(state.crops), 2)}</div><div class="label">Highest crop gTIR</div></div></div><div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Crop</th><th>Implement/practice</th><th>Tillage type</th><th>Rating</th><th>Depth</th><th>Disturbed</th><th>Passes</th><th>Event gTIR</th><th>Crop gTIR</th></tr></thead><tbody>${rows.join("") || `<tr><td colspan="9">No completed tillage practice records entered.</td></tr>`}</tbody></table></div>`;
       }
 
       function continuousImprovementPage() {
@@ -10668,7 +10670,7 @@ endstream`)
           "",
           "18. FORMULA REGISTER",
           "Key formulas include KML acreage, detailed harvest total, emergence date, living-root days, LRI, full-cover date, covered-soil percent, estimated bare-soil percent, event/crop/farm gTIR, equivalent product pounds, nutrient pounds per acre, whole-field nutrients, and IPM active ingredient totals.",
-          "Tillage register: eventGTIR = Rating × 3.25 × Depth(cm) × Disturbed Fraction × Passes; fieldTI = sum(completed eventGTIR); effectiveFieldCount = entered Crop Fields, else selected KML boundary count, else 1 when completed tillage exists; cropFieldTITotal = fieldTI × effectiveFieldCount; cropAvgGTIR = cropFieldTITotal / effectiveFieldCount; cropTotalGTIR = cropFieldTITotal; farmAverageGTIR = acreage-weighted cropAvgGTIR using only crops with completed tillage events.",
+          "Tillage register: eventGTIR = Rating × 3.25 × Depth(cm) × Disturbed Fraction × Passes; fieldTI = sum(completed eventGTIR); effectiveFieldCount = entered Crop Fields, else selected KML boundary count, else 1 when completed tillage exists; cropFieldTITotal = fieldTI; cropAvgGTIR = cropFieldTITotal / effectiveFieldCount; cropTotalGTIR = cropFieldTITotal; farmAverageGTIR = acreage-weighted cropAvgGTIR using only crops with completed tillage events.",
           "",
           "19. GOVERNANCE AND LIMITATIONS",
           "The builder is a planning, documentation, and QA/QC tool. Generalized Extension nutrient recommendations do not replace field-specific soil tests, yield goals, professional agronomic review, regulations, or audit determinations. SCI standards, policies, audit procedures, and certifying-body decisions remain controlling.",
