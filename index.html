@@ -8864,839 +8864,300 @@ ${acreChangePanel()}
       }
       function professionalReportText() {
         saveInputs();
-        let f = state.farm || {};
-        let lines = [];
-        let allRows = rowsNormalized();
-        let crops = state.crops || [];
-        let acres = crops.reduce((s, c) => s + Number(cropAcres(c) || 0), 0);
-        let cropPlannerRows = rowsBySectionName("crop_planner");
-        let tillRows = rowsBySectionName("tillage_intensity");
-        let nutrientRows = rowsBySectionName("nutrient_management_plan");
-        let ipmRows = rowsBySectionName("ipm_plan");
-        let dieselRows = rowsBySectionName("diesel_log");
-        let irrigationRows = rowsBySectionName("irrigation_log");
-        let harvestRows = rowsBySectionName("harvest_log");
-        let livingRootRows = livingRootIndexRows();
-        let bioRows = biodiversityRowsNormalized();
-        let learnRows = learningRowsNormalized();
-        let nrcsRows = nrcsRowsNormalized();
-        let improvementRows = continuousImprovementRows();
-        let livestockRows = livestockRowsNormalized();
-        let attRows = attestationRows();
+        const f = state.farm || {};
+        const lines = [];
+        const crops = state.crops || [];
+        const allRows = rowsNormalized();
+        const totalCropAcres = crops.reduce((s, c) => s + Number(cropAcres(c) || 0), 0);
+        const bioRows = biodiversityRowsNormalized();
+        const learnRows = learningRowsNormalized();
+        const nrcsRows = nrcsRowsNormalized();
+        const improvementRows = continuousImprovementRows();
+        const livestockRows = livestockRowsNormalized();
+        const attRows = attestationRows();
+
         const no = (v) => {
           v = cleanReportValue(v);
-          return (
-            v === "" || v === "Not entered" || v === "undefined" || v === "null"
-          );
+          return v === "" || v === "Not entered" || v === "undefined" || v === "null";
         };
         const has = (v) => !no(v);
         const val = (v, d = "Not entered") => (no(v) ? d : cleanReportValue(v));
         const list = (arr, sep = ", ") =>
-          (arr || [])
-            .filter((x) => !no(x))
-            .map(cleanReportValue)
-            .join(sep) || "Not entered";
-        const line = (label, value) => {
-          lines.push(`${label}: ${val(value)}`);
-        };
+          (arr || []).filter((x) => !no(x)).map(cleanReportValue).join(sep) || "Not entered";
+        const line = (label, value) => lines.push(`${label}: ${val(value)}`);
         const bullet = (txt) => lines.push(`- ${txt}`);
         const detail = (label, value) => {
           if (!no(value)) lines.push(`  ${label}: ${cleanReportValue(value)}`);
         };
-        const details = (pairs) =>
-          pairs.forEach(([label, value]) => detail(label, value));
-        const recordBlock = (idx, title, pairs) => {
-          bullet(`${idx}. ${title}`);
-          pairs.forEach(([label, value]) => detail(label, value));
+        const recordBlock = (title, pairs) => {
+          bullet(title);
+          (pairs || []).forEach(([label, value]) => detail(label, value));
         };
-        const section = (n, title, subtitle) =>
-          addReportSection(lines, `${n}. ${title}`, subtitle);
+        const section = (n, title, subtitle) => addReportSection(lines, `${n}. ${title}`, subtitle);
+        const sameCrop = (r, crop, i) => {
+          const rn = String((r && r.cropName) || "").trim().toLowerCase();
+          const names = [crop && crop.name, crop && crop.cropTypeOther, crop && crop.cropType, `Crop ${i + 1}`]
+            .filter(Boolean).map((x) => String(x).trim().toLowerCase());
+          return names.includes(rn);
+        };
+        const rowsForCrop = (sectionName, crop, i) =>
+          rowsBySectionName(sectionName).filter((r) => sameCrop(r, crop, i));
 
         lines.push(exportDocumentTitle());
-        lines.push(
-          `${f.farmName || "Unnamed Farm"}${effectivePlanningYear() ? " | Farm Planning Year: " + effectivePlanningYear() : ""}`,
-        );
+        lines.push(`${f.farmName || "Unnamed Farm"}${effectivePlanningYear() ? " | Farm Planning Year: " + effectivePlanningYear() : ""}`);
         lines.push(`Generated: ${new Date().toLocaleString()}`);
-        lines.push(
-          "Purpose: farm-plan review packet generated from entered and imported records.",
-        );
-        lines.push(
-          "Note: Final SCI verification, Pillar Engagement Level decisions, and audit determinations require the applicable SCI review process.",
-        );
+        lines.push("Purpose: clear, crop-by-crop farm plan summary generated from entered and imported records.");
+        lines.push("Note: Final SCI verification, Pillar Engagement Level decisions, and audit determinations require the applicable SCI review process.");
 
-        section(1, "Farm Snapshot");
+        section(1, "Farm Overview");
         line("Farm", f.farmName);
         line("Planning Year", effectivePlanningYear());
-        line("Years Farming", f.yearsFarming);
         line("Contact", list([f.contactName, f.email, f.phone], " | "));
-        line("Farm Address", f.farmAddress);
-        if (!no(f.mailingAddress)) line("Mailing Address", f.mailingAddress);
         line("Location", list([f.county, f.state], " | "));
-        line(
-          "USDA Zone / Frost Ranges",
-          `${val(f.usdaZone)} | Last frost: ${val(f.lastFrost)} | First frost: ${val(f.firstFrost)}`,
-        );
-        line(
-          "Fields / KML Boundaries / Crop Acres",
-          `${val(f.totalFields)} fields | ${(state.kmlBoundaries || []).length} KML boundaries | ${fmt(acres, 2)} crop acres entered`,
-        );
-        line(
-          "Soil Testing",
-          `Lab - ${val(f.soilLabTesting)} | Field - ${val(f.soilFieldTesting)} | Sampling Season - ${val(f.soilSamplingSeason)} | Season Changing - ${f.soilSamplingSeasonChanging ? "Yes" : "No"}${f.soilSamplingSeasonChanging ? " | Why: " + val(f.soilSamplingSeasonChangeWhy) : ""} | Equivalency Accepted - ${val(f.soilEquivalencyAccepted, "N/A")}${f.soilEquivalencyAccepted === "Yes" ? " | Program: " + val(f.soilEquivalencyProgram) : ""}`,
-        );
-        line(
-          "Records Included",
-          `${allRows.length} total records across the exported datasets`,
-        );
+        line("Farm Address", f.farmAddress);
+        line("Years Farming", f.yearsFarming);
+        line("Total Crop Acres", `${fmt(totalCropAcres, 2)} acres`);
+        line("Fields / KML Boundaries", `${val(f.totalFields)} fields | ${(state.kmlBoundaries || []).length} KML boundaries`);
+        line("Soil Testing", `Lab - ${val(f.soilLabTesting)} | Field - ${val(f.soilFieldTesting)} | Sampling Season - ${val(f.soilSamplingSeason)}`);
+        line("NRCS Participation", f.nrcs);
+        line("Records Included", `${allRows.length} total exported records`);
 
         section(2, "Farm Story and Goals");
-        const storyBlock = (label, value) => {
-          bullet(label);
-          lines.push(`  ${val(value)}`);
-        };
-        storyBlock("Farm History", f.farmHistory);
-        storyBlock("Farm Goals", (f.goals || []).join(", ") || "Not entered");
-        storyBlock("What's Going Well", f.whatsGoingWell);
-        storyBlock("What's Been Challenging", f.whatsChallenging);
-        if (!no(f.notes)) storyBlock("Farm Notes", f.notes);
+        recordBlock("Farm History", [["Summary", f.farmHistory]]);
+        recordBlock("Farm Goals", [["Goals", (f.goals || []).join(", ") || "Not entered"]]);
+        recordBlock("What's Going Well", [["Summary", f.whatsGoingWell]]);
+        recordBlock("What's Been Challenging", [["Summary", f.whatsChallenging]]);
+        if (!no(f.notes)) recordBlock("Farm Notes", [["Notes", f.notes]]);
 
-        section(3, "Review Flags");
-        let qa = qaqc();
-        let review = qa.filter((x) => !x.ok);
-        line(
-          "Summary",
-          `${review.length} item(s) need review; ${qa.length - review.length} checklist item(s) complete`,
-        );
-        if (review.length)
-          review.forEach((x, i) => bullet(`${i + 1}. ${x.msg}`));
-        else bullet("No open review items returned by the tool.");
-
-        section(4, "Boundaries and Acres");
+        section(3, "Boundaries and Acreage");
         line("Field Boundaries Confirmed", f.fieldBoundariesConfirmed);
-        if (f.fieldBoundariesWhyNo)
-          line("Boundary Explanation", f.fieldBoundariesWhyNo);
-        line(
-          "Acre Change",
-          `${val(f.acreChangeScenario || "No acre change")}${f.acreChangeScenario && f.acreChangeScenario !== "No acre change" ? " | " + acreText(f.acreChangeAcres) + " acres | Effective " + val(f.acreChangeEffectiveDate) + " | Fields " + val(f.acreChangeFields) + " | Basis " + val(f.acreChangeBasis) : ""}`,
-        );
-        let kb = kmlBoundaryRows();
+        if (f.fieldBoundariesWhyNo) line("Boundary Explanation", f.fieldBoundariesWhyNo);
+        line("Acre Change", `${val(f.acreChangeScenario || "No acre change")}${f.acreChangeScenario && f.acreChangeScenario !== "No acre change" ? " | " + acreText(f.acreChangeAcres) + " acres | Effective " + val(f.acreChangeEffectiveDate) : ""}`);
+        const kb = kmlBoundaryRows();
         if (!kb.length) bullet("No KML boundaries uploaded or parsed.");
-        else {
-          kb.slice(0, 20).forEach((r, i) => {
-            bullet(
-              `${i + 1}. ${val(r.boundaryName, "Unnamed boundary")} — ${fmt(r.acres, 2)} acres`,
-            );
-            if (!no(r.linkedCropsAndPractices))
-              detail("Linked crops/practices", r.linkedCropsAndPractices);
-          });
-          if (kb.length > 20)
-            bullet(
-              `${kb.length - 20} more boundary record(s) are included in 00_kml_boundaries.csv.`,
-            );
-        }
+        else kb.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.boundaryName, "Unnamed boundary")} — ${fmt(r.acres, 2)} acres`, [["Linked crops / practices", r.linkedCropsAndPractices]]));
 
-        section(5, "Pillar Engagement Summary");
-        bullet(
-          "Note: Final Pillar Engagement Level is determined during audit by SCS GLOBAL SERVICES.",
-        );
-        const minPillarStatus = (key) => methodologyFarmPEL(key).level;
-        const reportPELLevels = {
-          P1: minPillarStatus("P1"),
-          P2: minPillarStatus("P2"),
-          P3: minPillarStatus("P3"),
-          P4: minPillarStatus("P4"),
-          P5: minPillarStatus("P5"),
-          P6: minPillarStatus("P6"),
-          P7: minPillarStatus("P7"),
-        };
-        bullet(
-          `PEL methodology planning result: ${methodologyOverallPEL(reportPELLevels)}. Required pillars used: ${pelRequiredPillars().join(", ")}.`,
-        );
-        bullet(
-          `Sampling reference: ${pelSampleSize()} of ${(state.kmlBoundaries || []).length || crops.length || 0} entered fields; actual sample selection and field-level ratings are assigned by SCI's approved certifying body.`,
-        );
-        const pillarMaxTI = () => highestCropGTIR(crops);
-        const pillarPlannerEntries = () =>
-          crops.reduce(
-            (s, c) =>
-              s +
-              cropPlannerEntries(c).filter(
-                ({ entry: e }) =>
-                  has(e.crop) || has(e.plantingDate) || has(e.harvestDate),
-              ).length,
-            0,
-          );
-        const pillarFertRows = () =>
-          crops.reduce(
-            (s, c) =>
-              s +
-              (c.fertilizerRows || []).filter(
-                (r) =>
-                  has(r.product) ||
-                  has(r.productName) ||
-                  has(r.rateAcre) ||
-                  has(r.nPct) ||
-                  has(r.pPct) ||
-                  has(r.kPct),
-              ).length +
-              (c.microRows || []).filter(
-                (r) => has(r.name) || has(r.rate) || has(r.contains),
-              ).length +
-              (c.amendmentRows || []).filter(
-                (r) => has(r.name) || has(r.rate) || has(r.type),
-              ).length,
-            0,
-          );
-        const pillarIpmRows = () =>
-          crops.reduce(
-            (s, c) =>
-              s +
-              (c.ipmRows || []).filter(
-                (r) =>
-                  has(r.pest) ||
-                  has(r.targetPest) ||
-                  has(r.product) ||
-                  has(r.productName) ||
-                  has(r.epaRegNo) ||
-                  has(r.amountAcre) ||
-                  has(r.activePct),
-              ).length,
-            0,
-          );
-        const learningMetForReport =
-          learnRows.length &&
-          learnRows.every((r) => r.requirementStatus === "Requirements Met");
-        const pillarBlocks = [
-          [
-            "P1. Minimize Soil Disturbance",
-            minPillarStatus("P1"),
-            [
-              [
-                "Basis",
-                `Highest crop-average TI: ${fmt(pillarMaxTI(), 1)}${limitingTillageCrops(crops).length ? ` (${limitingTillageCrops(crops).join(", ")})` : ""}; each crop value is the average of its completed tillage events in the one-year crop rotation`,
-              ],
-              [
-                "Review note",
-                "Confirm primary inversion tillage prohibition, residue burning prohibition, and traffic/compaction details during review",
-              ],
-            ],
-          ],
-          [
-            "P2. Living Roots in the Ground Year-Round",
-            minPillarStatus("P2"),
-            [
-              [
-                "Basis",
-                `Crop planner entries used for living-root estimate: ${pillarPlannerEntries()}`,
-              ],
-              [
-                "Review note",
-                "Confirm growing-season photosynthetic activity and non-growing-season vegetative cover requirements by enrolled acres",
-              ],
-            ],
-          ],
-          [
-            "P3. Keeping Year-Round Soil Coverage",
-            minPillarStatus("P3"),
-            [
-              [
-                "Basis",
-                "Crop, harvest, tillage, and cover/residue records are captured for review",
-              ],
-              [
-                "Review note",
-                "Bare-soil decrease requires baseline/trend confirmation and should not be auto-claimed from the form alone",
-              ],
-            ],
-          ],
-          [
-            "P4. Maximizing Diversity Above and Below Ground",
-            minPillarStatus("P4"),
-            [
-              [
-                "Basis",
-                `Biodiversity actions complete: ${biodiversityCompleteCount()} of ${biodiversityRequiredCount()}; crop types documented: ${[...new Set(crops.map((c) => (c.cropType === "Other" ? c.cropTypeOther || "Other" : c.cropType)).filter(Boolean))].length}`,
-              ],
-              [
-                "Review note",
-                "Confirm required number of Biodiversity Action Elements, measurement criteria, evidence, and crop diversity requirements",
-              ],
-            ],
-          ],
-          [
-            "P5. Reducing Synthetic Inputs",
-            minPillarStatus("P5"),
-            [
-              ["Nutrient stewardship status", minPillarStatus("P5_Nutrients")],
-              ["IPM plan status", minPillarStatus("P5_IPM")],
-              [
-                "Basis",
-                `Nutrient entries: ${pillarFertRows()}; IPM entries: ${pillarIpmRows()}`,
-              ],
-              [
-                "Review note",
-                "P5 requires both nutrient and IPM information; reduction trends, pesticide phase-outs, and risk-mitigation requirements require reviewer confirmation",
-              ],
-            ],
-          ],
-          [
-            "P6. Continuous Learning",
-            minPillarStatus("P6"),
-            [
-              ["Basis", `Continuous learning records: ${learnRows.length}`],
-              [
-                "Review note",
-                learningMetForReport
-                  ? "Annual learning requirement appears met from entered records"
-                  : "Enter credits/evidence or first-year status to support this pillar",
-              ],
-            ],
-          ],
-          [
-            "P7. Appropriate Integration of Livestock",
-            minPillarStatus("P7"),
-            [
-              [
-                "Basis",
-                `Livestock selected: ${val(f.livestock, "Not entered")}; livestock log entries: ${livestockRows.length}`,
-              ],
-              [
-                "Review note",
-                f.livestock === "No"
-                  ? `Explanation: ${val(f.livestockWhyNo)}`
-                  : "Confirm outdoor access, feed/water, shelter, pasture cover, recovery, and withdrawal-period records where applicable",
-              ],
-            ],
-          ],
-        ];
-        pillarBlocks.forEach(([title, status, pairs], i) =>
-          recordBlock(i + 1, `${title} — Auto-estimate: ${status}`, pairs),
-        );
+        section(4, "Pillar Engagement Summary");
+        bullet("Final Pillar Engagement Level is determined during audit by SCS GLOBAL SERVICES.");
+        const reportPELLevels = {};
+        ["P1","P2","P3","P4","P5","P6","P7"].forEach((key) => { reportPELLevels[key] = methodologyFarmPEL(key).level; });
+        line("Planning Result", methodologyOverallPEL(reportPELLevels));
+        [
+          ["P1 — Minimize Soil Disturbance", reportPELLevels.P1],
+          ["P2 — Living Roots", reportPELLevels.P2],
+          ["P3 — Year-Round Soil Cover", reportPELLevels.P3],
+          ["P4 — Biodiversity / Diversity", reportPELLevels.P4],
+          ["P5 — Reducing Synthetic Inputs", reportPELLevels.P5],
+          ["P6 — Continuous Learning", reportPELLevels.P6],
+          ["P7 — Livestock Integration", reportPELLevels.P7],
+        ].forEach(([label, status]) => bullet(`${label}: ${status}`));
 
-        section(6, "Crop Summary");
+        section(5, "Crop-by-Crop Farm Plan", "Each crop is shown as one complete management story: acreage and fields, crop calendar, harvest, tillage, nutrients, IPM, irrigation, diesel, and improvement actions.");
         if (!crops.length) bullet("No crops entered.");
-        crops.forEach((c, i) => {
+
+        crops.forEach((c, ci) => {
           ensureHarvestSections(c);
-          let p = pillar(c);
-          const cropTitle = `${c.name || "Unnamed Crop"} — ${fmt(cropAcres(c), 2)} acres`;
-          recordBlock(i + 1, cropTitle, [
-            [
-              "Crop type",
-              c.cropType === "Other"
-                ? c.cropTypeOther || "Other"
-                : val(c.cropType),
-            ],
-            ["Production year", val(c.year)],
-            ["Designated Traffic Zones", c.designatedTrafficZones],
-            [
-              "Why designated traffic zones are not used",
-              c.designatedTrafficZones === "No"
-                ? c.designatedTrafficZonesWhyNo
-                : "N/A",
-            ],
-            ["Perennial / Orchard", c.isPerennial ? "Yes" : "No"],
-            ["No Till", c.noTill ? "Yes" : "No"],
-            [
-              "No-Till Drill Used",
-              c.noTill ? c.noTillDrillUsed || "Not answered" : "N/A",
-            ],
-            ["Non-GMO", c.nonGmo ? "Yes" : "No"],
-            ["Organic", c.organic ? "Yes" : "No"],
-            [
-              "Organic field boundaries",
-              c.organic ? organicBoundaryNames(c).join(", ") || "Not assigned" : "N/A",
-            ],
-            [
-              "Organic acres",
-              c.organic ? `${fmt(organicBoundaryAcres(c), 2)} acres` : "N/A",
-            ],
-            [
-              "Separate planting dates by field",
-              c.separateFieldPlantingDates ? "Yes" : "No",
-            ],
-            [
-              "Field planting dates",
-              c.separateFieldPlantingDates ? fieldPlantingDateSummary(c) || "Not entered" : "N/A",
-            ],
-          ]);
-          recordBlock("", `${c.name || "Unnamed Crop"} — Acreage and Fields`, [
-            ["Crop acres", `${fmt(cropAcres(c), 2)} acres`],
-            [
-              "Field boundaries",
-              selectedBoundaryNames(c).join(", ") || "Not assigned",
-            ],
+          const cropName = c.name || c.cropTypeOther || c.cropType || `Crop ${ci + 1}`;
+          const p = pillar(c);
+          const planner = rowsForCrop("crop_planner", c, ci);
+          const harvest = rowsForCrop("harvest_log", c, ci);
+          const tillage = rowsForCrop("tillage_intensity", c, ci);
+          const nutrients = rowsForCrop("nutrient_management_plan", c, ci);
+          const ipm = rowsForCrop("ipm_plan", c, ci);
+          const irrigation = rowsForCrop("irrigation_log", c, ci);
+          const diesel = rowsForCrop("diesel_log", c, ci);
+          const root = livingRootMetrics(c);
+          const cover = coveredSoilMetrics(c);
+
+          lines.push(`CROP ${ci + 1} — ${String(cropName).toUpperCase()}`);
+          recordBlock("At a Glance", [
+            ["Acres", `${fmt(cropAcres(c), 2)} acres`],
+            ["Crop type", c.cropType === "Other" ? c.cropTypeOther || "Other" : c.cropType],
+            ["Production year", c.year],
+            ["Field boundaries", selectedBoundaryNames(c).join(", ") || "Not assigned"],
             ["Management practices", cropPractices(c)],
+            ["No Till", c.noTill ? "Yes" : "No"],
+            ["Designated traffic zones", c.designatedTrafficZones],
+            ["Organic", c.organic ? "Yes" : "No"],
+            ["Non-GMO", c.nonGmo ? "Yes" : "No"],
           ]);
-          recordBlock("", `${c.name || "Unnamed Crop"} — Pillar Snapshot`, [
-            ["P1 Soil Disturbance", p.P1],
-            ["Living Root Index", fmt(p.rootIndex, 2)],
-            ["P5 Nutrient Management", p.P5_Nutrients],
+          recordBlock("Crop Performance / SCI Snapshot", [
+            ["P1 soil disturbance", p.P1],
+            ["Crop-average gTIR", fmt(p.TI, 2)],
+            ["Living Root Index", `${fmt(root.pct, 2)}% (${root.activityDays} days)`],
+            ["Estimated covered soil", `${fmt(cover.coveredPct, 2)}%`],
+            ["Estimated bare soil", `${fmt(cover.bareSoilPct, 2)}%`],
+            ["P5 nutrient management", p.P5_Nutrients],
             ["P5 IPM", p.P5_IPM],
-            ["P7 Livestock Integration", p.P7],
-            ["gTIR", fmt(p.TI)],
           ]);
-          recordBlock("", `${c.name || "Unnamed Crop"} — Harvest Summary`, [
-            ["Harvest information", harvestSummary(c)],
-          ]);
+
+          lines.push("CROP CALENDAR");
+          if (!planner.length) bullet("No crop planner entries entered for this crop.");
+          else planner.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.title, "Crop event")}`, [
+            ["Crop planted", r.crop], ["Planting date", r.plantingDate], ["Emergence date", cropEmergenceDate(r)],
+            ["Full soil cover date", cropFullCoverDate(r)], ["Harvest / end date", r.harvestDate],
+            ["Seeding rate", r.seedingRate], ["Termination", r.terminationStyle], ["Mulch", r.mulchUsed],
+          ]));
+
+          lines.push("HARVEST");
+          if (!harvest.length) bullet("No harvest records entered for this crop.");
+          else harvest.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.harvestPeriod, "Harvest entry")}`, [
+            ["Entry method", r.harvestEntryMode], ["Yield per acre", r.yieldAcre], ["Unit", r.unit],
+            ["Total harvest", r.totalHarvest], ["Notes", r.notes],
+          ]));
+
+          lines.push("TILLAGE");
+          if (!state.tillageEnabled) bullet(`Tillage section skipped: ${(state.skippedReasons || {}).tillage || "Reason not entered"}`);
+          else if (c.noTill && String(c.noTillDrillUsed || "") !== "Yes") bullet("No Till selected; no tillage events required for this crop.");
+          else if (!tillage.length) bullet("No tillage records entered for this crop.");
+          else {
+            line("Crop-average gTIR", fmt(tillageValue(c), 2));
+            tillage.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.implement, "Tillage event")}`, [
+              ["Date", r.date], ["Tillage type", r.tillageType], ["Depth", has(r.depthIn) ? `${r.depthIn} in` : ""],
+              ["Surface disturbed", has(r.disturbed) ? `${r.disturbed}%` : ""], ["Passes", r.passes],
+              ["Event gTIR", r.eventGTIR || r.gTIR || r.tillageValue],
+            ]));
+          }
+
+          lines.push("NUTRIENT MANAGEMENT");
+          if (!nutrientActive()) bullet(`Nutrient Management skipped: ${(state.skippedReasons || {}).nutrient || "Reason not entered"}`);
+          else if (!nutrients.length) bullet("No nutrient applications entered for this crop.");
+          else {
+            const totalN = nutrients.reduce((s, r) => s + num(r.totalN), 0);
+            const totalP = nutrients.reduce((s, r) => s + num(r.totalP), 0);
+            const totalK = nutrients.reduce((s, r) => s + num(r.totalK), 0);
+            line("Whole-field nutrient totals", `N ${fmt(totalN, 2)} lbs | P ${fmt(totalP, 2)} lbs | K ${fmt(totalK, 2)} lbs`);
+            nutrients.forEach((r, i) => {
+              const productLbsPerAcre = has(r.equivalentProductLbsPerAcre) ? num(r.equivalentProductLbsPerAcre) : fertilizerProductLbsPerAcre(r);
+              recordBlock(`${i + 1}. ${val(r.productName || r.product, "Fertilizer product")}`, [
+                ["Application date", r.applicationDate], ["Application rate", has(r.rateAcre) ? `${r.rateAcre} ${val(r.unit, "")}/acre` : ""],
+                ["Analysis", `${val(r.nPct, "0")}-${val(r.pPct, "0")}-${val(r.kPct, "0")}`],
+                ["Equivalent product weight", `${fmt(productLbsPerAcre, 2)} lbs/acre`],
+                ["Whole-field nutrients", `N ${fmt(r.totalN, 2)} lbs | P ${fmt(r.totalP, 2)} lbs | K ${fmt(r.totalK, 2)} lbs`],
+                ["Fields", r.fieldBoundaries], ["Notes", r.notes],
+              ]);
+            });
+          }
+
+          lines.push("IPM / CROP PROTECTION");
+          if (!state.ipmEnabled) bullet(`IPM skipped: ${(state.skippedReasons || {}).ipm || "Reason not entered"}`);
+          else if (!ipm.length) bullet("No IPM applications entered for this crop.");
+          else ipm.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.productName, "IPM application")}`, [
+            ["Application date", r.applicationDate], ["Target pest / weed", r.pest], ["EPA Reg No", r.epaRegNo],
+            ["Rate", list([r.amountAcre, r.unit], " ")], ["Active ingredient", has(r.activePct) ? `${r.activePct}%` : ""],
+            ["Area applied", r.areaApplied], ["Fields", r.fieldBoundaries],
+          ]));
+
+          lines.push("IRRIGATION");
+          if (!state.irrigationEnabled) bullet(`Irrigation skipped: ${(state.skippedReasons || {}).irrigation || "Reason not entered"}`);
+          else if (!irrigation.length) bullet("No irrigation records entered for this crop.");
+          else irrigation.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.cropPractice, "Irrigation record")}`, [
+            ["Irrigated acres", `${acreText(r.irrigatedAcres)} acres`], ["Pump / source", list([r.pumpName, r.waterSource], " | ")],
+            ["Flow rate", r.effectiveFlowRateGpm || r.pumpGpm], ["Hours", list([r.minHours, r.maxHours], " to ")],
+            ["Cycles", list([r.minCycles, r.maxCycles], " to ")], ["Gallons / acre-feet", `${val(r.gallons)} gal | ${val(r.acreFeet)} ac-ft`],
+            ["Drainage type", r.drainageType],
+          ]));
+
+          lines.push("DIESEL");
+          if (!dieselActive()) bullet(`Diesel skipped: ${(state.skippedReasons || {}).diesel || "Reason not entered"}`);
+          else if (!diesel.length) bullet("No diesel records entered for this crop.");
+          else diesel.forEach((r, i) => recordBlock(`${i + 1}. Diesel use`, [
+            ["Ground work", r.groundWorkGallons], ["Planting — cash / cover", list([r.plantingCashCropGallons, r.plantingCoverCropGallons], " / ")],
+            ["Fertilizer / spray", list([r.fertilizerApplicationsGallons, r.sprayApplicationsGallons], " / ")],
+            ["Harvest / transport", list([r.harvestGallons, r.transportGallons], " / ")], ["Irrigation pump", r.irrigationPumpOperationsGallons],
+            ["Total diesel", r.totalDiesel],
+          ]));
+
           if (c.isPerennial) {
-            let pd = c.perennialData || {};
-            recordBlock("", `${c.name || "Unnamed Crop"} — Perennial System`, [
-              [
-                "System type",
-                pd.systemType === "Other"
-                  ? pd.systemTypeOther || "Other"
-                  : pd.systemType,
-              ],
-              ["Establishment year", pd.establishmentYear],
-              ["Middle-row / inter-row vegetation", pd.middleRowVegetation],
-              ["Grasses, forbs, and legumes included", pd.functionalMix],
-              ["Mulch used", pd.mulchUsed],
-              ["Current bare soil in middle rows (%)", pd.bareSoilPct],
-              ["Designated traffic areas", pd.designatedTrafficAreas],
+            const pd = c.perennialData || {};
+            lines.push("PERENNIAL SYSTEM");
+            recordBlock("Perennial Management", [
+              ["System type", pd.systemType === "Other" ? pd.systemTypeOther || "Other" : pd.systemType],
+              ["Establishment year", pd.establishmentYear], ["Inter-row vegetation", pd.middleRowVegetation],
+              ["Grasses, forbs, legumes", pd.functionalMix], ["Mulch used", pd.mulchUsed],
+              ["Current bare soil in middle rows", has(pd.bareSoilPct) ? `${pd.bareSoilPct}%` : ""],
+              ["Bare-soil / soil-cover plan", pd.bareSoilReductionPlan], ["Tillage reduction plan", pd.tillageReductionPlan],
+              ["Notes", pd.notes],
             ]);
-            recordBlock(
-              "",
-              `${c.name || "Unnamed Crop"} — Perennial Management Plans`,
-              [
-                [
-                  "Bare soil reduction / soil cover plan",
-                  pd.bareSoilReductionPlan,
-                ],
-                ["Tillage reduction plan", pd.tillageReductionPlan],
-                ["Perennial system notes", pd.notes],
-              ],
-            );
+          }
+
+          const cropCI = improvementRows.filter((r) => {
+            const selected = String(r.selectedCrops || "").toLowerCase();
+            return selected && selected.includes(String(cropName).toLowerCase());
+          });
+          if (cropCI.length) {
+            lines.push("CONTINUOUS IMPROVEMENT FOR THIS CROP");
+            cropCI.forEach((r) => {
+              const boundaryNames = String(r.selectedBoundaries || "").split(/\s*;\s*/).filter(Boolean);
+              const boundarySummary = boundaryNames.length
+                ? `${boundaryNames.length} mapped field${boundaryNames.length === 1 ? "" : "s"}${boundaryNames.length <= 3 ? ": " + boundaryNames.join("; ") : ": " + boundaryNames.slice(0, 3).join("; ") + `; +${boundaryNames.length - 3} more`}`
+                : "No mapped fields selected";
+              recordBlock(r.improvementArea || "Improvement area", [
+                ["Selected actions", r.selectedActions], ["Other action", r.otherPlannedAction], ["Planned change", r.plannedChange],
+                ["Field scope", boundarySummary], ["Commitment", r.committedToChanges],
+              ]);
+            });
           }
         });
 
-        section(7, "Crop Calendar and Estimated Bare Soil");
-        (state.crops || []).forEach((c) => {
-          const root = livingRootMetrics(c), cover = coveredSoilMetrics(c);
-          bullet(`${c.name || c.cropTypeOther || c.cropType || "Unnamed crop"}: LRI ${fmt(root.pct, 2)}% (${root.activityDays} merged living-root days); Estimated Covered Soil ${fmt(cover.coveredPct, 2)}% (${cover.coveredDays} merged covered days); Estimated Bare Soil % = ${fmt(cover.bareSoilPct, 2)}%.`);
-        });
-        bullet(`Farm acreage-weighted Estimated Bare Soil %: ${fmt(farmEstimatedBareSoilPct(state.crops || []), 2)}%.`);
-        bullet("Important limitation: Crop residue is not included in Estimated Bare Soil %. An onsite assessment is required to evaluate residue and make the final soil-cover conclusion.");
-        if (!cropPlannerRows.length)
-          bullet("No crop calendar records entered.");
-        else
-          cropPlannerRows.forEach((r, i) =>
-            recordBlock(
-              i + 1,
-              `${val(r.cropName)} — ${val(r.title, "Crop event")}`,
-              [
-                ["Crop planted", r.crop],
-                ["Planting date", r.plantingDate],
-                ["Days until emergence", r.daysUntilEmergence],
-                ["DCC — days from emergence to full soil cover", r.dcc],
-                ["Calculated emergence date", cropEmergenceDate(r)],
-                ["Calculated full soil cover date", cropFullCoverDate(r)],
-                ["Living-root days", cropLivingRootDays(r)],
-                ["Covered days", cropCoveredDays(r)],
-                ["Harvest / end date", r.harvestDate],
-                ["Seeding rate", r.seedingRate],
-                ["Termination", r.terminationStyle],
-                ["Mulch used", r.mulchUsed],
-              ],
-            ),
-          );
-
-        section(8, "Harvest");
-        if (!harvestRows.length) bullet("No harvest records entered.");
-        else
-          harvestRows.forEach((r, i) =>
-            recordBlock(
-              i + 1,
-              `${val(r.cropName)} — ${val(r.harvestPeriod, "Harvest entry")}`,
-              [
-                ["Entry method", r.harvestEntryMode],
-                ["Yield per acre", r.yieldAcre],
-                ["Unit", r.unit],
-                ["Total harvest", r.totalHarvest],
-                ["Notes", r.notes],
-              ],
-            ),
-          );
-
-        section(9, "Tillage Intensity");
-        if (!tillRows.length) bullet("No tillage records entered.");
-        else
-          tillRows.forEach((r, i) =>
-            recordBlock(
-              i + 1,
-              `${val(r.cropName)} — ${val(r.implement, "Tillage event")}`,
-              [
-                ["Date", r.date],
-                ["Tillage type", r.tillageType],
-                ["Depth", r.depthIn],
-                ["Surface disturbed (%)", r.disturbed],
-                ["Passes", r.passes],
-                ["Tillage value", r.tillageValue || r.gTIR],
-              ],
-            ),
-          );
-
-        section(
-          10,
-          "Nutrient Management",
-          "Fertilizer applications are grouped by crop. Per-acre application information is separated from whole-field calculated totals for easier review.",
-        );
-        if (!nutrientActive()) {
-          bullet(
-            `Section skipped: ${(state.skippedReasons || {}).nutrient || "Reason not entered"}`,
-          );
-        } else if (!nutrientRows.length) {
-          bullet("No nutrient records entered.");
-        } else {
-          const nutrientGroups = {};
-          nutrientRows.forEach((r) => {
-            const key = val(r.cropName, "Unnamed Crop");
-            (nutrientGroups[key] || (nutrientGroups[key] = [])).push(r);
-          });
-          Object.entries(nutrientGroups).forEach(
-            ([cropName, records], cropIdx) => {
-              const cropRecord = (crops || []).find(
-                (c) =>
-                  String(c.name || "").trim() === String(cropName || "").trim(),
-              );
-              const cropAcreTotal = cropRecord
-                ? cropAcres(cropRecord)
-                : num(records[0] && records[0].acres);
-              const totalProduct = records.reduce(
-                (sum, r) => sum + num(r.totalProduct),
-                0,
-              );
-              const totalN = records.reduce((sum, r) => sum + num(r.totalN), 0);
-              const totalP = records.reduce((sum, r) => sum + num(r.totalP), 0);
-              const totalK = records.reduce((sum, r) => sum + num(r.totalK), 0);
-              recordBlock(cropIdx + 1, `${cropName} — Nutrient Plan Summary`, [
-                ["Crop acres", `${fmt(cropAcreTotal, 2)} acres`],
-                ["Application records", records.length],
-                [
-                  "Field boundaries",
-                  list(records.map((r) => r.fieldBoundaries).filter(Boolean)),
-                ],
-                ["Whole-field product total", `${fmt(totalProduct, 2)} lbs`],
-                [
-                  "Whole-field nutrient totals",
-                  `N ${fmt(totalN, 2)} lbs | P ${fmt(totalP, 2)} lbs | K ${fmt(totalK, 2)} lbs`,
-                ],
-              ]);
-              records.forEach((r, i) => {
-                const product = val(
-                  r.productName || r.product,
-                  "Fertilizer product",
-                );
-                const rateParts = [];
-                if (has(r.rateAcre))
-                  rateParts.push(
-                    `${cleanReportValue(r.rateAcre)} ${val(r.unit, "")}/acre`.trim(),
-                  );
-                const analysis = [
-                  val(r.nPct, "0"),
-                  val(r.pPct, "0"),
-                  val(r.kPct, "0"),
-                ].join("-");
-                const productLbsPerAcre = has(r.equivalentProductLbsPerAcre)
-                  ? num(r.equivalentProductLbsPerAcre)
-                  : fertilizerProductLbsPerAcre(r);
-                const perAcreN = (productLbsPerAcre * num(r.nPct)) / 100;
-                const perAcreP = (productLbsPerAcre * num(r.pPct)) / 100;
-                const perAcreK = (productLbsPerAcre * num(r.kPct)) / 100;
-                recordBlock(
-                  "",
-                  `${cropName} — Application ${i + 1}: ${product}`,
-                  [
-                    ["Application date", r.applicationDate],
-                    ["Application rate", rateParts.join(" ") || "Not entered"],
-                    [
-                      "Product density",
-                      ["Gallons", "Fluid oz"].includes(r.unit) &&
-                      has(r.productLbsPerGallon)
-                        ? `${fmt(r.productLbsPerGallon, 2)} lb/gal`
-                        : "Not required",
-                    ],
-                    [
-                      "Equivalent product weight",
-                      `${fmt(productLbsPerAcre, 2)} lbs/acre`,
-                    ],
-                    ["Guaranteed analysis (N-P-K)", analysis],
-                    [
-                      "Nutrients per acre",
-                      `N ${fmt(perAcreN, 2)} | P ${fmt(perAcreP, 2)} | K ${fmt(perAcreK, 2)} lbs/acre`,
-                    ],
-                    ["Whole-field product", `${fmt(r.totalProduct, 2)} lbs`],
-                    [
-                      "Whole-field nutrients",
-                      `N ${fmt(r.totalN, 2)} lbs | P ${fmt(r.totalP, 2)} lbs | K ${fmt(r.totalK, 2)} lbs`,
-                    ],
-                    ["Fields", r.fieldBoundaries],
-                    ["Notes", r.notes],
-                  ],
-                );
-              });
-            },
-          );
-        }
-
-        section(11, "IPM / Crop Protection");
-        if (!state.ipmEnabled)
-          bullet(
-            `Section skipped: ${(state.skippedReasons || {}).ipm || "Reason not entered"}`,
-          );
-        if (!ipmRows.length) bullet("No IPM records entered.");
-        else
-          ipmRows.forEach((r, i) =>
-            recordBlock(
-              i + 1,
-              `${val(r.cropName)} — ${val(r.productName, "IPM application")}`,
-              [
-                ["Product label", r.productLabel],
-                ["EPA Reg No", r.epaRegNo],
-                ["Application date", r.applicationDate],
-                ["Target pest/weed", r.pest],
-                ["Rate", list([r.amountAcre, r.unit], " ")],
-                ["Active ingredient (%)", r.activePct],
-                ["Area applied", r.areaApplied],
-                ["Total active ingredient", r.totalActiveIngredient],
-                ["Fields", r.fieldBoundaries],
-              ],
-            ),
-          );
-
-        section(12, "Diesel and Irrigation");
-        if (!dieselActive())
-          bullet(
-            `Diesel skipped: ${(state.skippedReasons || {}).diesel || "Reason not entered"}`,
-          );
-        if (!dieselRows.length) bullet("No diesel records entered.");
-        else
-          dieselRows.forEach((r, i) =>
-            recordBlock(i + 1, `${val(r.cropName)} — Diesel use`, [
-              ["Ground work gal", r.groundWorkGallons],
-              [
-                "Planting gal",
-                list(
-                  [r.plantingCashCropGallons, r.plantingCoverCropGallons],
-                  " / ",
-                ),
-              ],
-              [
-                "Fertilizer / spray gal",
-                list(
-                  [r.fertilizerApplicationsGallons, r.sprayApplicationsGallons],
-                  " / ",
-                ),
-              ],
-              [
-                "Harvest / transport gal",
-                list([r.harvestGallons, r.transportGallons], " / "),
-              ],
-              ["Irrigation pump gal", r.irrigationPumpOperationsGallons],
-              ["Total diesel", r.totalDiesel],
-            ]),
-          );
-        if (!state.irrigationEnabled)
-          bullet(
-            `Irrigation skipped: ${(state.skippedReasons || {}).irrigation || "Reason not entered"}`,
-          );
-        if (!irrigationRows.length) bullet("No irrigation records entered.");
-        else
-          irrigationRows.forEach((r, i) =>
-            recordBlock(i + 1, `${val(r.cropName)} — Irrigation`, [
-              [
-                "Practice / acres",
-                `${val(r.cropPractice)} | ${acreText(r.irrigatedAcres)} acres`,
-              ],
-              ["Pump / source", list([r.pumpName, r.waterSource], " | ")],
-              ["Flow rate", r.effectiveFlowRateGpm || r.pumpGpm],
-              ["Hours range", list([r.minHours, r.maxHours], " to ")],
-              ["Cycles range", list([r.minCycles, r.maxCycles], " to ")],
-              [
-                "Gallons / acre-feet",
-                `${val(r.gallons)} gal | ${val(r.acreFeet)} ac-ft`,
-              ],
-              ["Drainage type", r.drainageType],
-            ]),
-          );
-
-        section(13, "Livestock");
-        line(
-          "Livestock Question",
-          `${val(f.livestock, "Optional / not selected")}${f.livestock === "No" ? " | Reason: " + val(f.livestockWhyNo) : ""}`,
-        );
-        if (!livestockRows.length) bullet("No livestock records entered.");
-        else
-          livestockRows.forEach((r, i) =>
-            recordBlock(
-              i + 1,
-              `${val(r.status, "Livestock record")}${no(r.species) ? "" : " — " + val(r.species)}`,
-              [
-                ["Production type", r.productionType],
-                ["Animal count", r.animalCount],
-                ["Fields", r.fieldBoundaries],
-                [
-                  "Grazing window",
-                  list([r.grazingStart, r.grazingEnd], " to "),
-                ],
-                ["Recovery days", r.recoveryDays],
-                ["Vegetative cover (%)", r.vegetativeCoverPct],
-                [
-                  "Water / shelter",
-                  list([r.waterAccess, r.shelterAccess], " | "),
-                ],
-                ["Manure handling", r.manureHandling],
-                ["Notes", r.notes],
-              ],
-            ),
-          );
-
-        section(14, "Biodiversity Action Elements");
+        section(6, "Farm-Wide Programs and Commitments");
+        lines.push("BIODIVERSITY ACTION ELEMENTS");
         if (!bioRows.length) bullet("No biodiversity action elements entered.");
-        else
-          bioRows.forEach((r, i) =>
-            recordBlock(
-              i + 1,
-              `${val(r.actionElement, "Action element")} — ${val(r.status)}`,
-              [
-                [
-                  "Target / requirement",
-                  list([r.targetLevel, r.requirementStatus], " | "),
-                ],
-                ["Area", r.area],
-                ["Fields", r.fieldBoundaries],
-                ["Boundary acres", r.boundaryAcres],
-                ["Measurement criterion", r.measurementCriterion],
-                ["Baseline notes", r.baselineNotes],
-                ["Target notes", r.targetNotes],
-                ["Evidence", r.evidence],
-              ],
-            ),
-          );
+        else bioRows.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.actionElement, "Action element")} — ${val(r.status)}`, [
+          ["Target / requirement", list([r.targetLevel, r.requirementStatus], " | ")], ["Area", r.area], ["Fields", r.fieldBoundaries],
+          ["Measurement criterion", r.measurementCriterion], ["Baseline notes", r.baselineNotes], ["Target notes", r.targetNotes], ["Evidence", r.evidence],
+        ]));
 
-        section(15, "Continuous Learning");
-        if (state.learning?.firstYear === "Yes") {
-          line("First-Year Continuous Learning Requirement", "Satisfied");
-          bullet(
-            "Enrollment, completion of the Farm Commitment Form and Farm Plan, executing baseline soil testing, and participating in the soil testing interpretative support meeting will serve to meet the continuous learning requirements in the first year. Renewal requires Evidence of the required continuous learning credits.",
-          );
-        }
-        if (!learnRows.length)
-          bullet("No continuous learning records entered.");
-        else
-          learnRows.forEach((r, i) =>
-            recordBlock(
-              i + 1,
-              `${val(r.personName)} — ${val(r.eventType, "Learning event")}`,
-              [
-                ["Role", r.personRole],
-                ["Requirement status", r.requirementStatus],
-                ["Event date", r.eventDate],
-                ["Topic", r.topic],
-                ["Credits", r.credits],
-                ["Research credits", r.researchCredits],
-                [
-                  "Annual target / research minimum",
-                  `${val(r.annualTarget)} / ${val(r.researchMinimum)}`,
-                ],
-                [
-                  "Person totals",
-                  `${val(r.personTotalCredits)} total | ${val(r.personResearchCredits)} research`,
-                ],
-              ],
-            ),
-          );
+        lines.push("CONTINUOUS LEARNING");
+        if (state.learning?.firstYear === "Yes") bullet("First-year continuous learning requirement marked satisfied under the program's first-year pathway.");
+        if (!learnRows.length) bullet("No continuous learning records entered.");
+        else learnRows.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.personName)} — ${val(r.eventType, "Learning event")}`, [
+          ["Role", r.personRole], ["Requirement status", r.requirementStatus], ["Event date", r.eventDate], ["Topic", r.topic],
+          ["Credits", r.credits], ["Research credits", r.researchCredits], ["Evidence", r.evidence],
+        ]));
 
-        section(16, "NRCS Programs and Practices");
+        lines.push("NRCS PROGRAMS AND PRACTICES");
         line("NRCS Participation", f.nrcs);
         line("Selected Codes", (f.nrcsCodes || []).join("; ") || "Not entered");
         if (!nrcsRows.length) bullet("No NRCS practice/program rows entered.");
-        else
-          nrcsRows.forEach((r, i) =>
-            recordBlock(
-              i + 1,
-              `${val(r.program, "Program not entered")} — ${val(r.nrcsCode, "NRCS code not entered")}`,
-              [
-                ["Fields", r.fieldBoundaries],
-                ["Notes", r.notes],
-              ],
-            ),
-          );
+        else nrcsRows.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.program, "Program not entered")} — ${val(r.nrcsCode, "NRCS code not entered")}`, [["Fields", r.fieldBoundaries], ["Notes", r.notes]]));
 
-        section(17, "Continuous Improvement Commitments");
-        line(
-          "Recorded Areas",
-          `${improvementRows.filter((r) => r.status === "Entered").length} of ${improvementRows.length}`,
-        );
-        if (!improvementRows.length) {
-          bullet("No Continuous Improvement records entered.");
-        } else {
-          const ciNutrient = (state.continuousImprovement || {}).nutrient || {};
-          const ciRecs = ciNutrient.extensionRecommendations || [];
-          improvementRows.forEach((r) => {
-            lines.push(`CONTINUOUS IMPROVEMENT — ${String(r.improvementArea || "Area").toUpperCase()}`);
-            detail("Planning focus", r.question);
-            if (r.selectedActions) {
-              lines.push("  Planned actions:");
-              String(r.selectedActions).split(";").map((v) => v.trim()).filter(Boolean).forEach((action) => bullet(action));
-            } else detail("Planned actions", "None selected");
-            detail("Other planned action", r.otherPlannedAction);
-            detail("Planned change notes", r.plannedChange);
-            detail("Applies to crops", r.selectedCrops);
-            detail("Applies to KML boundaries", r.selectedBoundaries);
+        lines.push("LIVESTOCK");
+        line("Livestock Question", `${val(f.livestock, "Optional / not selected")}${f.livestock === "No" ? " | Reason: " + val(f.livestockWhyNo) : ""}`);
+        if (!livestockRows.length) bullet("No livestock records entered.");
+        else livestockRows.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.species, "Livestock record")}`, [
+          ["Production type", r.productionType], ["Animal count", r.animalCount], ["Fields", r.fieldBoundaries],
+          ["Grazing window", list([r.grazingStart, r.grazingEnd], " to ")], ["Recovery days", r.recoveryDays],
+          ["Vegetative cover", has(r.vegetativeCoverPct) ? `${r.vegetativeCoverPct}%` : ""], ["Manure handling", r.manureHandling], ["Notes", r.notes],
+        ]));
 
-            if (r.improvementArea === "Nutrient Management") {
-              lines.push("STATE EXTENSION N-P-K RECOMMENDATIONS (LB/AC)");
-              let recommendationCount = 0;
-              (state.crops || []).forEach((crop, i) => {
-                const rec = ciRecs[i] || {};
-                if (!(rec.recommendedN || rec.recommendedP || rec.recommendedK || rec.sourceLink)) return;
-                recommendationCount += 1;
-                const cropName = crop.name || crop.cropTypeOther || crop.cropType || `Crop ${i + 1}`;
-                detail("Crop", cropName);
-                detail("N | P | K", `${rec.recommendedN || "—"} | ${rec.recommendedP || "—"} | ${rec.recommendedK || "—"}`);
-                detail("Extension source", rec.sourceLink);
-              });
-              if (!recommendationCount) detail("State Extension N-P-K recommendations", "Not entered");
-              const fertilizerCount = (state.crops || []).reduce((total, crop) => total + (crop.fertilizerRows || []).filter((entry) => entry.productName || num(entry.rateAcre) || num(entry.nPct) || num(entry.pPct) || num(entry.kPct)).length, 0);
-              detail("Nutrient plan detail", `${fertilizerCount} fertilizer product record(s) are listed in Section 10, Nutrient Management.`);
-            } else if (r.improvementArea === "IPM") {
-              const ipmCount = (state.crops || []).reduce((total, crop) => total + (crop.ipmRows || []).filter((entry) => entry.productName || entry.pest || num(entry.amountAcre) || num(entry.activePct)).length, 0);
-              detail("IPM plan detail", `${ipmCount} IPM application record(s) are listed in Section 11, IPM / Crop Protection.`);
-            } else if (r.improvementArea === "Tillage") {
-              detail("Farm acreage-weighted gTIR", fmt(farmWeightedGTIR(state.crops || []), 2));
-              detail("Highest crop gTIR", fmt(highestCropGTIR(state.crops || []), 2));
-              (state.crops || []).forEach((crop, i) => {
-                const cropName = crop.name || crop.cropTypeOther || crop.cropType || `Crop ${i + 1}`;
-                detail(`${cropName} gTIR`, fmt(tillageValue(crop), 2));
-              });
-            }
-            detail("Commitment", r.committedToChanges);
-            detail("Entry status", r.status);
-            lines.push("");
-          });
-        }
+        section(7, "Farm-Wide Continuous Improvement");
+        if (!improvementRows.length) bullet("No Continuous Improvement records entered.");
+        else improvementRows.forEach((r) => {
+          const boundaryNames = String(r.selectedBoundaries || "").split(/\s*;\s*/).filter(Boolean);
+          const boundarySummary = boundaryNames.length
+            ? `${boundaryNames.length} mapped field${boundaryNames.length === 1 ? "" : "s"}${boundaryNames.length <= 3 ? ": " + boundaryNames.join("; ") : ": " + boundaryNames.slice(0, 3).join("; ") + `; +${boundaryNames.length - 3} more`}`
+            : "No mapped fields selected";
+          recordBlock(r.improvementArea || "Improvement area", [
+            ["Selected actions", r.selectedActions],
+            ["Other planned action", r.otherPlannedAction],
+            ["Planned change", r.plannedChange],
+            ["Applies to crops", r.selectedCrops],
+            ["Field scope", boundarySummary],
+            ["Commitment", r.committedToChanges],
+          ]);
+        });
 
-        section(18, "Attestation");
+        section(8, "Attestation");
         if (!attRows.length) bullet("No attestation record entered.");
-        else
-          attRows.forEach((r, i) =>
-            recordBlock(i + 1, `${val(r.status, "Attestation record")}`, [
-              ["Category", r.category],
-              ["Activity", r.activity],
-              ["Fields", r.fieldBoundaries],
-              ["Explanation", r.why],
-            ]),
-          );
+        else attRows.forEach((r, i) => recordBlock(`${i + 1}. ${val(r.status, "Attestation record")}`, [["Category", r.category], ["Activity", r.activity], ["Fields", r.fieldBoundaries], ["Explanation", r.why]]));
 
-        section(19, "Appendix Note");
-        bullet(
-          "Detailed normalized records are not repeated in this PDF to keep the report readable.",
-        );
-        bullet(
-          "The ZIP export includes the full normalized CSV, each section-level CSV, the complete SCI IPM Plan CSV, a separate PRT spray-record CSV, a dedicated Living Root Index CSV, an Estimated Bare Soil CSV, and a dedicated Continuous Improvement CSV containing IPM, Nutrient Management, and Tillage commitments.",
-        );
+        section(9, "Report Notes");
+        bullet("This PDF is intentionally organized by crop so a reviewer can understand each crop's full management plan in one place.");
+        bullet("The ZIP export contains the detailed normalized and section-level CSV datasets for record-level review.");
         return lines.join("\n");
       }
+
 
       function blobDownload(name, content, type = "text/csv") {
         let a = document.createElement("a");
@@ -10629,7 +10090,7 @@ endstream`)
         function itemHeight(type) {
           if (type === "title") return 24;
           if (type === "subtitle") return 17;
-          if (type === "section") return 28;
+          if (type === "section") return 40;
           if (type === "space") return 7;
           if (type === "detail") return 12;
           if (type === "small") return 12;
@@ -10668,7 +10129,7 @@ endstream`)
             y = top;
           }
 
-          if (it.type === "section" && pages[pages.length - 1].length) y -= 4;
+          if (it.type === "section" && pages[pages.length - 1].length) y -= 12;
           pages[pages.length - 1].push({ ...it, y: y });
           y -= itemHeight(it.type);
         }
@@ -10758,8 +10219,8 @@ endstream`)
               font = "/F2";
               color = "0.12 0.35 0.20";
               x = 52;
-              stream += `0.92 0.96 0.93 rg 44 ${it.y - 8} 524 22 re f\n`;
-              stream += `0.72 0.84 0.73 rg 44 ${it.y - 8} 4 22 re f\n`;
+              stream += `0.92 0.96 0.93 rg 44 ${it.y - 9} 524 24 re f\n`;
+              stream += `0.72 0.84 0.73 rg 44 ${it.y - 9} 4 24 re f\n`;
             } else if (it.type === "bullet") {
               size = 9.5;
               if (it.text.includes("SCS GLOBAL SERVICES")) font = "/F2";
