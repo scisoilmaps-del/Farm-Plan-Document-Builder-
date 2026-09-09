@@ -6081,7 +6081,7 @@ ${acreChangePanel()}
       function cropPlannerLRISummary(c) {
         const metrics = livingRootMetrics(c);
         const cover = coveredSoilMetrics(c);
-        return `<div class="note" style="margin-bottom:10px"><strong>Merged Living Root Index:</strong> ${fmt(metrics.activityDays, 0)} living-root days ÷ 365 = ${fmt(metrics.pct, 2)}%. Each LRI interval starts at emergence.</div><div class="note" style="margin-bottom:10px"><strong>Estimated Bare Soil %:</strong> ${fmt(cover.coveredDays, 0)} merged covered days ÷ ${cover.totalDays} = ${fmt(cover.coveredPct, 2)}% covered; Estimated Bare Soil = 100% − ${fmt(cover.coveredPct, 2)}% = <strong>${fmt(cover.bareSoilPct, 2)}%</strong>. Each covered interval starts at emergence + DCC, and overlaps are merged.<br><strong>Important:</strong> Crop residue is not included in this estimate. An onsite assessment is required to evaluate residue and make the final soil-cover conclusion.</div>`;
+        return `<div class="note" style="margin-bottom:10px"><strong>Merged Living Root Index:</strong> ${fmt(metrics.activityDays, 0)} living-root days ÷ 365 = <strong>${fmt(metrics.index, 2)}</strong>. Each LRI interval starts at emergence.</div><div class="note" style="margin-bottom:10px"><strong>Estimated Bare Soil %:</strong> ${fmt(cover.coveredDays, 0)} merged covered days ÷ ${cover.totalDays} = ${fmt(cover.coveredPct, 2)}% covered; Estimated Bare Soil = 100% − ${fmt(cover.coveredPct, 2)}% = <strong>${fmt(cover.bareSoilPct, 2)}%</strong>. Each covered interval starts at emergence + DCC, and overlaps are merged.<br><strong>Important:</strong> Crop residue is not included in this estimate. An onsite assessment is required to evaluate residue and make the final soil-cover conclusion.</div>`;
       }
       function cropPlanner() {
         let c = crop();
@@ -6567,6 +6567,11 @@ ${acreChangePanel()}
       function coveredSoilMetrics(c) {
         const year = Number(state.farm && state.farm.planningYear) || new Date().getFullYear();
         const totalDays = 365;
+        // Perennial / orchard systems are assumed to maintain living roots and full soil cover year-round.
+        // Do not require annual planting/harvest dates for these crops.
+        if (c && c.isPerennial) {
+          return { year, totalDays, coveredDays: 365, coveredPct: 100, bareSoilPct: 0, merged: [] };
+        }
         const intervals = cropPlannerEntries(c)
           .map(({ entry: e }) => {
             const fullCover = cropFullCoverDate(e);
@@ -6620,9 +6625,11 @@ ${acreChangePanel()}
             finalConclusionRequirement: "Onsite assessment required to evaluate crop residue and make the final soil-cover conclusion",
             formula: "Estimated Bare Soil % = (1 - merged covered days / 365) * 100",
             coveredIntervalRule: "Full Soil Cover Date (Emergence Date + DCC) through Harvest / Termination or Maturity Date; overlaps merged",
-            status: cropPlannerEntries(c).some(({ entry: e }) => e.plantingDate && e.harvestDate)
-              ? "Calculated"
-              : "Needs complete crop dates",
+            status: c.isPerennial
+              ? "Perennial assumption — year-round living roots and full soil cover"
+              : cropPlannerEntries(c).some(({ entry: e }) => e.plantingDate && e.harvestDate)
+                ? "Calculated"
+                : "Needs complete crop dates",
           };
         });
       }
@@ -6631,6 +6638,22 @@ ${acreChangePanel()}
           Number(state.farm && state.farm.planningYear) ||
           new Date().getFullYear();
         const denominator = 365;
+        // Perennial / orchard systems are assumed to have living roots year-round.
+        // Report LRI as 1.00 (365 days) even when annual crop-calendar dates are blank.
+        if (c && c.isPerennial) {
+          return {
+            year,
+            seasonStart: null,
+            seasonEnd: null,
+            growingSeasonDays: denominator,
+            activityDays: 365,
+            pct: 100,
+            index: 1,
+            level: "IV",
+            usedFrostWindow: false,
+            merged: [],
+          };
+        }
         let intervals = cropPlannerEntries(c)
           .map(({ entry: e }) => {
             let a = parseFarmDate(e.plantingDate, year),
@@ -6656,7 +6679,8 @@ ${acreChangePanel()}
             merged.reduce((sum, i) => sum + (i[1] - i[0]) / 86400000, 0),
           ),
         );
-        let pct = Math.min(100, (activityDays / denominator) * 100);
+        let index = Math.min(1, activityDays / denominator);
+        let pct = index * 100;
         let level =
           pct >= 80
             ? "IV"
@@ -6674,6 +6698,7 @@ ${acreChangePanel()}
           growingSeasonDays: denominator,
           activityDays,
           pct,
+          index,
           level,
           usedFrostWindow: false,
           merged,
@@ -6771,6 +6796,17 @@ ${acreChangePanel()}
             });
         });
         return rows;
+      }
+      function livingRootIndexSummaryRows() {
+        return (state.crops || []).map((c) => {
+          const m = livingRootMetrics(c);
+          const cover = coveredSoilMetrics(c);
+          return {
+            cropName: c.name || c.cropTypeOther || c.cropType || "Unnamed crop",
+            lri: Number(m.index.toFixed(2)),
+            bareSoilPct: Number(cover.bareSoilPct.toFixed(2)),
+          };
+        });
       }
       function hasNutrientPlanData(c) {
         return (
@@ -8437,7 +8473,7 @@ ${acreChangePanel()}
           ensureHarvestSections(c);
           let p = pillar(c);
           lines.push(
-            `${c.name || "Crop"} (${c.cropType === "Other" ? c.cropTypeOther : c.cropType || "crop type not entered"}): ${fmt(cropAcres(c), 2)} acres; Boundaries: ${selectedBoundaryNames(c).join(", ") || "Not assigned"}; Designated Traffic Zones: ${c.designatedTrafficZones || "Not entered"}${c.designatedTrafficZones === "No" ? " — Why: " + (c.designatedTrafficZonesWhyNo || "Not entered") : ""}; Practices: ${cropPractices(c)}; P1 ${p.P1}, P2 ${p.P2}, P5 Nutrients ${p.P5}, P5 IPM ${p.P5_IPM}, P7 ${p.P7}; gTIR ${fmt(p.TI)}; Living Root Index photosynthetic component ${p.rootPct}%; full P2 requires non-growing-season cover documentation and reviewer confirmation.`,
+            `${c.name || "Crop"} (${c.cropType === "Other" ? c.cropTypeOther : c.cropType || "crop type not entered"}): ${fmt(cropAcres(c), 2)} acres; Boundaries: ${selectedBoundaryNames(c).join(", ") || "Not assigned"}; Designated Traffic Zones: ${c.designatedTrafficZones || "Not entered"}${c.designatedTrafficZones === "No" ? " — Why: " + (c.designatedTrafficZonesWhyNo || "Not entered") : ""}; Practices: ${cropPractices(c)}; P1 ${p.P1}, P2 ${p.P2}, P5 Nutrients ${p.P5}, P5 IPM ${p.P5_IPM}, P7 ${p.P7}; gTIR ${fmt(p.TI)}; Living Root Index ${fmt(p.rootIndex, 2)} (${p.rootDays} days); full P2 requires non-growing-season cover documentation and reviewer confirmation.`,
           );
           if (c.isPerennial) {
             let pd = c.perennialData || {};
@@ -8593,7 +8629,8 @@ ${acreChangePanel()}
               P5_IPM: p.P5_IPM,
               P7: p.P7,
               tillageValue: p.TI,
-              livingRootPct: p.rootPct,
+              livingRootIndex: p.rootIndex,
+              livingRootDays: p.rootDays,
             };
           if (state.cropPlanEnabled)
             cropPlannerEntries(c).forEach(({ entry: r }) =>
@@ -8984,7 +9021,7 @@ ${acreChangePanel()}
           recordBlock("Crop Performance / SCI Snapshot", [
             ["P1 soil disturbance", p.P1],
             ["Crop-average gTIR", fmt(p.TI, 2)],
-            ["Living Root Index", `${fmt(root.pct, 2)}% (${root.activityDays} days)`],
+            ["Living Root Index", `${fmt(root.index, 2)} (${root.activityDays} days)`],
             ["Estimated covered soil", `${fmt(cover.coveredPct, 2)}%`],
             ["Estimated bare soil", `${fmt(cover.bareSoilPct, 2)}%`],
             ["P5 nutrient management", p.P5_Nutrients],
@@ -10168,7 +10205,7 @@ endstream`)
           // Legacy SCI white-paper cover used by the prior Builder edition.
           let cover = "";
           cover += `0.03 0.45 0.20 rg 48 738 516 1.5 re f\n`;
-          cover += `0.03 0.45 0.20 rg BT /F1 8 Tf 332 754 Td (${pdfEscape("SCI Farm Plan Document Builder | Technical White Paper | August 2026")}) Tj ET\n`;
+          cover += `0.03 0.45 0.20 rg BT /F1 8 Tf 332 754 Td (${pdfEscape("SCI Farm Plan Document Builder | Technical White Paper | September 2026")}) Tj ET\n`;
           if (logoId) cover += `q 390 0 0 159 111 492 cm /Logo Do Q\n`;
           cover += `0.03 0.45 0.20 rg BT /F2 22 Tf 129 446 Td (${pdfEscape("SCI Farm Plan Document Builder")}) Tj ET\n`;
           cover += `0.03 0.45 0.20 rg BT /F2 20 Tf 92 404 Td (${pdfEscape("Technical White Paper - Consolidated")}) Tj ET\n`;
@@ -10195,7 +10232,7 @@ endstream`)
             stream += `0.88 0.93 0.89 rg 48 694 516 1 re f\n`;
           }
           const bodyHeader = isWhitePaper
-            ? "SCI Farm Plan Document Builder | Technical White Paper | August 2026"
+            ? "SCI Farm Plan Document Builder | Technical White Paper | September 2026"
             : (headerLabel || (state.farm && state.farm.farmName) || "SCI Farm Plan Document");
           stream += `0.24 0.18 0.13 rg BT /F2 9 Tf 48 775 Td (${pdfEscape(bodyHeader)}) Tj ET\n`;
           stream += `0.45 0.42 0.36 rg BT /F1 8 Tf 502 28 Td (${pdfEscape("Page " + renderedPageNumber + " of " + totalRenderedPages)}) Tj ET\n`;
@@ -10285,7 +10322,7 @@ endstream`)
       function technicalWhitePaperText() {
         return [
           "SCI FARM PLAN DOCUMENT BUILDER — TECHNICAL WHITE PAPER",
-          "Consolidated edition | August 2026",
+          "Consolidated edition | September 2026",
           "",
           "1. EXECUTIVE SUMMARY",
           "The SCI Farm Plan Document Builder is a client-side single-file application that collects farm, boundary, crop, practice, evidence, and follow-up records. It performs deterministic planning calculations, checks record completeness, generates a Farm Plan PDF, and packages machine-readable records in a Farm Plan Data Packet ZIP.",
@@ -10301,11 +10338,11 @@ endstream`)
           "",
           "4. CROP PLANNER, EMERGENCE, FULL COVER, AND PERENNIAL SYSTEMS",
           "Up to ten crop/practice records are supported. Annual planning includes pre-season cover crop, cash crop, and post-harvest cover crop. Planting date, days until emergence, termination or maturity date, and days to full cover support living-root and soil-cover planning.",
-          "Emergence Date = Planting Date + Days Until Emergence. Full Cover Date = Emergence Date + Days to Full Cover. Perennial and orchard records retain perennial metadata, establishment, inter-row vegetation, mulch, traffic, and planning notes.",
+          "Emergence Date = Planting Date + Days Until Emergence. Full Cover Date = Emergence Date + Days to Full Cover. Perennial and orchard records retain perennial metadata, establishment, inter-row vegetation, mulch, traffic, and planning notes. Crops marked Perennial / Orchard are treated as maintaining living roots and full soil cover year-round for these planning calculations.",
           "",
           "5. LIVING ROOT INDEX AND ESTIMATED BARE SOIL",
-          "Living-root days begin at emergence and end at termination or maturity. Overlapping intervals are merged before totals are calculated. LRI (%) = merged living-root days / 365 × 100.",
-          "Full-cover intervals begin on the calculated full-cover date. Covered soil percent = merged covered days / 365 × 100. Estimated bare soil percent = (1 − merged covered days / 365) × 100. These are planning proxies and do not independently establish SCI conformity.",
+          "For annual crops, living-root days begin at emergence and end at termination or maturity. Overlapping intervals are merged before totals are calculated. Living Root Index (LRI) = merged living-root days / 365 and is reported on a 0.00–1.00 index scale. A crop with 365 living-root days has an LRI of 1.00. Crops marked Perennial / Orchard are assigned 365 living-root days and an LRI of 1.00.",
+          "For annual crops, full-cover intervals begin on the calculated full-cover date. Covered soil percent = merged covered days / 365 × 100. Estimated bare soil percent = (1 − merged covered days / 365) × 100. Crops marked Perennial / Orchard are assigned 365 covered days, 100% covered soil, and 0% estimated bare soil. These are planning proxies and do not independently establish SCI conformity.",
           "",
           "6. HARVEST LOG",
           "Detailed harvest records calculate total harvest as crop acres × yield per acre. Simple total-harvest records retain the entered total. Last-year, projected, and actual harvest records are retained with crop context and status.",
@@ -10354,7 +10391,7 @@ endstream`)
           "The Farm Plan Data Packet ZIP includes the Farm Plan PDF, Farm Plan text, normalized dataset, section-level CSVs, saved progress, and retained uploads when supplied. The Continuous Improvement CSV includes planned actions, applicable crops and boundaries, commitment status, practice summary, and State Extension N-P-K recommendation/source information.",
           "",
           "18. FORMULA REGISTER",
-          "Key formulas include KML acreage, detailed harvest total, emergence date, living-root days, LRI, full-cover date, covered-soil percent, estimated bare-soil percent, event/crop/farm gTIR, equivalent product pounds, nutrient pounds per acre, whole-field nutrients, and IPM active ingredient totals.",
+          "Key formulas include KML acreage, detailed harvest total, emergence date, living-root days, LRI = merged living-root days / 365, full-cover date, covered-soil percent, estimated bare-soil percent, event/crop/farm gTIR, equivalent product pounds, nutrient pounds per acre, whole-field nutrients, and IPM active ingredient totals. Perennial / Orchard crops use the year-round assumptions of 365 living-root days, LRI 1.00, 100% covered soil, and 0% estimated bare soil.",
           "Tillage register: eventGTIR = Rating × 3.25 × Depth(cm) × Disturbed Fraction × Passes; Step 1 annual Field TI = sum(completed eventGTIR) for each unique field + crop + year; Step 2 Crop TI (cropAvgGTIR) = sum of those annual Field TI values (cropFieldTITotal) / number of unique fields growing that crop. Individual Field TI values are retained separately in the roll-up and are never replaced by their crop-level sum. Imported field identity is retained from fieldId/fieldBoundaries or field_id in notes. If event-level field identity is unavailable, the manually entered crop-level tillage sequence is treated as the representative sequence for each entered/selected crop field. cropTotalGTIR = cropFieldTITotal; farmAverageGTIR = acreage-weighted cropAvgGTIR using only crops with completed tillage events.",
           "",
           "19. GOVERNANCE AND LIMITATIONS",
@@ -10441,11 +10478,7 @@ endstream`)
           "notes", "status", "reason"
         ],
         living_root_index: [
-          "cropName", "cropType", "acres", "plantingDate", "daysUntilEmergence",
-          "emergenceDate", "dcc", "fullSoilCoverDate", "coveredDays", "harvestDate",
-          "growingSeasonDays", "photosyntheticDays", "livingRootPct",
-          "mergedCoveredDays", "coveredSoilPct", "bareSoilPct",
-          "nonGrowingSeasonCover", "documentationStatus", "notes", "status"
+          "cropName", "lri", "bareSoilPct"
         ],
         estimated_bare_soil: [
           "cropNumber", "cropName", "cropType", "acres", "fieldBoundaries",
@@ -10881,7 +10914,7 @@ endstream`)
           "01_crop_planner.csv": rowsForSection("crop_planner"),
           "02_harvest_log.csv": rowsForSection("harvest_log"),
           "03_livestock_log.csv": livestockRowsNormalized(),
-          "04_living_root_index.csv": livingRootIndexRows(),
+          "04_living_root_index.csv": livingRootIndexSummaryRows(),
           "04b_estimated_bare_soil.csv": estimatedBareSoilRows(),
           "04_tillage_intensity.csv": tillageRowsForExport(),
           "05_nutrient_management_plan.csv": rowsForSection(
