@@ -10058,7 +10058,9 @@ endstream`)
               return;
             }
             if (/^={20,}$/.test(t)) return;
-            if (t === t.toUpperCase() && t.length < 80 && /[A-Z]/.test(t))
+            if (/^TABLE_HEADER\|/.test(t)) add("table-header", t);
+            else if (/^TABLE_ROW\|/.test(t)) add("table-row", t);
+            else if (t === t.toUpperCase() && t.length < 80 && /[A-Z]/.test(t))
               add("section", t);
             else if (/^\s{2}/.test(line)) add("detail", t.trim());
             else if (/^-\s+/.test(t)) add("bullet", t.replace(/^-\s+/, ""));
@@ -10080,6 +10082,8 @@ endstream`)
           bullet: 82,
           detail: 78,
           small: 100,
+          "table-header": 80,
+          "table-row": 80,
         };
         function wrapByType(text, type) {
           return wrapPdfLine(text, wrapWidths[type] || 86);
@@ -10107,6 +10111,24 @@ endstream`)
             laid.push({ ...it, text: "" });
             return;
           }
+          if (isWhitePaper && it.type === "section") {
+            laid.push({ type: "section", sectionLines: wrapPdfLine(it.text, 72), text: "" });
+            return;
+          }
+          if (it.type === "table-header" || it.type === "table-row") {
+            const fields = String(it.text || "").split("|");
+            const label = fields.length > 1 ? fields[1] : "";
+            const value = fields.length > 2 ? fields.slice(2).join("|") : "";
+            const labelLines = wrapPdfLine(label, 24);
+            const valueLines = wrapPdfLine(value, 55);
+            laid.push({
+              type: it.type,
+              labelLines,
+              valueLines,
+              text: "",
+            });
+            return;
+          }
           const parts = wrapByType(it.text, it.type);
           const group = it.type === "bullet" ? `bullet-${++groupCounter}` : "";
           parts.forEach((part, idx) => {
@@ -10121,21 +10143,32 @@ endstream`)
               groupLast: idx === parts.length - 1,
             });
           });
+          if (isWhitePaper && (it.type === "body" || it.type === "detail"))
+            laid.push({ type: "wp-gap", text: "" });
         });
         let pages = [[]],
           y = top;
-        function itemHeight(type) {
+        function itemHeight(type, item = null) {
           if (type === "title") return 24;
           if (type === "subtitle") return 17;
-          if (type === "section") return 40;
+          if (type === "section") {
+            const lines = isWhitePaper && item && item.sectionLines ? item.sectionLines.length : 1;
+            return isWhitePaper ? 46 + Math.max(0, lines - 1) * 13 : 40;
+          }
           if (type === "space") return 7;
+          if (type === "wp-gap") return 5;
           if (type === "detail") return 12;
           if (type === "small") return 12;
+          if (type === "table-header") return 24;
+          if (type === "table-row") {
+            const lines = Math.max(1, (item && item.labelLines ? item.labelLines.length : 1), (item && item.valueLines ? item.valueLines.length : 1));
+            return Math.max(28, 12 + lines * 11);
+          }
           return 14;
         }
         for (let idx = 0; idx < laid.length; idx++) {
           const it = laid[idx];
-          let h = itemHeight(it.type);
+          let h = itemHeight(it.type, it);
           if (it.type === "section" && y < top - 20) h += 4;
 
           // Keep every wrapped bullet together and prevent a bullet from splitting across pages.
@@ -10146,7 +10179,7 @@ endstream`)
               j < laid.length && laid[j].group === it.group;
               j++
             )
-              groupHeight += itemHeight(laid[j].type);
+              groupHeight += itemHeight(laid[j].type, laid[j]);
             if (y - groupHeight < bottom) {
               pages.push([]);
               y = top;
@@ -10156,7 +10189,7 @@ endstream`)
           // Keep a section heading with at least one following line whenever possible.
           if (it.type === "section") {
             const next = laid[idx + 1];
-            const needed = h + (next ? itemHeight(next.type) : 0);
+            const needed = h + (next ? itemHeight(next.type, next) : 0);
             if (y - needed < bottom) {
               pages.push([]);
               y = top;
@@ -10166,9 +10199,9 @@ endstream`)
             y = top;
           }
 
-          if (it.type === "section" && pages[pages.length - 1].length) y -= 12;
+          if (it.type === "section" && pages[pages.length - 1].length) y -= isWhitePaper ? 16 : 12;
           pages[pages.length - 1].push({ ...it, y: y });
-          y -= itemHeight(it.type);
+          y -= itemHeight(it.type, it);
         }
         let objects = [];
         function add(obj) {
@@ -10241,7 +10274,32 @@ endstream`)
               size = 9.8,
               font = "/F1",
               color = "0.18 0.13 0.09";
-            if (it.type === "title") {
+            if (it.type === "table-header" || it.type === "table-row") {
+              const rowH = itemHeight(it.type, it);
+              const rowTop = it.y + 4;
+              const rowBottom = rowTop - rowH + 5;
+              const left = 52, labelW = 150, totalW = 508;
+              if (it.type === "table-header") {
+                stream += `0.12 0.35 0.20 rg ${left} ${rowBottom} ${totalW} ${rowH - 5} re f\n`;
+              } else {
+                stream += `0.95 0.97 0.95 rg ${left} ${rowBottom} ${labelW} ${rowH - 5} re f\n`;
+                stream += `0.985 0.985 0.98 rg ${left + labelW} ${rowBottom} ${totalW - labelW} ${rowH - 5} re f\n`;
+              }
+              stream += `0.72 0.78 0.73 RG 0.5 w ${left} ${rowBottom} ${totalW} ${rowH - 5} re S\n`;
+              stream += `0.72 0.78 0.73 RG 0.5 w ${left + labelW} ${rowBottom} m ${left + labelW} ${rowBottom + rowH - 5} l S\n`;
+              const labelFont = "/F2";
+              const valueFont = it.type === "table-header" ? "/F2" : "/F1";
+              const txtColor = it.type === "table-header" ? "1 1 1" : "0.16 0.14 0.12";
+              (it.labelLines || [""]).forEach((line, li) => {
+                stream += `${txtColor} rg BT ${labelFont} 8.6 Tf ${left + 7} ${rowTop - 12 - li * 11} Td (${pdfEscape(line)}) Tj ET\n`;
+              });
+              (it.valueLines || [""]).forEach((line, li) => {
+                stream += `${txtColor} rg BT ${valueFont} 8.6 Tf ${left + labelW + 7} ${rowTop - 12 - li * 11} Td (${pdfEscape(line)}) Tj ET\n`;
+              });
+              return;
+            } else if (it.type === "wp-gap") {
+              return;
+            } else if (it.type === "title") {
               size = 18;
               font = "/F2";
               color = "0.12 0.35 0.20";
@@ -10256,8 +10314,17 @@ endstream`)
               font = "/F2";
               color = "0.12 0.35 0.20";
               x = 52;
-              stream += `0.92 0.96 0.93 rg 44 ${it.y - 9} 524 24 re f\n`;
-              stream += `0.72 0.84 0.73 rg 44 ${it.y - 9} 4 24 re f\n`;
+              const sectionLines = isWhitePaper && it.sectionLines ? it.sectionLines : [it.text];
+              const sectionBoxH = (isWhitePaper ? 26 : 24) + Math.max(0, sectionLines.length - 1) * 13;
+              const sectionBoxY = it.y - 9 - Math.max(0, sectionLines.length - 1) * 13;
+              stream += `0.92 0.96 0.93 rg 44 ${sectionBoxY} 524 ${sectionBoxH} re f\n`;
+              stream += `0.72 0.84 0.73 rg 44 ${sectionBoxY} 4 ${sectionBoxH} re f\n`;
+              if (isWhitePaper && it.sectionLines) {
+                sectionLines.forEach((line, li) => {
+                  stream += `${color} rg BT ${font} ${size} Tf ${x} ${it.y - li * 13} Td (${pdfEscape(line)}) Tj ET\n`;
+                });
+                return;
+              }
             } else if (it.type === "bullet") {
               size = 9.5;
               if (it.text.includes("SCS GLOBAL SERVICES")) font = "/F2";
@@ -10330,7 +10397,22 @@ endstream`)
           "",
           "2. SYSTEM ARCHITECTURE AND WORKFLOW",
           "The application consists of a presentation layer, structured state, deterministic calculations, CSV import/export, PDF/text report generation, saved progress, and ZIP packaging.",
-          "Workflow: Farm Details; Attestation; Crop Planner; Harvest Log; Tillage Intensity; Nutrient Management; IPM; Diesel; Irrigation; Biodiversity; Continuous Learning; NRCS Programs; Continuous Improvement; Roll Up; Export.",
+          "Workflow:",
+          "- Farm Details",
+          "- Attestation",
+          "- Crop Planner",
+          "- Harvest Log",
+          "- Tillage Intensity",
+          "- Nutrient Management",
+          "- IPM",
+          "- Diesel",
+          "- Irrigation",
+          "- Biodiversity",
+          "- Continuous Learning",
+          "- NRCS Programs",
+          "- Continuous Improvement",
+          "- Roll Up",
+          "- Export.",
           "",
           "3. CORE DATA MODEL, BOUNDARIES, AND ACREAGE",
           "The crop/practice record is the core planning unit. A crop can be linked to one or more KML field boundaries. When selected boundary acreage is greater than zero, it overrides manual crop acres for all related calculations and exports.",
@@ -10338,32 +10420,65 @@ endstream`)
           "",
           "4. CROP PLANNER, EMERGENCE, FULL COVER, AND PERENNIAL SYSTEMS",
           "Up to ten crop/practice records are supported. Annual planning includes pre-season cover crop, cash crop, and post-harvest cover crop. Planting date, days until emergence, termination or maturity date, and days to full cover support living-root and soil-cover planning.",
-          "Emergence Date = Planting Date + Days Until Emergence. Full Cover Date = Emergence Date + Days to Full Cover. Perennial and orchard records retain perennial metadata, establishment, inter-row vegetation, mulch, traffic, and planning notes. Crops marked Perennial / Orchard are treated as maintaining living roots and full soil cover year-round for these planning calculations.",
+          "TABLE_HEADER|Formula|Calculation",
+          "TABLE_ROW|Emergence Date|Emergence Date = Planting Date + Days Until Emergence.",
+          "TABLE_ROW|Full Cover Date|Full Cover Date = Emergence Date + Days to Full Cover.",
+          "Perennial and orchard records retain perennial metadata, establishment, inter-row vegetation, mulch, traffic, and planning notes. Crops marked Perennial / Orchard are treated as maintaining living roots and full soil cover year-round for these planning calculations.",
           "",
           "5. LIVING ROOT INDEX AND ESTIMATED BARE SOIL",
-          "For annual crops, living-root days begin at emergence and end at termination or maturity. Overlapping intervals are merged before totals are calculated. Living Root Index (LRI) = merged living-root days / 365 and is reported on a 0.00–1.00 index scale. A crop with 365 living-root days has an LRI of 1.00. Crops marked Perennial / Orchard are assigned 365 living-root days and an LRI of 1.00.",
-          "For annual crops, full-cover intervals begin on the calculated full-cover date. Covered soil percent = merged covered days / 365 × 100. Estimated bare soil percent = (1 − merged covered days / 365) × 100. Crops marked Perennial / Orchard are assigned 365 covered days, 100% covered soil, and 0% estimated bare soil. These are planning proxies and do not independently establish SCI conformity.",
+          "For annual crops, living-root days begin at emergence and end at termination or maturity. Overlapping intervals are merged before totals are calculated.",
+          "TABLE_HEADER|Formula|Calculation",
+          "TABLE_ROW|Living Root Index (LRI)|Living Root Index (LRI) = merged living-root days / 365 and is reported on a 0.00–1.00 index scale.",
+          "A crop with 365 living-root days has an LRI of 1.00. Crops marked Perennial / Orchard are assigned 365 living-root days and an LRI of 1.00.",
+          "For annual crops, full-cover intervals begin on the calculated full-cover date.",
+          "TABLE_HEADER|Formula|Calculation",
+          "TABLE_ROW|Covered soil percent|Covered soil percent = merged covered days / 365 × 100.",
+          "TABLE_ROW|Estimated bare soil percent|Estimated bare soil percent = (1 − merged covered days / 365) × 100.",
+          "Crops marked Perennial / Orchard are assigned 365 covered days, 100% covered soil, and 0% estimated bare soil. These are planning proxies and do not independently establish SCI conformity.",
           "",
           "6. HARVEST LOG",
-          "Detailed harvest records calculate total harvest as crop acres × yield per acre. Simple total-harvest records retain the entered total. Last-year, projected, and actual harvest records are retained with crop context and status.",
+          "TABLE_HEADER|Formula|Calculation",
+          "TABLE_ROW|Detailed harvest total|Detailed harvest records calculate total harvest as crop acres × yield per acre.",
+          "Simple total-harvest records retain the entered total. Last-year, projected, and actual harvest records are retained with crop context and status.",
           "",
           "7. TILLAGE INTENSITY MATHEMATICS AND FIELD ROLL-UP LOGIC",
           "The tillage section uses the same corrected gTIR method as the standalone SCI Tillage Intensity Calculator. Each completed tillage event is calculated independently, then completed events are rolled up to the annual field, crop, and farm levels.",
-          "Event gTIR = Tillage Rating × 3.25 × Depth (cm) × Disturbed Fraction × Passes. Depth (cm) = Depth (inches) × 2.54. Disturbed Fraction = Disturbed Percent / 100. Acres Tilled = Crop Acres × Disturbed Fraction for a completed event.",
+          "TABLE_HEADER|Formula|Calculation",
+          "TABLE_ROW|Event gTIR|Event gTIR = Tillage Rating × 3.25 × Depth (cm) × Disturbed Fraction × Passes.",
+          "TABLE_ROW|Depth (cm)|Depth (cm) = Depth (inches) × 2.54.",
+          "TABLE_ROW|Disturbed Fraction|Disturbed Fraction = Disturbed Percent / 100.",
+          "TABLE_ROW|Acres Tilled|Acres Tilled = Crop Acres × Disturbed Fraction for a completed event.",
           "A tillage event is complete only when crop name, implement, tillage type/rating, depth greater than zero, disturbed percent greater than zero, and passes greater than zero are present. Incomplete events return 0 event gTIR and are excluded from roll-ups.",
-          "Annual Field TI = sum of Event gTIR for all completed tillage events in the crop/field/year sequence. Events are summed; they are not averaged.",
-          "Effective Field Count follows this hierarchy: (1) entered Crop Fields when greater than zero; otherwise (2) number of selected KML field boundaries when one or more are assigned; otherwise (3) one representative field when a completed tillage sequence exists. If no completed tillage sequence exists, the effective field count is zero.",
-          "Crop Field TI Total = Annual Field TI × Effective Field Count. Crop Avg gTIR = Crop Field TI Total / Effective Field Count. When one crop-level tillage sequence represents all selected fields, each represented field carries the same Annual Field TI, so Crop Avg gTIR equals Annual Field TI regardless of whether the crop represents one field or multiple fields.",
+          "TABLE_HEADER|Roll-up formula|Calculation / rule",
+          "TABLE_ROW|Annual Field TI|Annual Field TI = sum of Event gTIR for all completed tillage events in the crop/field/year sequence. Events are summed; they are not averaged.",
+          "Effective Field Count follows this hierarchy:",
+          "- (1) entered Crop Fields when greater than zero; otherwise",
+          "- (2) number of selected KML field boundaries when one or more are assigned; otherwise",
+          "- (3) one representative field when a completed tillage sequence exists.",
+          "If no completed tillage sequence exists, the effective field count is zero.",
+          "TABLE_ROW|Crop Field TI Total|Crop Field TI Total = Annual Field TI × Effective Field Count.",
+          "TABLE_ROW|Crop Avg gTIR|Crop Avg gTIR = Crop Field TI Total / Effective Field Count.",
+          "When one crop-level tillage sequence represents all selected fields, each represented field carries the same Annual Field TI, so Crop Avg gTIR equals Annual Field TI regardless of whether the crop represents one field or multiple fields.",
           "If fields growing the same crop have materially different tillage sequences, they should be represented as separate crop/practice records so each management system retains its own Annual Field TI rather than combining unlike field management under one sequence.",
-          "Farm Average gTIR is acreage weighted only across crops with at least one completed tillage event: Farm Average gTIR = sum(Crop Avg gTIR × Crop Acres) / sum(Crop Acres for crops with completed tillage events). Blank or incomplete tillage records are not treated as zero-intensity acreage in the farm denominator.",
+          "Farm Average gTIR is acreage weighted only across crops with at least one completed tillage event:",
+          "TABLE_HEADER|Formula|Calculation",
+          "TABLE_ROW|Farm Average gTIR|Farm Average gTIR = sum(Crop Avg gTIR × Crop Acres) / sum(Crop Acres for crops with completed tillage events).",
+          "Blank or incomplete tillage records are not treated as zero-intensity acreage in the farm denominator.",
           "No-Till / Direct Seed logic: when No Till is selected and No-Till Drill Used is not Yes, the tillage roll-up remains 0. When No-Till Drill Used is Yes, the builder creates/synchronizes the defined No-Till Drill event and calculates it using the same event formula and crop roll-up rules.",
           "Tillage export fields include eventGTIR at the event level and cropAvgGTIR, cropFieldTITotal, and cropTotalGTIR at the crop roll-up level. cropTotalGTIR is retained as a compatibility field and carries the same value as cropFieldTITotal. Farm-level outputs use the corrected acreage-weighted Farm Average gTIR.",
           "",
           "8. NUTRIENT MANAGEMENT MATHEMATICS",
-          "Equivalent product lb/ac is the entered rate adjusted for tons, gallons with density, or fluid ounces with density. Nutrient lb/ac = equivalent product lb/ac × nutrient percentage / 100. Application nutrient total = nutrient lb/ac × applied acres. Applied acres equal the selected KML boundary acreage for field-targeted records, or all crop acres when no event-level boundary is selected.",
+          "Equivalent product lb/ac is the entered rate adjusted for tons, gallons with density, or fluid ounces with density.",
+          "TABLE_HEADER|Formula|Calculation",
+          "TABLE_ROW|Nutrient lb/ac|Nutrient lb/ac = equivalent product lb/ac × nutrient percentage / 100.",
+          "TABLE_ROW|Application nutrient total|Application nutrient total = nutrient lb/ac × applied acres.",
+          "Applied acres equal the selected KML boundary acreage for field-targeted records, or all crop acres when no event-level boundary is selected.",
           "",
           "9. INTEGRATED PEST MANAGEMENT MATHEMATICS",
-          "Active ingredient per acre = amount per acre × active ingredient percentage / 100. Total active ingredient = active ingredient per acre × area applied. Product, pest, label, method, rate, and restricted-use context are retained.",
+          "TABLE_HEADER|Formula|Calculation",
+          "TABLE_ROW|Active ingredient per acre|Active ingredient per acre = amount per acre × active ingredient percentage / 100.",
+          "TABLE_ROW|Total active ingredient|Total active ingredient = active ingredient per acre × area applied.",
+          "Product, pest, label, method, rate, and restricted-use context are retained.",
           "",
           "10. CONTINUOUS IMPROVEMENT",
           "Continuous Improvement is a dedicated step for IPM, Nutrient Management, and Tillage commitments. Each area captures planned actions, other action, planned-change notes, selected crops, selected KML boundaries, commitment status, and entry status.",
@@ -10391,8 +10506,17 @@ endstream`)
           "The Farm Plan Data Packet ZIP includes the Farm Plan PDF, Farm Plan text, normalized dataset, section-level CSVs, saved progress, and retained uploads when supplied. The Continuous Improvement CSV includes planned actions, applicable crops and boundaries, commitment status, practice summary, and State Extension N-P-K recommendation/source information.",
           "",
           "18. FORMULA REGISTER",
-          "Key formulas include KML acreage, detailed harvest total, emergence date, living-root days, LRI = merged living-root days / 365, full-cover date, covered-soil percent, estimated bare-soil percent, event/crop/farm gTIR, equivalent product pounds, nutrient pounds per acre, whole-field nutrients, and IPM active ingredient totals. Perennial / Orchard crops use the year-round assumptions of 365 living-root days, LRI 1.00, 100% covered soil, and 0% estimated bare soil.",
-          "Tillage register: eventGTIR = Rating × 3.25 × Depth(cm) × Disturbed Fraction × Passes; Step 1 annual Field TI = sum(completed eventGTIR) for each unique field + crop + year; Step 2 Crop TI (cropAvgGTIR) = sum of those annual Field TI values (cropFieldTITotal) / number of unique fields growing that crop. Individual Field TI values are retained separately in the roll-up and are never replaced by their crop-level sum. Imported field identity is retained from fieldId/fieldBoundaries or field_id in notes. If event-level field identity is unavailable, the manually entered crop-level tillage sequence is treated as the representative sequence for each entered/selected crop field. cropTotalGTIR = cropFieldTITotal; farmAverageGTIR = acreage-weighted cropAvgGTIR using only crops with completed tillage events.",
+          "Key formulas include KML acreage, detailed harvest total, emergence date, living-root days, LRI = merged living-root days / 365, full-cover date, covered-soil percent, estimated bare-soil percent, event/crop/farm gTIR, equivalent product pounds, nutrient pounds per acre, whole-field nutrients, and IPM active ingredient totals.",
+          "Perennial / Orchard crops use the year-round assumptions of 365 living-root days, LRI 1.00, 100% covered soil, and 0% estimated bare soil.",
+          "TABLE_HEADER|Tillage register|Formula / rule",
+          "TABLE_ROW|eventGTIR|eventGTIR = Rating × 3.25 × Depth(cm) × Disturbed Fraction × Passes;",
+          "TABLE_ROW|Step 1 annual Field TI|Step 1 annual Field TI = sum(completed eventGTIR) for each unique field + crop + year;",
+          "TABLE_ROW|Step 2 Crop TI (cropAvgGTIR)|Step 2 Crop TI (cropAvgGTIR) = sum of those annual Field TI values (cropFieldTITotal) / number of unique fields growing that crop.",
+          "Individual Field TI values are retained separately in the roll-up and are never replaced by their crop-level sum.",
+          "Imported field identity is retained from fieldId/fieldBoundaries or field_id in notes.",
+          "If event-level field identity is unavailable, the manually entered crop-level tillage sequence is treated as the representative sequence for each entered/selected crop field.",
+          "TABLE_ROW|cropTotalGTIR|cropTotalGTIR = cropFieldTITotal;",
+          "TABLE_ROW|farmAverageGTIR|farmAverageGTIR = acreage-weighted cropAvgGTIR using only crops with completed tillage events.",
           "",
           "19. GOVERNANCE AND LIMITATIONS",
           "The builder is a planning, documentation, and QA/QC tool. Generalized Extension nutrient recommendations do not replace field-specific soil tests, yield goals, professional agronomic review, regulations, or audit determinations. SCI standards, policies, audit procedures, and certifying-body decisions remain controlling.",
